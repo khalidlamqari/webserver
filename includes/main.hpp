@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 09:50:31 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/11 10:25:20 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/11 14:41:52 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,8 +25,11 @@
 #include <vector>
 #include <sstream>   // For std::istringstream
 #include <map>
+#include <poll.h>
+
 #define BUFFER_SIZE 30000
 
+#define MAX_CLIENTS 10
 
 std::vector<std::string> split(const std::string & str) ;
 std::string trim(const std::string & str ) ;

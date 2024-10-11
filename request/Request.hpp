@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 11:35:53 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/11 10:40:49 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/11 16:50:44 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,11 +36,12 @@ class Request
         bool Valide_method( const std::string methodName );
         
         void parseHeader(const std::string & line ) ;
-        
+        std::vector<std::string> parse_header_values(const std::string & field_value);
 
         
     public :
-        std::map< std::string, std::string > headers ;// key , value
+        std::map< std::string, std::vector<std::string> > headers ;// key , value
+        
         std::string method ;
         std::string request_target ;
         std::string HTTP_version ;

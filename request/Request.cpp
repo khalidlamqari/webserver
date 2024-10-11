@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 11:24:24 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/11 12:16:10 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/11 16:46:41 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,12 +83,12 @@ void Request::parseMessage()
         if ( line.length() == 1 && line[0] == '\r' ) // CRLF
             break ;
             
-        if ( line.eof() ) // if not ending with CRLF
+        if ( stream.eof() ) // if not ending with CRLF
             throw 400 ; 
 
         parseHeader( line ) ;
 
-        std::cout << line << std::endl ;
+        // std::cout << line << std::endl ;
     }
 }
 
