@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 10:28:23 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/11 19:07:02 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/12 09:22:58 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -107,13 +107,14 @@ void Server::handl_each_client_socket()
             }
             else
             {
+                std::cout << message << std::endl;
                 // here we will handle request
                 Request request(message) ;
                 request.parseMessage() ;
 
-                std::cout << "method         " << request.method << std::endl ;
-                std::cout << "request_target " << request.request_target << std::endl ;
-                std::cout << "HTTP_version   " << request.HTTP_version << std::endl ;
+                // std::cout << "method         " << request.method << std::endl ;
+                // std::cout << "request_target " << request.request_target << std::endl ;
+                // std::cout << "HTTP_version   " << request.HTTP_version << std::endl ;
                 
                 for (std::map<std::string, std::vector<std::string> >::iterator it = (request.headers).begin(); it != (request.headers).end(); ++it)
                 {
