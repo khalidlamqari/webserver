@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/11 10:18:07 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/11 10:32:12 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/12 18:06:29 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,8 +16,8 @@ std::string trim(const std::string & str )
 {
     size_t start, end ;
 
-    start = 0;
-    end = str.length() - 1;
+    start    = 0;
+    end      = str.length() - 1;
     
     while ( start < str.length() && std::iswspace(str[ start ]) ) // skip whitespaces from the begining
         start++ ;

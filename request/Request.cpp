@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 11:24:24 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/11 16:46:41 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/14 16:27:45 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,6 +90,12 @@ void Request::parseMessage()
 
         // std::cout << line << std::endl ;
     }
+
+
+    if (this->headers.find("Host") == this->headers.end() )
+        throw 400 ;
+
+    
 }
 
 bool Request::Valide_method( const std::string methodName )

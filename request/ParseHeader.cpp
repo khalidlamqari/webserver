@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 17:26:40 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/12 10:32:34 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/14 16:20:34 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ void Request::parseHeader( const std::string & line )
     size_t i =  line.find( ":" );
     if (i == std::string::npos)
         throw 400 ;
-
+ 
     std::string field_name = line.substr( 0, i ); // get field name
 
      // check if any whitespace between field name and ':'
