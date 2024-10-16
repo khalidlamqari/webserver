@@ -6,20 +6,20 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 10:28:23 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/14 19:27:56 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/16 12:34:54 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "Server.hpp"
 #include <cstring>
-class Request ;
+// class Request ;
 
 Server::Server()
 {
     this->server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (this->server_fd == -1) 
+    if (this->server_fd == -1)
         throw std::runtime_error("socket creation failure");
-        
+
     this->root  = "/Users/klamqari/Desktop/web";
     memset(&(this->address) , 0, sizeof(address));
     
@@ -27,7 +27,7 @@ Server::Server()
     this->addrlen                   = sizeof(address) ;
     this->address.sin_family        = AF_INET ;
     this->address.sin_addr.s_addr   = INADDR_ANY ;
-    this->address.sin_port          = htons(5000) ;
+    this->address.sin_port          = htons(8000) ;
 
     for (int i = 0; i <= MAX_CLIENTS; ++i)
         this->fds[i].fd = -1; // Initialize
@@ -95,6 +95,7 @@ void Server::handl_each_client_socket()
     {
         if (this->fds[i].fd != -1 && (this->fds[i].revents & POLLIN))
         {
+            
             char message[BUFFER_SIZE] = {0} ;
                 std::cout << "read" << std::endl;
             if ( read(this->fds[i].fd, message, BUFFER_SIZE) == -1 )
@@ -105,26 +106,34 @@ void Server::handl_each_client_socket()
             }
             else
             {
-
+                Request request ;
                 // std::cout << message << std::endl;
                 // here we will handle request
-                Request request(message) ;
-                request.parseMessage() ;
+                try
+                {
+                    request.setMessage ( message ) ;
+                    request.parseMessage () ;
+                }
+                catch(int error_num)
+                {
+                    std::cout << "ERROR : " << error_num << std::endl;
+                }
+                
 
                 std::cout << "method         " << request.method << std::endl ;
                 std::cout << "request_target " << request.request_target << std::endl ;
                 std::cout << "HTTP_version   " << request.HTTP_version << std::endl ;
 
-                // for (std::map<std::string, std::vector<std::string> >::iterator it = (request.headers).begin(); it != (request.headers).end(); ++it)
-                // {
-                //     std::cout    << "key   : " << it->first << std::endl ;
+                for (std::map<std::string, std::vector<std::string> >::iterator it = (request.headers).begin(); it != (request.headers).end(); ++it)
+                {
+                    std::cout    << "key   : " << it->first << std::endl ;
 
-                //     for (std::vector<std::string>::iterator j = (it->second).begin() ; j != (it->second).end() ; j++ )
-                //     {
-                //         std::cout << "value : " << *j << std::endl ;
-                //     }
-                //     std::cout << "        ----------------------------------------          " << std::endl ;
-                // }
+                    for (std::vector<std::string>::iterator j = (it->second).begin() ; j != (it->second).end() ; j++ )
+                    {
+                        std::cout << "value : " << *j << std::endl ;
+                    }
+                    std::cout << "        ----------------------------------------          " << std::endl ;
+                }
 
                 // here we will handle response
                 
@@ -144,7 +153,7 @@ void Server::handl_each_client_socket()
                     ssize_t size = read(fd, response, 2024) ;
                     response[size] = '\0' ;
                     close(fd) ;
-                    
+
                 }
                 std::string response1 = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n";
                 // const char * response1 = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<h1 style='color:red;'>Hello from C++ server!</h1>";
@@ -159,7 +168,6 @@ void Server::handl_each_client_socket()
 
                 if ( close(this->fds[i].fd) == -1 )
                     throw std::runtime_error("close failure ") ;
-
             }
         }
     }
@@ -172,10 +180,8 @@ void Server::closeServer()
         throw std::runtime_error("close failure") ;
 }
 
-
 Server::~Server()
 {
     // free 
     this->closeServer();
 }
-

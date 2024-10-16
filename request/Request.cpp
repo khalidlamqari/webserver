@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 11:24:24 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/14 16:27:45 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/16 12:01:32 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,23 +18,25 @@ Request::Request(std::string message)
 }
 
 /*
-
-    CR (carriage return), CRLF (CR LF) LF (line feed)
-
-    typically parse the request-line into its component parts
-    by splitting on whitespace . since no whitespace is allowed in the three components
-
-    -- ERROR--
-    Recipients of an invalid request-line SHOULD respond with either a
-    400 (Bad Request) error or a 301 (Moved Permanently)
-
+*
+*    CR (carriage return), CRLF (CR LF) LF (line feed)
+*
+*    typically parse the request-line into its component parts
+*    by splitting on whitespace . since no whitespace is allowed in the three components
+*
+*    -- ERROR--
+*    Recipients of an invalid request-line SHOULD respond with either a
+*    400 (Bad Request) error or a 301 (Moved Permanently)
+*
 */
+
 
 void Request::parseStartLine(const std::string & line) 
 {
  
     std::vector<std::string> tokens ;
-    
+    if ( line[ line.length() - 1 ] != '\r' )
+        throw 400 ;
     tokens = split(line) ;
     std::vector<std::string>::iterator start = tokens.begin();
     // std::vector<std::string>::iterator end = tokens.end();
@@ -42,15 +44,15 @@ void Request::parseStartLine(const std::string & line)
     // start line should be 3 elements <HTTP Method>  <Request-URI>  <HTTP Version>
     if ( tokens.size() != 3 )
         throw 400 ;
-        
+
     //  <HTTP Method>
     if ( ! this->Valide_method(*start) )
         throw 400 ;
     this->method = *start ;
-    
+
     // <Request-URI>
     this->request_target = *(++start);
-    
+
     // <HTTP Version>
     if ( (*(++start)) != "HTTP/1.1" ) // should trim(*start first)
         throw 400 ;
@@ -65,37 +67,52 @@ void Request::parseStartLine(const std::string & line)
 }
 
 
+/*
+*   body
+*   a Content-Length header  field is normally sent in a POST request even when the value is 0  (indicating an empty payload body).
+*   
+*   A user agent SHOULD NOT send a  Content-Length header field 
+*   when the request message does not contain  a payload body 
+*   and the method semantics do not anticipate such a  body.
+*/
 
 void Request::parseMessage()
 {
     std::string line ;
-    std::istringstream stream(message) ; // Treat the string as an input stream 
+    std::istringstream stream(this->message) ; // Treat the string as an input stream 
+    short   were_am_i = 0 ;
+                        /*
+                        * 0 = start line 
+                        * 1 = header line
+                        * 2 = body line
+                        */
 
-    getline(stream , line) ; // get start line
-
-    if ( stream.eof() )
-        throw 400 ; // error : 400 (Bad Request)
-
-    parseStartLine(line) ;
-    
-    while ( getline( stream , line )  )
+    while ( getline( stream , line ) )
     {
-        if ( line.length() == 1 && line[0] == '\r' ) // CRLF
-            break ;
-            
-        if ( stream.eof() ) // if not ending with CRLF
-            throw 400 ; 
-
-        parseHeader( line ) ;
-
-        // std::cout << line << std::endl ;
+        if ( 0 == were_am_i )
+        {
+            parseStartLine( line ) ;
+            were_am_i = 1 ;
+        }
+        else if ( 1 == were_am_i )
+        {
+            if ( ! stream.eof() && line.length() == 1 && line[0] == '\r') // CRLF
+                were_am_i = 2 ;
+            else
+                parseHeader( line ) ;
+        }
+        else if ( 2 == were_am_i )
+        {
+            this->body.append( line ) ;
+            if ( ! stream.eof() )
+                this->body.append("\n") ;
+        }
     }
 
-
-    if (this->headers.find("Host") == this->headers.end() )
+    if ( 2 != were_am_i )
         throw 400 ;
+    check_valid_headres() ;
 
-    
 }
 
 bool Request::Valide_method( const std::string methodName )
@@ -109,10 +126,47 @@ bool Request::Valide_method( const std::string methodName )
     return ( false ) ;
 }
 
+/*
+*   A user agent SHOULD NOT send a  Content-Length header field when the request message does not contain  a payload body
+*   
+*   A server MAY reject a request that contains a message body but not a  Content-Length by responding with 
+*   411 (Length Required).
+* 
+*/
 
+void Request::check_valid_headres()
+{
+    if ( this->headers.find("Host") == this->headers.end() ) // should check the value
+        throw 400 ;
 
+    std::map< std::string , std::vector<std::string> >::iterator header ;
+    
+    header = this->headers.find("Content-Length") ;
 
+    if ( header != this->headers.end() )
+    {
+        if ( header->second.size() != 1  ||  ! is_all_digit((*(header->second.begin()))) || std::atoi( (*(header->second.begin())).c_str() ) <  0 )
+            throw 400 ;
+            
+        if (  this->body.length() != (size_t) std::atoi( (*(header->second.begin())).c_str() ) )
+            throw 400 ;
 
+    }
+    else
+    {
+        if ( ! this->body.empty() )
+            throw 411 ; // 411 (Length Required).
+    }
+}
+
+Request::Request() {} 
+
+/* Setters */
+
+void Request::setMessage( std::string message )
+{
+    this->message = message ;
+}
 
 Request::~Request() 
 {

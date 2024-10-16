@@ -1,4 +1,5 @@
-FUNS =  SERVER/main.cpp SERVER/Server.cpp request/Request.cpp request/ParseHeader.cpp utils/split.cpp utils/trim.cpp
+FUNS =  SERVER/main.cpp SERVER/Server.cpp request/Request.cpp request/ParseHeader.cpp utils/split.cpp utils/trim.cpp \
+		utils/helpers.cpp
 
 OBJS = ${FUNS:.cpp=.o}
 
