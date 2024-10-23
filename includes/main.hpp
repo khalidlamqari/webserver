@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 09:50:31 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/16 10:49:45 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/23 23:52:46 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,10 +28,12 @@
 #include <poll.h>
 #include <fstream>
 #include <fcntl.h>
+# include "../config_file_parsing/HttpContext.hpp"
+
 
 #define BUFFER_SIZE 30000
 
-#define MAX_CLIENTS 10000
+#define MAX_CLIENTS 1024
 
 
 std::vector<std::string> split(const std::string & str) ;

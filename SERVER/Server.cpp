@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 10:28:23 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/23 22:52:50 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/24 00:17:54 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,6 +128,8 @@ bool Server::check_incomming_connection_server()
 
 void Server::handl_each_client_socket()
 {
+    int error_page_number = -1 ;
+    
     for (int i = this->number_of_ports ; i <= MAX_CLIENTS; ++i)
     {
         if (this->fds[i].fd != -1 && (this->fds[i].revents & POLLIN))
@@ -142,71 +144,47 @@ void Server::handl_each_client_socket()
             }
             else
             {
-                
                 Request request ;
+
                 // std::cout << message << std::endl;
                 // here we will handle request
                 try
                 {
                     request.setMessage ( message ) ;
                     request.parseMessage () ;
+                    // TODO : create a function ( request.checkMessage() ) in request to check message
                 }
-                catch(int error_num)
+                catch(int error_num) // 
                 {
+                    error_page_number = error_num ;
                     std::cout << "ERROR : " << error_num << std::endl;
-                }
-                
-
-                std::cout << "method         " << request.method << std::endl ;
-                std::cout << "request_target " << request.request_target << std::endl ;
-                std::cout << "HTTP_version   " << request.HTTP_version << std::endl ;
-
-                for (std::map<std::string, std::vector<std::string> >::iterator it = (request.headers).begin(); it != (request.headers).end(); ++it)
-                {
-                    std::cout    << "key   : " << it->first << std::endl ;
-
-                    for (std::vector<std::string>::iterator j = (it->second).begin() ; j != (it->second).end() ; j++ )
-                    {
-                        std::cout << "value : " << *j << std::endl ;
-                    }
-                    std::cout << "        ----------------------------------------          " << std::endl ;
                 }
 
                 // here we will handle response
+                send_response( this->server_context, request , i , error_page_number ) ;
                 
-                int fd ;
-                char response[2024] ;
-                std::string error_404 = "<h1>error 404, page not found !!</h1>" ;
-                if ( request.request_target == "/" )
-                {
-                    fd = open("index.html", O_RDONLY) ;
-                    ssize_t size = read(fd, response, 2024) ;
-                    response[size] = '\0' ;
-                    close(fd) ;
-                }
-                else
-                {
-                    fd = open((root + request.request_target).c_str(), O_RDONLY) ;
-                    ssize_t size = read(fd, response, 2024) ;
-                    response[size] = '\0' ;
-                    close(fd) ;
-
-                }
-                std::string response1 = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n";
-                // const char * response1 = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<h1 style='color:red;'>Hello from C++ server!</h1>";
-                if ( send(this->fds[i].fd, response1.c_str(), response1.length(), 0) == -1 )
-                    throw std::runtime_error("send failure ") ;
-
-                if (fd == -1)
-                        send(this->fds[i].fd, error_404.c_str(), error_404.length(), 0);
-                else
-                    if ( send(this->fds[i].fd, response, strlen(response), 0) == -1 )
-                        throw std::runtime_error("send failure ") ;
-
-                if ( close(this->fds[i].fd) == -1 )
-                    throw std::runtime_error("close failure ") ;
             }
         }
+    }
+}
+
+void    Server::send_response(ServerContext & server_context, Request & request, int index, int error_page_number )
+{
+    std::string msg ;
+    Response response( server_context, request ) ;
+    this->print_request( request ) ;
+
+    std::cout << "error_page_number : " << error_page_number << std::endl ;
+
+    msg = response.getResponse() ;
+
+    if ( send(this->fds[index].fd, msg.c_str(), msg.length(), 0) == -1 )
+        throw std::runtime_error("send failure ") ;
+
+    if ( close(this->fds[index].fd) == -1 )
+    {
+        fds[index].fd = -1 ;
+        throw std::runtime_error("close failure ") ;
     }
 }
 
@@ -222,3 +200,27 @@ Server::~Server()
     // free 
     this->closeServer();
 }
+
+
+
+/* FOR Testting */
+void Server::print_request(Request & request)
+{
+    std::cout << "method         " << request.method << std::endl ;
+    std::cout << "request_target " << request.request_target << std::endl ;
+    std::cout << "HTTP_version   " << request.HTTP_version << std::endl ;
+
+    for (std::map<std::string, std::vector<std::string> >::iterator it = (request.headers).begin(); it != (request.headers).end(); ++it)
+    {
+        std::cout    << "key   : " << it->first << std::endl ;
+
+        for (std::vector<std::string>::iterator j = (it->second).begin() ; j != (it->second).end() ; j++ )
+        {
+            std::cout << "value : " << *j << std::endl ;
+        }
+        std::cout << "        ----------------------------------------          " << std::endl ;
+    }
+}
+
+
+

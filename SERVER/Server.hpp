@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 10:23:18 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/23 22:28:09 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/24 00:08:06 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,7 @@
 
 # include "../includes/main.hpp"
 # include "../request/Request.hpp"
+# include "../response/Response.hpp"
 # include "../config_file_parsing/HttpContext.hpp"
 
 class Server
@@ -45,6 +46,7 @@ class Server
         bool                check_incomming_connection_server() ;
         void                handl_each_client_socket() ;
         
+        void                send_response( ServerContext & server_context, Request & request, int index , int error_page_number) ;
         
 
     public :
@@ -63,5 +65,9 @@ class Server
         void                run() ; // 
         void                closeServer () ;
         
+        /* For Testting */
+        void print_request( Request & request) ;
+        
 };
+
 #endif
