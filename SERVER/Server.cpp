@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 10:28:23 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/16 12:34:54 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/23 22:52:50 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,43 +14,77 @@
 #include <cstring>
 // class Request ;
 
-Server::Server()
+Server::Server( ServerContext & server_context )
 {
-    this->server_fd = socket(AF_INET, SOCK_STREAM, 0);
-    if (this->server_fd == -1)
-        throw std::runtime_error("socket creation failure");
+    this->server_context = server_context ;
+    
+    // this->server_fd = socket(AF_INET, SOCK_STREAM, 0); 
+    // if (this->server_fd == -1)
+    //     throw std::runtime_error("socket creation failure");
 
-    this->root  = "/Users/klamqari/Desktop/web";
-    memset(&(this->address) , 0, sizeof(address));
+    // this->root  = "/Users/klamqari/Desktop/web";
+    memset(&(this->address) , 0, sizeof(address)) ;
     
     
     this->addrlen                   = sizeof(address) ;
     this->address.sin_family        = AF_INET ;
     this->address.sin_addr.s_addr   = INADDR_ANY ;
-    this->address.sin_port          = htons(8000) ;
+    // this->address.sin_port          = htons(8000) ;
 
     for (int i = 0; i <= MAX_CLIENTS; ++i)
         this->fds[i].fd = -1; // Initialize
+
+    this->number_of_ports = 0 ;
 }
 
+void    Server::init_server( void )
+{
+    
 
+    this->number_of_ports = this->server_context.get_ports().size() ;
+
+    std::vector<unsigned short>::iterator it = this->server_context.get_ports().begin() ;
+    
+    for ( int i = 0 ; i < this->number_of_ports ; i++ )
+    {
+        this->fds[i].fd = create_socket( *it ) ;
+        this->fds[i].events = POLLIN ;
+        it++ ;
+    }
+
+}
+
+int Server::create_socket( int port )
+{
+    int serv_fd ;
+    struct sockaddr_in address ;
+    
+    std::cout << "port : " << port << std::endl;
+    serv_fd = socket( AF_INET, SOCK_STREAM, 0 ) ;
+    if ( serv_fd == -1 )
+        throw std::runtime_error(" can't create socket ") ;
+        
+    int opt = 1 ;
+    // if ( setsockopt( serv_fd, SOL_SOCKET, SO_REUSEADDR | SO_REUSEPORT, &opt, sizeof(opt) ) != 0)
+    if ( setsockopt( serv_fd, SOL_SOCKET, SO_REUSEPORT, &opt, sizeof(opt) ) != 0 )
+        throw std::runtime_error("error : setsockopt failed") ;
+    
+    address.sin_family = AF_INET;
+    address.sin_addr.s_addr = INADDR_ANY;
+    address.sin_port = htons( port );
+    
+    if ( bind( serv_fd , ( struct sockaddr * )&address, sizeof(address) ) < 0 )
+        throw std::runtime_error("error : bind failed") ;
+
+    if ( listen ( serv_fd, MAX_CLIENTS ) < 0 )
+        throw std::runtime_error("error : listen error") ;
+
+    return ( serv_fd ) ;
+}
 
 void Server::run()
 {
-    // struct pollfd fds[MAX_CLIENTS + 1]; // +1 for the server socket
-    if ( bind(this->server_fd, (struct sockaddr*)&(this->address), sizeof(this->address)) == -1)
-    {
-        if ( errno == EADDRINUSE )
-            throw std::runtime_error("Port is already used ") ;
-        else
-            throw std::runtime_error("baind failure ") ;
-    }
-    std::cout << "listen" << std::endl;
-    if ( listen( this->server_fd, 10 ) == -1)
-        throw std::runtime_error("listen failure ") ;
-
-    this->fds[0].fd = this->server_fd;
-    this->fds[0].events = POLLIN; // Monitor for incoming connections
+    this->init_server() ;
 
     while (true)
     {
@@ -68,34 +102,36 @@ void Server::run()
 
 bool Server::check_incomming_connection_server()
 {
-    if (this->fds[0].revents & POLLIN)  // Check if there is an incoming connection on the server socket
+    for ( int i = 0 ; i < this->number_of_ports ; i++ )
     {
-        std::cout << "accept" << std::endl;
-        this->new_socket = accept(this->server_fd, (struct sockaddr*)&(this->address), (socklen_t*)&(this->addrlen));
-        if ( this->new_socket < 0 )
-            return ( true ) ;
-
-        for ( int i = 1; i <= MAX_CLIENTS; ++i )
+        if (this->fds[i].revents & POLLIN)  // Check if there is an incoming connection on the server socket
         {
-            if ( this->fds[i].fd == -1 )
+            std::cout << "accept" << std::endl;
+            this->new_socket = accept( this->fds[i].fd, (struct sockaddr*)&(this->address), (socklen_t*)&(this->addrlen) ) ;
+            if ( this->new_socket < 0 )
+                return ( true ) ;
+
+            for ( int j = this->number_of_ports; i <= MAX_CLIENTS; ++j )
             {
-                this->fds[i].fd = this->new_socket ;
-                this->fds[i].events = POLLIN ;
-                break ;
+                if ( this->fds[j].fd == -1 )
+                {
+                    this->fds[j].fd = this->new_socket ;
+                    this->fds[j].events = POLLIN ;
+                    break ;
+                }
             }
         }
+        
     }
     return ( false );
 }
 
-
 void Server::handl_each_client_socket()
 {
-    for (int i = 1; i <= MAX_CLIENTS; ++i)
+    for (int i = this->number_of_ports ; i <= MAX_CLIENTS; ++i)
     {
         if (this->fds[i].fd != -1 && (this->fds[i].revents & POLLIN))
         {
-            
             char message[BUFFER_SIZE] = {0} ;
                 std::cout << "read" << std::endl;
             if ( read(this->fds[i].fd, message, BUFFER_SIZE) == -1 )
@@ -106,6 +142,7 @@ void Server::handl_each_client_socket()
             }
             else
             {
+                
                 Request request ;
                 // std::cout << message << std::endl;
                 // here we will handle request
