@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 11:24:24 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/16 12:01:32 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/24 18:40:25 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -136,11 +136,17 @@ bool Request::Valide_method( const std::string methodName )
 
 void Request::check_valid_headres()
 {
-    if ( this->headers.find("Host") == this->headers.end() ) // should check the value
-        throw 400 ;
-
     std::map< std::string , std::vector<std::string> >::iterator header ;
-    
+ 
+    header = this->headers.find("Host") ;
+    if ( header == this->headers.end() ) // should check the value
+        throw 400 ;
+    else
+    {
+        if ( header->second.size() != 1 )
+            throw 400;
+    }
+
     header = this->headers.find("Content-Length") ;
 
     if ( header != this->headers.end() )
@@ -171,4 +177,26 @@ void Request::setMessage( std::string message )
 Request::~Request() 
 {
 
+}
+
+/* Setters */
+
+const std::string   & Request::get_request_method( void ) const
+{
+    return ( this->method ) ;
+}
+
+const std::string   & Request::get_request_target( void ) const
+{
+    return ( this->request_target ) ;
+}
+
+const std::string   & Request::get_request_body  ( void ) const
+{
+    return ( this->body ) ;
+}
+
+std::map < std::string, std::vector<std::string> >    & Request::get_request_headers( void )
+{
+    return ( this->headers ) ;
 }

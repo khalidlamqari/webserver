@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 16:37:22 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/10/23 20:51:18 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/24 19:14:38 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -210,7 +210,7 @@ const std::string & ServerContext::get_index           ( void )
     return ( this->index ) ;
 }
 
-const std::vector<std::string> & ServerContext::get_server_names    ( void )
+std::vector<std::string> & ServerContext::get_server_names    ( void )
 {
     return ( this->server_names ) ;
 }
@@ -220,7 +220,7 @@ bool ServerContext::get_auto_index( void )
     return ( this->auto_index ) ;
 }
 
-const std::vector<std::string> & ServerContext::get_allowed_methods ( void )
+std::vector<std::string> & ServerContext::get_allowed_methods ( void )
 {
     return ( this->allowed_methods ) ;
 }

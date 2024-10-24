@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 10:28:23 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/24 00:17:54 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/24 19:20:31 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -171,8 +171,8 @@ void Server::handl_each_client_socket()
 void    Server::send_response(ServerContext & server_context, Request & request, int index, int error_page_number )
 {
     std::string msg ;
-    Response response( server_context, request ) ;
-    this->print_request( request ) ;
+    Response response( server_context, request , error_page_number) ;
+    // this->print_request( request ) ;
 
     std::cout << "error_page_number : " << error_page_number << std::endl ;
 

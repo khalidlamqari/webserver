@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 11:35:53 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/16 11:58:48 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/24 18:39:24 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,11 +50,20 @@ class Request
         Request(std::string message) ;
         Request() ;
         
+        void                                                parseMessage() ;
+        
         /* Setters */
         
         void setMessage( std::string message ) ;
         
-        void                                                parseMessage() ;
+
+        /* Getters */
+        
+        const std::string                                           & get_request_method( void ) const ;
+        const std::string                                           & get_request_target( void ) const ;
+        const std::string                                           & get_request_body  ( void ) const ;
+        std::map < std::string, std::vector<std::string> >    & get_request_headers( void ) ;
+
         
         ~Request() ;
 

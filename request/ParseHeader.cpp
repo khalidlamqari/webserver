@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 17:26:40 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/16 11:54:00 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/24 17:35:21 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,7 @@ void Request::parseHeader( const std::string & line )
                                     // get field value
     std::string field_value = trim( line.substr( i + 1) ); // remove OWS
     std::vector<std::string> values = this->parse_header_values(field_value) ;
+    
     // check the field name already exists in map
     if ( this->headers.find(field_name) != this->headers.end() )
         throw 400 ;

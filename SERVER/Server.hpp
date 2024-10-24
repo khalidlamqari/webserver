@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 10:23:18 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/24 00:08:06 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/24 18:07:53 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,7 @@ class Server
 {
     
     private :
-    
+
         int                 server_fd ;
 
         struct sockaddr_in  address ;
@@ -35,8 +35,9 @@ class Server
         int                 poll_count ;
 
         struct pollfd       fds[MAX_CLIENTS + 1] ;
-        
+
         int                 number_of_ports ;
+        
         std::string         root ;
         
         ServerContext       server_context ;
