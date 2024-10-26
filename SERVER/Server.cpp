@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 10:28:23 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/24 19:20:31 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/26 13:15:38 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -121,71 +121,136 @@ bool Server::check_incomming_connection_server()
                 }
             }
         }
-        
     }
     return ( false );
 }
 
 void Server::handl_each_client_socket()
 {
-    int error_page_number = -1 ;
-    
+    // int error_page_number = -1 ;
+    // std::string message ;
+
+    // std::vector<char> buffer(BUFFER_SIZE);
+    // ssize_t bytes_received;
+
     for (int i = this->number_of_ports ; i <= MAX_CLIENTS; ++i)
     {
         if (this->fds[i].fd != -1 && (this->fds[i].revents & POLLIN))
         {
-            char message[BUFFER_SIZE] = {0} ;
-                std::cout << "read" << std::endl;
-            if ( read(this->fds[i].fd, message, BUFFER_SIZE) == -1 )
-            {
-                // throw std::runtime_error("read failure ") ;
-                close(this->fds[i].fd) ;
-                this->fds[i].fd = -1 ;
-            }
-            else
-            {
-                Request request ;
+            // bytes_received = 1 ;
+            // this->requests[i]
+            read_data_from_socket(i);
+            // while ( bytes_received != 0 )
+            // {
+            //     bytes_received = recv( this->fds[i].fd , buffer.data(), buffer.size(), MSG_DONTWAIT) ; // MSG_DONTWAIT Makes the operation non-blocking.
+            //     std::cout << "size : " << bytes_received << std::endl ;
+            //     if ( bytes_received == -1 )
+            //     {
+            //         continue;
+            //         // close(this->fds[i].fd) ;
+            //         // this->fds[i].fd = -1 ;
+            //         // return ;
+            //     }
 
-                // std::cout << message << std::endl;
-                // here we will handle request
-                try
-                {
-                    request.setMessage ( message ) ;
-                    request.parseMessage () ;
-                    // TODO : create a function ( request.checkMessage() ) in request to check message
-                }
-                catch(int error_num) // 
-                {
-                    error_page_number = error_num ;
-                    std::cout << "ERROR : " << error_num << std::endl;
-                }
+            //     message.append( buffer.data(), bytes_received ) ;
+            //     // if (message.find("\r\n\r\n") != std::string::npos)
+            //     //     break;
+            // }
 
-                // here we will handle response
-                send_response( this->server_context, request , i , error_page_number ) ;
-                
-            }
+            // Request request ;
+
+            // here we will handle request
+            // try
+            // {
+            //     request.setMessage ( message ) ;
+            //     request.parseMessage () ;
+            //     // TODO : create a function ( request.checkMessage() ) in request to check message
+            // }
+            // catch(int error_num) //
+            // {
+            //     error_page_number = error_num ;
+            //     std::cout << "ERROR : " << error_num << std::endl;
+            // }
+
+            // here we will handle response
+            send_response( this->server_context ) ;
+
         }
     }
 }
 
-void    Server::send_response(ServerContext & server_context, Request & request, int index, int error_page_number )
+void    Server::read_data_from_socket(int i)
+{
+    ssize_t             bytes_received;
+    std::vector<char>   buffer(BUFFER_SIZE);
+    std::map<int, t_request>::iterator it;
+    
+    it = this->requests.find( this->fds[i].fd ) ;
+    if ( it == this->requests.end() )
+    {
+        this->requests[this->fds[i].fd] ;
+        this->requests[this->fds[i].fd].isReady = false ;
+    }
+    
+    bytes_received = recv( this->fds[i].fd , buffer.data(), buffer.size(), MSG_DONTWAIT) ; // MSG_DONTWAIT Makes the operation non-blocking.
+    std::cout << "size : " << bytes_received << std::endl ;
+    // if ( bytes_received == -1 )
+    // {
+    //     // close(this->fds[i].fd) ;
+    //     // this->fds[i].fd = -1 ;
+    //     // return ;
+    // }
+    if ( bytes_received == 0 )
+    {
+        this->requests[this->fds[i].fd].isReady = true ;
+        return ;
+    }
+
+    this->requests[this->fds[i].fd].request.appendMessage( buffer.data(), bytes_received ) ;
+
+    // message.append( buffer.data(), bytes_received ) ;
+
+}
+
+void    Server::send_response(ServerContext & server_context )
 {
     std::string msg ;
-    Response response( server_context, request , error_page_number) ;
-    // this->print_request( request ) ;
+    std::map<int, t_request>::iterator it;
+    int error_page_number = -1 ;
+    // for ( it = this->requests.begin() ; it != this->requests.end() ; it++ )
+    it = this->requests.begin() ;
 
-    std::cout << "error_page_number : " << error_page_number << std::endl ;
-
-    msg = response.getResponse() ;
-
-    if ( send(this->fds[index].fd, msg.c_str(), msg.length(), 0) == -1 )
-        throw std::runtime_error("send failure ") ;
-
-    if ( close(this->fds[index].fd) == -1 )
+    if ( (it->first) > 0 && it->second.isReady )
     {
-        fds[index].fd = -1 ;
-        throw std::runtime_error("close failure ") ;
+        try
+        {
+            it->second.request.parseMessage () ;
+            // TODO : create a function ( request.checkMessage() ) in request to check message
+        }
+        catch(int error_num) //
+        {
+            error_page_number = error_num ;
+            std::cout << "ERROR : " << error_num << std::endl;
+        }
+        
+        Response response( server_context, it->second.request , error_page_number) ;
+        // this->print_request( request ) ;
+
+        std::cout << "error_page_number : " << error_page_number << std::endl ;
+
+        msg = response.getResponse() ;
+
+        if ( send( it->first, msg.c_str(), msg.length(), 0 ) == -1 )
+            throw std::runtime_error("send failure ") ;
+
+        if ( close(it->first) == -1 )
+        {
+            // *(it->first) = -1 ;
+            throw std::runtime_error("close failure ") ;
+        }
+        
     }
+    
 }
 
 
@@ -224,3 +289,11 @@ void Server::print_request(Request & request)
 
 
 
+/*
+
+( 
+  echo -e "POST /upload HTTP/1.1\r\nHost: 127.0.0.1:8888\r\nContent-Type: image/png\r\nContent-Length: $(stat -f%z img.png)\r\nConnection: close\r\n\r\n"
+  cat img.png 
+) | nc 127.0.0.1 8888
+
+*/

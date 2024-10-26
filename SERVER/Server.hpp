@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 10:23:18 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/24 18:07:53 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/26 13:01:41 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,12 @@
 # include "../request/Request.hpp"
 # include "../response/Response.hpp"
 # include "../config_file_parsing/HttpContext.hpp"
+
+typedef struct s_request
+{
+    bool isReady;
+    Request request ;
+}   t_request ;
 
 class Server
 {
@@ -35,11 +41,13 @@ class Server
         int                 poll_count ;
 
         struct pollfd       fds[MAX_CLIENTS + 1] ;
+        
+        std::map<int , t_request>     requests ;
 
         int                 number_of_ports ;
-        
+
         std::string         root ;
-        
+
         ServerContext       server_context ;
 
         void                init_server( void ) ;
@@ -47,8 +55,10 @@ class Server
         bool                check_incomming_connection_server() ;
         void                handl_each_client_socket() ;
         
-        void                send_response( ServerContext & server_context, Request & request, int index , int error_page_number) ;
+        void                read_data_from_socket( int i );
         
+        void                send_response( ServerContext & server_context ) ;
+
 
     public :
         
@@ -63,7 +73,7 @@ class Server
 
         ~Server() ;
     
-        void                run() ; // 
+        void                run() ;
         void                closeServer () ;
         
         /* For Testting */

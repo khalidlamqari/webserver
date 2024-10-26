@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 11:24:24 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/24 18:40:25 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/26 12:58:16 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -80,13 +80,14 @@ void Request::parseMessage()
 {
     std::string line ;
     std::istringstream stream(this->message) ; // Treat the string as an input stream 
+    size_t size = 0 ; 
     short   were_am_i = 0 ;
                         /*
                         * 0 = start line 
                         * 1 = header line
                         * 2 = body line
                         */
-
+ 
     while ( getline( stream , line ) )
     {
         if ( 0 == were_am_i )
@@ -96,19 +97,18 @@ void Request::parseMessage()
         }
         else if ( 1 == were_am_i )
         {
-            if ( ! stream.eof() && line.length() == 1 && line[0] == '\r') // CRLF
+            if (line.length() == 1 && line[0] == '\r') // CRLF
                 were_am_i = 2 ;
             else
                 parseHeader( line ) ;
         }
-        else if ( 2 == were_am_i )
+        else if ( 2 == were_am_i ) // read the body
         {
-            this->body.append( line ) ;
-            if ( ! stream.eof() )
-                this->body.append("\n") ;
+            this->body.resize( this->message.length() - size - 1) ;
+            stream.read( &this->body[0], (this->message.length() - size - 1) ) ;
         }
+        size = size + line.length() + 1;
     }
-
     if ( 2 != were_am_i )
         throw 400 ;
     check_valid_headres() ;
@@ -152,8 +152,10 @@ void Request::check_valid_headres()
     if ( header != this->headers.end() )
     {
         if ( header->second.size() != 1  ||  ! is_all_digit((*(header->second.begin()))) || std::atoi( (*(header->second.begin())).c_str() ) <  0 )
+        {
+            std::cout << "error in content lenght " << std::endl;
             throw 400 ;
-            
+        }
         if (  this->body.length() != (size_t) std::atoi( (*(header->second.begin())).c_str() ) )
             throw 400 ;
 
@@ -171,15 +173,17 @@ Request::Request() {}
 
 void Request::setMessage( std::string message )
 {
+    std::cout << "message : \n" << message << std::endl;
     this->message = message ;
 }
 
 Request::~Request() 
 {
-
 }
 
-/* Setters */
+
+
+/* getters */
 
 const std::string   & Request::get_request_method( void ) const
 {
@@ -199,4 +203,10 @@ const std::string   & Request::get_request_body  ( void ) const
 std::map < std::string, std::vector<std::string> >    & Request::get_request_headers( void )
 {
     return ( this->headers ) ;
+}
+
+
+void Request::appendMessage( std::string message , ssize_t bytes_received)
+{
+    this->message.append( message, bytes_received ) ;
 }

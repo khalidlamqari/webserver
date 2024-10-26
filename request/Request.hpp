@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 11:35:53 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/24 18:39:24 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/26 12:54:36 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,7 @@ class Request
         std::string                                         HTTP_version ;
         std::string                                         body ;
         
+        
         Request(std::string message) ;
         Request() ;
         
@@ -55,6 +56,7 @@ class Request
         /* Setters */
         
         void setMessage( std::string message ) ;
+        void appendMessage( std::string message, ssize_t             bytes_received ) ;
         
 
         /* Getters */

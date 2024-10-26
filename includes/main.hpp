@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 09:50:31 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/23 23:52:46 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/26 10:28:39 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,10 +28,11 @@
 #include <poll.h>
 #include <fstream>
 #include <fcntl.h>
+#include <deque>
 # include "../config_file_parsing/HttpContext.hpp"
 
 
-#define BUFFER_SIZE 30000
+#define BUFFER_SIZE 1024
 
 #define MAX_CLIENTS 1024
 

@@ -74,13 +74,8 @@ int main(int argc, char *argv[])
 }
 
 
-
-
-
-
 void HandleTCPClient(int clntSocket)
 {
-
     /* Error handling function */
     char echoBuffer[RCVBUFSIZE];
     int recvMsgSize;
