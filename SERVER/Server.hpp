@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 10:23:18 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/26 13:01:41 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/26 17:40:11 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@ class Server
 
         struct pollfd       fds[MAX_CLIENTS + 1] ;
         
-        std::map<int , t_request>     requests ;
+        std::deque < Request >     requests ;
 
         int                 number_of_ports ;
 
@@ -57,7 +57,7 @@ class Server
         
         void                read_data_from_socket( int i );
         
-        void                send_response( ServerContext & server_context ) ;
+        void                send_response( ServerContext & server_context, int i ) ;
 
 
     public :

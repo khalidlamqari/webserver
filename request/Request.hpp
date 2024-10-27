@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 11:35:53 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/26 12:54:36 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/27 12:28:34 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,9 @@ class Request
         std::string                                         request_target ;
         std::string                                         HTTP_version ;
         std::string                                         body ;
-        
+        size_t                                              content_length;
+        size_t                                              counter_recv;
+        bool                                                isReady ;
         
         Request(std::string message) ;
         Request() ;
@@ -56,15 +58,18 @@ class Request
         /* Setters */
         
         void setMessage( std::string message ) ;
-        void appendMessage( std::string message, ssize_t             bytes_received ) ;
+        const std::string   &  getMessage( void ) ;
+        void appendMessage(  char * message , ssize_t             bytes_received ) ;
+        void appendTobody(  char * message , ssize_t             bytes_received ) ;
         
 
         /* Getters */
-        
+
         const std::string                                           & get_request_method( void ) const ;
         const std::string                                           & get_request_target( void ) const ;
         const std::string                                           & get_request_body  ( void ) const ;
-        std::map < std::string, std::vector<std::string> >    & get_request_headers( void ) ;
+        std::map < std::string, std::vector<std::string> >          & get_request_headers( void ) ;
+        void                                                        reuse();
 
         
         ~Request() ;

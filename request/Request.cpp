@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 11:24:24 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/26 12:58:16 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/27 12:40:28 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,9 @@
 Request::Request(std::string message)
 {
     this->message = message ;
+    this->content_length = 0;
+    this->counter_recv = 0;
+    this->isReady = false ;
 }
 
 /*
@@ -110,7 +113,7 @@ void Request::parseMessage()
         size = size + line.length() + 1;
     }
     if ( 2 != were_am_i )
-        throw 400 ;
+        throw 401 ;
     check_valid_headres() ;
 
 }
@@ -131,34 +134,38 @@ bool Request::Valide_method( const std::string methodName )
 *   
 *   A server MAY reject a request that contains a message body but not a  Content-Length by responding with 
 *   411 (Length Required).
-* 
 */
 
 void Request::check_valid_headres()
 {
     std::map< std::string , std::vector<std::string> >::iterator header ;
  
+    // header = this->get_request_headers();
+    
     header = this->headers.find("Host") ;
     if ( header == this->headers.end() ) // should check the value
-        throw 400 ;
+        throw 402 ;
     else
     {
         if ( header->second.size() != 1 )
-            throw 400;
+            throw 403;
     }
 
     header = this->headers.find("Content-Length") ;
-
+    
     if ( header != this->headers.end() )
     {
-        if ( header->second.size() != 1  ||  ! is_all_digit((*(header->second.begin()))) || std::atoi( (*(header->second.begin())).c_str() ) <  0 )
+        if ( header->second.size() != 1  ||  ! is_all_digit((*(header->second.begin()))) || (std::atoi( (*(header->second.begin())).c_str() )) <  0 )
         {
-            std::cout << "error in content lenght " << std::endl;
-            throw 400 ;
+            std::cout << "error in content lenght header " << std::endl;
+            throw 404 ;
         }
+        this->content_length = std::atoi( (*(header->second.begin())).c_str() ) ;
         if (  this->body.length() != (size_t) std::atoi( (*(header->second.begin())).c_str() ) )
-            throw 400 ;
-
+        {
+            std::cout << "error in content lenght header " << std::endl;
+            throw 405 ;
+        }
     }
     else
     {
@@ -167,7 +174,7 @@ void Request::check_valid_headres()
     }
 }
 
-Request::Request() {} 
+Request::Request() {}
 
 /* Setters */
 
@@ -181,9 +188,12 @@ Request::~Request()
 {
 }
 
-
-
 /* getters */
+
+const std::string   &  Request::getMessage( void )
+{
+    return ( this->message ) ;
+}
 
 const std::string   & Request::get_request_method( void ) const
 {
@@ -206,7 +216,30 @@ std::map < std::string, std::vector<std::string> >    & Request::get_request_hea
 }
 
 
-void Request::appendMessage( std::string message , ssize_t bytes_received)
+void Request::appendMessage ( char * message , ssize_t bytes_received)
 {
-    this->message.append( message, bytes_received ) ;
+    // (void)bytes_received ;
+    if ( bytes_received > 0 )
+        this->message.append( message, bytes_received ) ;
 }
+
+void Request::appendTobody(  char * message , ssize_t             bytes_received )
+{
+    if ( bytes_received > 0 )
+        this->body.append( message, bytes_received );
+}
+
+void   Request::reuse()
+{
+    this->message = "";
+    this->body = "";
+    this->method = "" ;
+    this->HTTP_version = "" ;
+    this->request_target = "" ;
+    this->isReady = false ;
+    std::map< std::string, std::vector<std::string> >   headers ;
+    this->headers = headers ;
+    this->content_length = 0;
+    
+}
+
