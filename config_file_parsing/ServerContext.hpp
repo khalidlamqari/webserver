@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/09 11:31:30 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/10/24 19:14:59 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/27 16:38:56 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,6 +17,7 @@
 #include <string>
 #include <iostream>
 #include "LocationContext.hpp"
+
 
 class ServerContext {
 
@@ -57,22 +58,21 @@ class ServerContext {
         /* Getters */
         const std::vector<std::pair <unsigned short, std::string> >     & get_error_page      ( void );
         const std::vector<LocationContext>                              & get_locations       ( void );
-        std::vector<unsigned short>                                    & get_ports            ( void );
+        std::vector<unsigned short>                                     & get_ports            ( void );
         const std::string                                               & get_root_directory  ( void );
         const std::string                                               & get_cgi_extension   ( void );
         const std::string                                               & get_upload_dir      ( void );
         const std::string                                               & get_index           ( void );
-        std::vector<std::string>                                  & get_server_names    ( void );
+        std::vector<std::string>                                        & get_server_names    ( void );
         bool                                                              get_auto_index      ( void );
-        std::vector<std::string>                                  & get_allowed_methods ( void );
+        std::vector<std::string>                                        & get_allowed_methods ( void );
         
         // Testing
         void show_info();
 
     private :
 
-        std::vector<std::pair <unsigned short, std::string> >   error_pages;
-
+        std::vector<std::pair < unsigned short, std::string> >   error_pages ;
         std::vector<LocationContext>                            locations; // TODO : Is making a separated vector for exact locations better that mixing all locations in one single vector. 
 
         std::vector<std::string>                                server_names;

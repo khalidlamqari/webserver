@@ -9,7 +9,7 @@ MAIN_SRC = helper_functions.cpp
 MAIN_OBJECTS = $(MAIN_SRC:.cpp=.o)
 
 FUNS =  SERVER/main.cpp SERVER/Server.cpp request/Request.cpp request/ParseHeader.cpp utils/split.cpp utils/trim.cpp \
-		utils/helpers.cpp response/Response.cpp
+		utils/helpers.cpp response/Response.cpp response/ErrorPages.cpp
 
 OBJS = ${FUNS:.cpp=.o}
 
@@ -23,7 +23,7 @@ RM = rm -f
 
 all: $(NAME)
 
-%.o : %.cpp includes/main.hpp SERVER/Server.hpp request/Request.hpp response/Response.hpp
+%.o : %.cpp includes/main.hpp SERVER/Server.hpp request/Request.hpp response/Response.hpp response/ErrorPages.hpp
 	$(CC) $(FLAGS) -c $< -o $@
 
 $(NAME): $(OBJS) $(CONFIG_PARSE_OBJECTS) $(MAIN_OBJECTS)

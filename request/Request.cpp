@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 11:24:24 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/27 12:40:28 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/28 13:31:10 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@ Request::Request(std::string message)
     this->content_length = 0;
     this->counter_recv = 0;
     this->isReady = false ;
+    this->status = -1 ;
 }
 
 /*
@@ -113,7 +114,7 @@ void Request::parseMessage()
         size = size + line.length() + 1;
     }
     if ( 2 != were_am_i )
-        throw 401 ;
+        throw 400 ;
     check_valid_headres() ;
 
 }
@@ -144,11 +145,11 @@ void Request::check_valid_headres()
     
     header = this->headers.find("Host") ;
     if ( header == this->headers.end() ) // should check the value
-        throw 402 ;
+        throw 400 ;
     else
     {
         if ( header->second.size() != 1 )
-            throw 403;
+            throw 400;
     }
 
     header = this->headers.find("Content-Length") ;
@@ -158,13 +159,13 @@ void Request::check_valid_headres()
         if ( header->second.size() != 1  ||  ! is_all_digit((*(header->second.begin()))) || (std::atoi( (*(header->second.begin())).c_str() )) <  0 )
         {
             std::cout << "error in content lenght header " << std::endl;
-            throw 404 ;
+            throw 411 ;
         }
         this->content_length = std::atoi( (*(header->second.begin())).c_str() ) ;
         if (  this->body.length() != (size_t) std::atoi( (*(header->second.begin())).c_str() ) )
         {
             std::cout << "error in content lenght header " << std::endl;
-            throw 405 ;
+            throw 411 ;
         }
     }
     else
@@ -184,8 +185,22 @@ void Request::setMessage( std::string message )
     this->message = message ;
 }
 
-Request::~Request() 
+void Request::appendMessage ( char * message , ssize_t bytes_received)
 {
+    // (void)bytes_received ;
+    if ( bytes_received > 0 )
+        this->message.append( message, bytes_received ) ;
+}
+
+void Request::appendTobody(  char * message , ssize_t bytes_received )
+{
+    if ( bytes_received > 0 )
+        this->body.append( message, bytes_received );
+}
+
+void Request::setStatus( short status )
+{
+    this->status = status ;
 }
 
 /* getters */
@@ -215,19 +230,11 @@ std::map < std::string, std::vector<std::string> >    & Request::get_request_hea
     return ( this->headers ) ;
 }
 
-
-void Request::appendMessage ( char * message , ssize_t bytes_received)
+short  Request::getStatus( void )
 {
-    // (void)bytes_received ;
-    if ( bytes_received > 0 )
-        this->message.append( message, bytes_received ) ;
+    return ( this->status ) ;   
 }
 
-void Request::appendTobody(  char * message , ssize_t             bytes_received )
-{
-    if ( bytes_received > 0 )
-        this->body.append( message, bytes_received );
-}
 
 void   Request::reuse()
 {
@@ -240,6 +247,10 @@ void   Request::reuse()
     std::map< std::string, std::vector<std::string> >   headers ;
     this->headers = headers ;
     this->content_length = 0;
-    
+    this->status = -1 ;
 }
 
+
+Request::~Request() 
+{
+}

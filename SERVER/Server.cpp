@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 10:28:23 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/27 12:44:44 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/28 13:31:57 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -17,7 +17,7 @@
 Server::Server( ServerContext & server_context )
 {
     this->server_context = server_context ;
-    
+
     // this->server_fd = socket(AF_INET, SOCK_STREAM, 0); 
     // if (this->server_fd == -1)
     //     throw std::runtime_error("socket creation failure");
@@ -147,7 +147,6 @@ void    Server::read_data_from_socket( int i )
     std::vector<char>   buffer(BUFFER_SIZE);
     std::string message ;
     // std::vector<char>   buffer(10);
-    int error_page_number = -1 ; 
 
     if ( ! this->requests[i].isReady )
     {
@@ -197,14 +196,14 @@ void    Server::read_data_from_socket( int i )
                 }
                 catch ( int error )
                 {
-                    error_page_number = error ;
+                    this->requests[i].setStatus( error ) ;
                     std::cout << "Error : " << error << std::endl;
                 }
             }
             if ( ! this->requests[i].get_request_method().empty() && this->requests[i].content_length == this->requests[i].get_request_body().length())
             {
                 this->requests[i].isReady = true ;
-                // break ;   
+                // break ;
             }
 
             
@@ -232,11 +231,11 @@ void    Server::send_response(ServerContext & server_context , int i)
 
     if ( this->requests[i].isReady )
     {
-        std::cout << ".......................... i = " << i  << std::endl;
-        Response response( server_context, this->requests[i] , -1 ) ;
+        std::cout << ".......................... i = " << i  << std::endl ;
+        Response response( server_context, this->requests[i] ) ;
 
         msg = response.getResponse() ;
-        
+
         if ( send( this->fds[i].fd, msg.c_str(), msg.length(), 0 ) == -1 )
             throw std::runtime_error("send failure ") ;
 
@@ -252,7 +251,6 @@ void    Server::send_response(ServerContext & server_context , int i)
     }
 }
 
-
 void Server::closeServer()
 {
     if ( close (this->server_fd )  == -1 )
@@ -261,11 +259,9 @@ void Server::closeServer()
 
 Server::~Server()
 {
-    // free 
+    // free
     this->closeServer();
 }
-
-
 
 /* FOR Testting */
 void Server::print_request(Request & request)

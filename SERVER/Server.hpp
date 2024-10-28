@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 10:23:18 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/26 17:40:11 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/27 21:04:50 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@
 # include "../request/Request.hpp"
 # include "../response/Response.hpp"
 # include "../config_file_parsing/HttpContext.hpp"
+
 
 typedef struct s_request
 {
