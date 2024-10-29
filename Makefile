@@ -9,7 +9,7 @@ MAIN_SRC = helper_functions.cpp
 MAIN_OBJECTS = $(MAIN_SRC:.cpp=.o)
 
 FUNS =  SERVER/main.cpp SERVER/Server.cpp request/Request.cpp request/ParseHeader.cpp utils/split.cpp utils/trim.cpp \
-		utils/helpers.cpp response/Response.cpp response/ErrorPages.cpp
+		utils/helpers.cpp response/Response.cpp response/StaticPage.cpp response/ErrorPages.cpp
 
 OBJS = ${FUNS:.cpp=.o}
 

@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/11 14:47:39 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/10/23 10:34:57 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/29 16:23:52 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -154,7 +154,7 @@ void    store_serv_directives(HttpContext& http_config, std::queue<token_info>& 
         if (server.index_is_set)
             throw_config_parse_exception("duplication", token, file_name, tokens_queue.front().line_num);
         
-        server.set_upload_dir(extract_index(tokens_queue, file_name));
+        server.set_index(extract_index(tokens_queue, file_name));
 
         server.index_is_set = true;
     }
@@ -236,7 +236,7 @@ void    store_location_directives(LocationContext& location, std::queue<token_in
         if (location.index_is_set)
             throw_config_parse_exception("duplication", token, file_name, tokens_queue.front().line_num);
         
-        location.set_upload_dir(extract_index(tokens_queue, file_name));
+        location.set_index(extract_index(tokens_queue, file_name));
 
         location.index_is_set = true;
     }

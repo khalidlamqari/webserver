@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/28 13:39:56 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/29 16:11:20 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,15 +16,13 @@ ErrorPages default_error_pages ;
 
 Response::Response ( ServerContext & server_context, Request & request) :\
                     server_context(server_context), request(request)
-{
-    std::cout << "-////////////////-  " << this->request.getStatus() << std::endl; 
-}
+{}
  
 void    Response::format_message( void )
 {
     short status = this->request.getStatus() ;
     // short status = 505 ;
-
+    std::cout << "am here 1" << std::endl;
     // responde cleint errors (parse error ... )
     // if ( (status >= 400 && status <= 418) || (status >= 421 && status <= 426) || status == 428 || status == 429 || status == 431 || status == 451 )
     if ( status != -1)
@@ -36,7 +34,16 @@ void    Response::format_message( void )
     }
     else
     {
-        this->message = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<h1 style='color:red;'>Hello from C++ server!</h1>" ;
+        std::cout << "am here 2" << std::endl;
+        try
+        {
+            this->get_static_page() ;
+        }
+        catch ( int error )
+        {
+            this->error_response( error ) ;
+        }
+        // this->message = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<h1 style='color:red;'>Hello from C++ server!</h1>" ;
     }
 
     // else statis file
@@ -80,6 +87,16 @@ bool    Response::is_cgi_request( void )
         return true ;
     }
     return false ;
+}
+
+bool Response::is_allowd_method()
+{
+    if ( std::find( this->server_context.get_allowed_methods().begin(), this->server_context.get_allowed_methods().end(), \
+    this->request.get_request_method() ) !=  this->server_context.get_allowed_methods().end() ) 
+    {
+        return ( true ) ;
+    }
+    return ( false ) ;
 }
 
 /* Getters */

@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 10:28:23 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/28 13:31:57 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/29 16:25:44 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,7 +153,7 @@ void    Server::read_data_from_socket( int i )
         // while ( true )
         // {
             bytes_received = recv( this->fds[i].fd , buffer.data(), BUFFER_SIZE, MSG_DONTWAIT ) ; // MSG_DONTWAIT Makes the operation non-blocking.
-            std::cout << "bytes_received : " << bytes_received << std::endl ;
+            // std::cout << "bytes_received : " << bytes_received << std::endl ;
 
             if (bytes_received == -1)
             {
@@ -222,7 +222,7 @@ void    Server::read_data_from_socket( int i )
         // }
         // std::cout << "buffer.data() " << buffer.data() << std::endl;
     }
-    this->print_request( this->requests[i] ) ;
+    // this->print_request( this->requests[i] ) ;
 }
 
 void    Server::send_response(ServerContext & server_context , int i)

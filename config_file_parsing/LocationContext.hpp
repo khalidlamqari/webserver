@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   LocationContext.hpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ymafaman <ymafaman@student.42.fr>          +#+  +:+       +#+        */
+/*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/09 11:31:25 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/10/14 12:39:24 by ymafaman         ###   ########.fr       */
+/*   Updated: 2024/10/29 13:45:26 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,8 +53,20 @@ class LocationContext {
 
     /* Getters */
 
+    const std::vector<std::pair <unsigned short, std::string> > &              get_error_page      ( void ) const ;
+    const std::pair<unsigned short, std::string>&              get_redirection     ( void ) const ;
+    const std::string&                                         get_root_directory  ( void ) const ;
+    const std::string&                                         get_cgi_extension   ( void ) const ;
+    const std::string&                                         get_upload_dir      ( void ) const ;
+    const std::string&                                         get_index           ( void ) const ;
+    bool                                                       get_auto_index      ( void ) const ;
+    const std::vector<std::string>&                            get_allowed_methods ( void ) const ;
+    const std::string&                                         get_location        ( void ) const ;
+
+    
     //Testing 
     void    show_info();
+    
     private :
 
         std::vector<std::pair <unsigned short, std::string> >   error_pages;

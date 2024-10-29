@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   LocationContext.cpp                                :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ymafaman <ymafaman@student.42.fr>          +#+  +:+       +#+        */
+/*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 20:30:49 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/10/15 10:27:03 by ymafaman         ###   ########.fr       */
+/*   Updated: 2024/10/29 13:47:49 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -91,6 +91,58 @@ void    LocationContext::set_redirection( std::pair<unsigned short, std::string>
     this->redirection = redirection_info;
 }
 
+/* Getters */
+
+const std::vector<std::pair <unsigned short, std::string> > &              LocationContext::get_error_page      ( void ) const
+{
+    return ( this->error_pages ) ;
+}
+
+const std::pair<unsigned short, std::string>&   LocationContext::get_redirection     ( void ) const
+{
+    return ( this->redirection ) ;    
+}
+
+const std::string&  LocationContext::get_root_directory  ( void ) const
+{
+    return ( this->root_directory ) ;    
+}
+
+const std::string&  LocationContext::get_cgi_extension   ( void ) const
+{
+    return ( this->cgi_extension ) ;    
+}
+
+const std::string&  LocationContext::get_upload_dir      ( void ) const
+{
+    return ( this->upload_dir ) ;    
+}
+
+const std::string&  LocationContext::get_index           ( void ) const
+{
+    return ( this->index ) ;    
+}
+
+bool   LocationContext::get_auto_index      ( void ) const
+{
+    return ( this->auto_index ) ;    
+}
+
+const std::vector<std::string>& LocationContext::get_allowed_methods ( void ) const
+{
+    return ( this->allowed_methods ) ;    
+}
+
+const std::string&  LocationContext::get_location        ( void ) const
+{
+    return ( this->location ) ;
+}
+
+
+
+
+    
+    
 void    LocationContext::show_info()
 {
 
