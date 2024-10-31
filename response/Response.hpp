@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/29 16:46:16 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/31 19:32:18 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,7 +33,8 @@ class Response
         bool                        is_allowd_method() ;
         void                        get_static_page() ;
         void                        generate_message( char * content, size_t size ) ;
-        std::vector<LocationContext>::iterator find_location( const std::string & target );
+        LocationContext *           find_location( const std::string & target ) ;
+        void                        remove_last_slash( std::string & target ) ;
 
     public:
 

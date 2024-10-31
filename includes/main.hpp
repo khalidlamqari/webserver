@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 09:50:31 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/27 21:23:53 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/31 18:13:58 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,7 @@ std::vector<std::string> split(const std::string & str) ;
 std::string trim(const std::string & str ) ;
 bool is_all_WS( const std::string & str ) ;
 bool is_all_digit(const std::string & str) ;
-
+std::vector<std::string> _split_(const std::string & str, char c) ;
 
 
 

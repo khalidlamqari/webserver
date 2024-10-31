@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/29 16:11:20 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/31 16:11:28 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,6 @@ void    Response::format_message( void )
     }
     else
     {
-        std::cout << "am here 2" << std::endl;
         try
         {
             this->get_static_page() ;

@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 16:37:22 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/10/24 19:14:38 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/10/31 17:03:56 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -180,7 +180,7 @@ const std::vector<std::pair <unsigned short, std::string> > & ServerContext::get
     return ( this->error_pages );
 }
 
-const std::vector<LocationContext>  & ServerContext::get_locations ( void )
+std::vector<LocationContext>  & ServerContext::get_locations ( void )
 {
     return ( this->locations ) ;
 }
