@@ -6,11 +6,11 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/31 22:14:50 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/02 12:41:22 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Response.hpp"
+# include "../includes/main.hpp"
 
 void    Response::get_static_page()
 {
@@ -18,32 +18,24 @@ void    Response::get_static_page()
     std::string                     path_of_page ;
     std::string                     index;
     std::string                     target;
-    std::vector<LocationContext>    locations ;
     std::ifstream                   page_content ;
-    char                            buffer[ 1024 ] = {0} ;
-
+    char                            buffer[ RESP_BUFF ] = {0} ;
     target    =                     this->request.get_request_target() ;
-    locations =                     this->server_context.get_locations();
+            
     
 
-
-    
-    // std::vector<std::string> paths = _split_(target, '/');
-    // std::vector<std::string>::iterator i ;
     LocationContext * location = NULL ;
     std::string new_taget = target ;
+
     while ( true )
     {
-        std::cout << "new_taget " << new_taget << std::endl;
         location =    this->find_location( new_taget ) ;
-
         if ( location ) // if find location
             break ;
-        
+
         remove_last_slash( new_taget ) ;
         if ( new_taget == "" ) // if all paths removed / / /
             break ;
-
     }
 
     if ( location != NULL )
@@ -54,9 +46,10 @@ void    Response::get_static_page()
             if ( target.back() == '/' )
                 path_of_page.append("/" + (location)->get_index()) ;
         }
-        else
+        else // TODO: handle redirections(return) 
         {
-            path_of_page = (location)->get_root_directory() + "/" + target ;
+            redirection_handler( location->get_redirection().first, location->get_redirection().second ) ;
+            return ;
         }
     }
     else
@@ -77,19 +70,21 @@ void    Response::get_static_page()
         else
             path_of_page = this->server_context.get_root_directory() + "/" + target;
     }
-    
-    page_content.open( path_of_page ) ;
 
+    page_content.open( path_of_page ) ;
     if ( ! page_content.is_open() )
         throw 404 ;
 
-    page_content.read( buffer, 1024 ) ; // TODO: should check if reading is done or not
-    buffer[page_content.gcount()] = '\0' ;
-
+    page_content.read( buffer, RESP_BUFF - 1 ) ; // TODO: should check if reading is done or not
     if ( page_content.fail() && ! page_content.eof() )
         throw 500 ;
 
-    this->generate_message(buffer, page_content.gcount() );
+    buffer[page_content.gcount()] = '\0' ;
+    if ( page_content.eof() )
+        this->is_finished = true ;
+
+    this->generate_message(buffer, page_content.gcount() ) ;
+
 }
 
 /*
@@ -106,7 +101,7 @@ Connection: keep-alive
 void    Response::generate_message( char * content, size_t size )
 {
     std::ostringstream ss;
-    
+
     ss << size ;
 
     this->message.append("HTTP/1.1 200 OK\r\n") ;
@@ -120,7 +115,7 @@ void    Response::generate_message( char * content, size_t size )
 
 LocationContext * Response::find_location(const std::string &target)
 {
-    std::vector<LocationContext>& locations = this->server_context.get_locations();
+    std::vector<LocationContext> & locations = this->server_context.get_locations();
     
     for (std::vector<LocationContext>::iterator i = locations.begin(); i != locations.end(); ++i)
     {

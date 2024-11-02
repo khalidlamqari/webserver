@@ -6,25 +6,23 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/31 16:11:28 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/02 12:53:29 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "Response.hpp"
-
-ErrorPages default_error_pages ;
+# include "../includes/main.hpp"
 
 Response::Response ( ServerContext & server_context, Request & request) :\
                     server_context(server_context), request(request)
-{}
+{
+    this->is_finished = false ;
+}
  
 void    Response::format_message( void )
 {
     short status = this->request.getStatus() ;
-    // short status = 505 ;
-    std::cout << "am here 1" << std::endl;
+    
     // responde cleint errors (parse error ... )
-    // if ( (status >= 400 && status <= 418) || (status >= 421 && status <= 426) || status == 428 || status == 429 || status == 431 || status == 451 )
     if ( status != -1)
         this->error_response( status ) ;
 
@@ -37,16 +35,13 @@ void    Response::format_message( void )
         try
         {
             this->get_static_page() ;
+            std::cout << "is_finished " << this->is_finished << std::endl;
         }
         catch ( int error )
         {
             this->error_response( error ) ;
         }
-        // this->message = "HTTP/1.1 200 OK\nContent-Type: text/html\n\n<h1 style='color:red;'>Hello from C++ server!</h1>" ;
     }
-
-    // else statis file
-
 }
 
 /*

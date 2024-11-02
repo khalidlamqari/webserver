@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 09:50:31 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/31 18:13:58 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/02 09:48:05 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,13 +32,16 @@
 #include "macros.hpp"
 # include "../config_file_parsing/HttpContext.hpp"
 
+#include "../request/Request.hpp"
 
+#include "../response/ErrorPages.hpp"
+#include "../response/Response.hpp"
 
 #define BUFFER_SIZE 1024
 
 #define MAX_CLIENTS 1024
 
-
+static ErrorPages default_error_pages; 
 
 std::vector<std::string> split(const std::string & str) ;
 std::string trim(const std::string & str ) ;

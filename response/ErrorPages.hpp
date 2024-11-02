@@ -6,16 +6,15 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/27 15:21:52 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/28 12:01:17 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/02 10:08:09 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
 #ifndef ERRORPAGES_HPP
 #define ERRORPAGES_HPP
-# include "../includes/macros.hpp"
-#include <map>
-#include <string>
+
+# include "../includes/main.hpp"
 
 typedef struct s_error_page {
     int         error_num ;
@@ -38,7 +37,7 @@ class ErrorPages
     public:
 
         // const error_page & getErrorPage( short error ) ;
-        const std::string & getErrorMsg( short error ) ;
+        const std::string & getErrorMsg( unsigned short error ) ;
         ErrorPages();
         ~ErrorPages();
         std::string  getErrorPage( const std::string & error_message );

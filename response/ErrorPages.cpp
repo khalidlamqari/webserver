@@ -6,12 +6,11 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/27 15:21:34 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/28 13:25:13 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/02 10:21:26 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "ErrorPages.hpp"
-
+# include "../includes/main.hpp"
 
 ErrorPages::ErrorPages()
 {
@@ -63,6 +62,15 @@ void ErrorPages::init_pages(void) {
     this->error_pages[510] = NOT_EXTENDED ;
     this->error_pages[511] = NETWORK_AUTHENTICATION_REQUIRED ;
 
+    // Redirection messages
+    this->error_pages[300] = MULTIPLE_CHOICES ;
+    this->error_pages[301] = MOVED_PERMANENTLY ;
+    this->error_pages[302] = FOUND ;
+    this->error_pages[303] = SEE_OTHER ;
+    this->error_pages[304] = NOT_MODIFIED ;
+    this->error_pages[307] = TEMPORARY_REDIRECT ;
+    this->error_pages[308] = PERMANENT_REDIRECT ;
+
     
 }
 
@@ -90,7 +98,7 @@ std::string  ErrorPages::getErrorPage( const std::string & error_message )
     return ( html ) ;
 }
 
-const std::string & ErrorPages::getErrorMsg( short error )
+const std::string & ErrorPages::getErrorMsg( unsigned short error )
 {
     return ( this->error_pages.find( error )->second ) ;
 }

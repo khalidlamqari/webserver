@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/31 19:32:18 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/02 09:19:45 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,9 +14,10 @@
 
 #ifndef RESPONSE_HPP
 # define RESPONSE_HPP
+
 # include "../includes/main.hpp"
-# include "../request/Request.hpp"
-# include "ErrorPages.hpp"
+
+class Request ;
 
 class Response
 {
@@ -35,7 +36,8 @@ class Response
         void                        generate_message( char * content, size_t size ) ;
         LocationContext *           find_location( const std::string & target ) ;
         void                        remove_last_slash( std::string & target ) ;
-
+        // redirection 
+        void                        redirection_handler( unsigned short status, const std::string & msg_or_file ) ;
     public:
 
         Response ( ServerContext & server_context, Request & request ) ;
