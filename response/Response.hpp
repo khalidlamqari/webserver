@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/03 12:47:15 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/03 17:24:45 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -31,6 +31,7 @@ class Response
         bool                        is_first_message ;
         std::ifstream               page_content ;
         LocationContext *           _location;
+        short                       status;
 
         void                        format_message( void ) ;
         bool                        is_cgi_request() ;
@@ -40,6 +41,7 @@ class Response
         LocationContext *           find_location( const std::string & target ) ;
         LocationContext *           find_exact_location( const std::string &target ) ;
         void                        remove_last_slash( std::string & target ) ;
+        void                        get_path_of_page( std::string & path_of_page ) ;
         // redirection 
         void                        redirection_handler( unsigned short status, const std::string & msg_or_file ) ;
         LocationContext *           find_match_more_location( std::string & new_target );
@@ -47,7 +49,9 @@ class Response
         // error
         std::string                 find_error_page( unsigned  short error ) ;
         void                        error_response( short error ) ;
-        
+        void                        responde_with_default_page( short error ) ;
+        void                        responde_with_overrided_page( short error, std::string err_page_path ) ;
+
     public:
 
         Response ( ServerContext & server_context, Request & request ) ;
@@ -55,6 +59,8 @@ class Response
         /* Getters */
 
         const std::string &         getResponse( void );
+        const std::ifstream &         getPageStream( void );
+        
         bool                        end_of_response() ;
         bool                        tranfer_encoding() ;
 

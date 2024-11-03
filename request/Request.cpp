@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 11:24:24 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/02 17:07:01 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/03 15:35:23 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,7 +18,7 @@ Request::Request(std::string message)
     this->content_length = 0;
     this->counter_recv = 0;
     this->isReady = false ;
-    this->status = -1 ;
+    this->status = 200 ;
 }
 
 /*
@@ -247,7 +247,7 @@ void   Request::reuse()
     std::map< std::string, std::vector<std::string> >   headers ;
     this->headers = headers ;
     this->content_length = 0;
-    this->status = -1 ;
+    this->status = 200 ;
 }
 
 

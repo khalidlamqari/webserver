@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/27 15:21:34 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/02 10:21:26 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/03 16:16:34 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,6 +71,16 @@ void ErrorPages::init_pages(void) {
     this->error_pages[307] = TEMPORARY_REDIRECT ;
     this->error_pages[308] = PERMANENT_REDIRECT ;
 
+    // Successful responses
+    this->error_pages[200] = OK;
+    this->error_pages[201] = CREATED ;
+    this->error_pages[202] = ACCEPTED ;
+    this->error_pages[203] = NON_AUTHORITATIVE_INFORMATION ;
+    this->error_pages[204] = NO_CONTENT ;
+    this->error_pages[205] = RESET_CONTENT ;
+    this->error_pages[206] = PARTIAL_CONTENT ;
+    this->error_pages[207] = MULTI_STATUS ;
+    this->error_pages[208] = ALREADY_REPORTED ;
     
 }
 

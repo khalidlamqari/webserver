@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/03 12:15:14 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/03 17:33:57 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,15 +20,11 @@
     *
 */
 
-void    Response::get_static_page()
-{
-    std::string                     path_of_page ;
-    std::string                     target ;
-    char                            buffer[ RESP_BUFF ] = {0} ;
 
-    if ( ! this->_tranfer_encoding )
-    {
-        target                      =   this->request.get_request_target() ;
+void Response::get_path_of_page(std::string & path_of_page )
+{
+     std::string                     target ;
+    target                      =   this->request.get_request_target() ;
         std::string new_target      = target ;
         _location  = find_match_more_location( new_target ) ;
 
@@ -55,6 +51,16 @@ void    Response::get_static_page()
             else
                 path_of_page = this->server_context.get_root_directory() + "/" + target ;
         }
+}
+
+void    Response::get_static_page()
+{
+    std::string                     path_of_page ;
+    char                            buffer[ RESP_BUFF ] = {0} ;
+
+    if ( ! this->_tranfer_encoding )
+    {
+        this->get_path_of_page( path_of_page );
         this->page_content.open( path_of_page ) ;
         if ( ! this->page_content.is_open() )
             throw 404 ;
@@ -97,17 +103,17 @@ void    Response::generate_message( char * content, size_t size )
     {
         if ( this->is_first_message ) // send headers first
         {
-            this->message.append("HTTP/1.1 200 OK\r\nTransfer-Encoding: chunked\r\nServer: webserv/0.0\r\nContent-Type: text/html\r\n\r\n") ;
-            this->is_first_message = false ;   
+            this->message.append("HTTP/1.1 " + default_error_pages.getErrorMsg( this->status ) + "\r\nTransfer-Encoding: chunked\r\nServer: webserv/0.0\r\nContent-Type: text/html\r\n\r\n") ;
+            this->is_first_message = false ;
         }
-       
+
         this->message.append(ss.str() + "\r\n") ;
         this->message.append(content, size) ;
         this->message.append("\r\n") ;
     }
     else
     {
-        this->message.append("HTTP/1.1 200 OK\r\nServer: webserv/0.0\r\nContent-Type: text/html\r\n") ;
+        this->message.append("HTTP/1.1 " + default_error_pages.getErrorMsg( this->status ) + "\r\nServer: webserv/0.0\r\nContent-Type: text/html\r\n") ;
         this->message.append("Content-Length: " + ss.str() + "\r\nConnection: keep-alive\r\n\r\n") ;
         this->message.append(content, size) ;
     }

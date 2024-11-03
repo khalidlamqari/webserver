@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 10:28:23 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/03 11:46:33 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/03 17:30:48 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -245,7 +245,8 @@ void    Server::send_response(ServerContext & server_context , int i)
             ssize_t size = send( this->fds[i].fd, msg.c_str(), msg.length(), 0 ) ;
             if ( size == -1 )
                 throw std::runtime_error("send failure ") ;
-            if ( response.end_of_response() )
+            
+            if ( (response.tranfer_encoding() && response.getPageStream().gcount() == 0) ||  ( ! response.tranfer_encoding() && response.end_of_response() ))
                 break ;
         }
 
