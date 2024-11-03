@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 11:35:53 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/27 18:44:06 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/02 17:07:13 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,6 @@
 *                    *( header-field CRLF )
 *                    CRLF
 *                    [ message-body ]
-*
 */
 
 class Request
@@ -33,7 +32,7 @@ class Request
         // request-line = method SP request-target SP HTTP-version CRLF
         
         std::string                 message ;
-        short                       status ;
+        int                       status ;
         void                        parseStartLine(const std::string & line) ;
         bool                        Valide_method( const std::string methodName );
         

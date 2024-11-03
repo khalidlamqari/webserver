@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 16:37:22 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/10/31 17:03:56 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/03 12:54:41 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -175,7 +175,7 @@ void ServerContext::show_info()
 
 
 /* Getters */
-const std::vector<std::pair <unsigned short, std::string> > & ServerContext::get_error_page      ( void )
+std::vector<std::pair <unsigned short, std::string> > & ServerContext::get_error_pages      ( void )
 {
     return ( this->error_pages );
 }

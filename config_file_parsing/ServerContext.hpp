@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/09 11:31:30 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/10/31 17:04:16 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/03 12:54:32 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,8 +56,8 @@ class ServerContext {
         LocationContext&  get_latest_location( void );
 
         /* Getters */
-        const std::vector<std::pair <unsigned short, std::string> >     & get_error_page      ( void );
-        std::vector<LocationContext>                              & get_locations       ( void );
+        std::vector<std::pair <unsigned short, std::string> >     & get_error_pages      ( void );
+        std::vector<LocationContext>                                    & get_locations       ( void );
         std::vector<unsigned short>                                     & get_ports            ( void );
         const std::string                                               & get_root_directory  ( void );
         const std::string                                               & get_cgi_extension   ( void );

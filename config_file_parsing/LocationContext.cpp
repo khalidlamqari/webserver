@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 20:30:49 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/10/29 13:47:49 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/03 12:43:54 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,7 +93,7 @@ void    LocationContext::set_redirection( std::pair<unsigned short, std::string>
 
 /* Getters */
 
-const std::vector<std::pair <unsigned short, std::string> > &              LocationContext::get_error_page      ( void ) const
+std::vector<std::pair <unsigned short, std::string> > &              LocationContext::get_error_pages      ( void )
 {
     return ( this->error_pages ) ;
 }
@@ -136,6 +136,11 @@ const std::vector<std::string>& LocationContext::get_allowed_methods ( void ) co
 const std::string&  LocationContext::get_location        ( void ) const
 {
     return ( this->location ) ;
+}
+
+bool  LocationContext::is_exact_location        ( void ) const
+{
+    return ( this->is_exact ) ;
 }
 
 

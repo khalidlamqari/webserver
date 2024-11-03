@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 10:28:23 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/02 09:16:50 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/03 11:46:33 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,8 +24,7 @@ Server::Server( ServerContext & server_context )
 
     // this->root  = "/Users/klamqari/Desktop/web";
     memset(&(this->address) , 0, sizeof(address)) ;
-    
-    
+
     this->addrlen                   = sizeof(address) ;
     this->address.sin_family        = AF_INET ;
     this->address.sin_addr.s_addr   = INADDR_ANY ;
@@ -38,7 +37,10 @@ Server::Server( ServerContext & server_context )
 
     this->requests.resize(MAX_CLIENTS + 1) ;
     for ( int i = 0 ; i < MAX_CLIENTS + 1; i++ )
-        this->requests[i].isReady = false ;
+    {
+        this->requests[i].reuse() ;
+        // this->requests[i].isReady = false ;
+    }
 }
 
 void    Server::init_server( void )
@@ -197,7 +199,7 @@ void    Server::read_data_from_socket( int i )
                 catch ( int error )
                 {
                     this->requests[i].setStatus( error ) ;
-                    std::cout << "Error : " << error << std::endl;
+                    std::cout << "Error : " << error << std::endl ;
                 }
             }
             if ( ! this->requests[i].get_request_method().empty() && this->requests[i].content_length == this->requests[i].get_request_body().length())
@@ -231,23 +233,34 @@ void    Server::send_response(ServerContext & server_context , int i)
 
     if ( this->requests[i].isReady )
     {
+        print_request( this->requests[i] ) ;
         std::cout << ".......................... i = " << i  << std::endl ;
         Response response( server_context, this->requests[i] ) ;
 
-        msg = response.getResponse() ;
-
-        if ( send( this->fds[i].fd, msg.c_str(), msg.length(), 0 ) == -1 )
-            throw std::runtime_error("send failure ") ;
+        while ( true ) // for testting
+        {
+            std::cout << "send " << std::endl;
+            msg = response.getResponse() ;
+            
+            ssize_t size = send( this->fds[i].fd, msg.c_str(), msg.length(), 0 ) ;
+            if ( size == -1 )
+                throw std::runtime_error("send failure ") ;
+            if ( response.end_of_response() )
+                break ;
+        }
 
         if ( close(this->fds[i].fd) == -1 )
         {
             this->fds[i].fd = -1 ;
             throw std::runtime_error("close failure ") ;
         }
+
         this->fds[i].fd = -1 ;
         this->requests[i].reuse() ;
+
         // this->requests[i].isReady = false ;
         // this->requests[i].method = "";
+
     }
 }
 
@@ -282,6 +295,7 @@ void Server::print_request(Request & request)
     }
     
     std::cout << "body length   " << request.body.length() << std::endl ;
+    std::cout << "status   " << request.getStatus() << std::endl ;
 }
 
 
