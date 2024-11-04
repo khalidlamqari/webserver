@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/09 11:31:25 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/03 12:43:31 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/03 18:08:39 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -66,7 +66,7 @@ class LocationContext {
     
     //Testing 
     void    show_info();
-    
+
     private :
 
         std::vector<std::pair <unsigned short, std::string> >   error_pages;
@@ -81,11 +81,11 @@ class LocationContext {
 
         std::string                                             cgi_extension;
 
-        std::string                                             upload_dir;
+        std::string                                             upload_dir ;
 
-        std::string                                             index;
+        std::string                                             index ;
 
-        bool                                                    auto_index;
+        bool                                                    auto_index ;
 
         bool                                                    is_exact; // TODO
 };

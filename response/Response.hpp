@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/03 17:24:45 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/04 23:13:32 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,6 +42,7 @@ class Response
         LocationContext *           find_exact_location( const std::string &target ) ;
         void                        remove_last_slash( std::string & target ) ;
         void                        get_path_of_page( std::string & path_of_page ) ;
+        
         // redirection 
         void                        redirection_handler( unsigned short status, const std::string & msg_or_file ) ;
         LocationContext *           find_match_more_location( std::string & new_target );
@@ -52,14 +53,17 @@ class Response
         void                        responde_with_default_page( short error ) ;
         void                        responde_with_overrided_page( short error, std::string err_page_path ) ;
 
+        // auto index
+        void                        respond_list_files( const std::string & path , const std::string & target) ;
+        bool                        is_folder( const std::string & path ) ;
+        
     public:
 
         Response ( ServerContext & server_context, Request & request ) ;
 
         /* Getters */
-
-        const std::string &         getResponse( void );
-        const std::ifstream &         getPageStream( void );
+        const std::string &         getResponse  ( void );
+        const std::ifstream &       getPageStream( void );
         
         bool                        end_of_response() ;
         bool                        tranfer_encoding() ;
