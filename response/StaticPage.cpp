@@ -6,24 +6,16 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/05 00:33:15 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/05 14:20:11 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "../includes/main.hpp"
-# include <sys/stat.h>
+# include <sys/stat.h> 
 # include <dirent.h>
 #include <time.h>
-/*
-    *    http://127.0.0.1:8888/folder
-    **   If the folder exists and directory listing is enabled: Nginx will display the contents of the folder.
-    ***  If the folder exists but directory listing is not enabled and no index file is present: Nginx will return a 403 Forbidden error.
-    **   If the folder does not exist: Nginx will return a 404 Not Found error.
-    *
-*/
 
-
-void Response::get_path_of_page(std::string & path_of_page )
+bool Response::get_path_of_page(std::string & path_of_page )
 {
     std::string                     target ;
     target                      =   this->request.get_request_target() ;
@@ -34,13 +26,13 @@ void Response::get_path_of_page(std::string & path_of_page )
     {
         if ( ! (_location)->redirect_is_set )
         {
-            // path_of_page = (_location)->get_root_directory() + "/" + target.substr( _location->get_location().length() ) ;
             path_of_page = (_location)->get_root_directory() + "/" + target ;
             
             if ( ( new_target == target || ( new_target + "/" ) == target ) && _location->get_auto_index() && this->is_folder( path_of_page ) )
             {
                 this->respond_list_files( path_of_page, target ) ;
-                return ;
+                this->_end_of_response = true ;
+                return false ;
             }
             else if ( new_target != target && this->is_folder( path_of_page ) )
                 throw 403 ;
@@ -51,19 +43,28 @@ void Response::get_path_of_page(std::string & path_of_page )
         else // TODO: handle redirections(return)
         {
             redirection_handler( _location->get_redirection().first, _location->get_redirection().second ) ;
-            return ;
+            return false ;
         }
     }
     else
     {
         path_of_page = this->server_context.get_root_directory() + "/" + target ;
-        if ( target == "/" ) // http://127.0.0.1:8888/folder
+        if ( target == "/" && this->is_folder( path_of_page )  && this->server_context.get_auto_index() ) // http://127.0.0.1:8888/folder
+        {
+            this->respond_list_files( path_of_page, target ) ;
+            this->_end_of_response = true ;
+                return false ;
+        }
+        else if ( target == "/" && this->is_folder( path_of_page ) )
+        {
             path_of_page +=  this->server_context.get_index() ;
-        else if ( this->is_folder( path_of_page ) ) // should test nginx
+        }
+        else if ( target != "/" && this->is_folder( path_of_page ) ) // should test nginx
             throw 403 ;
         else
             path_of_page = this->server_context.get_root_directory() + "/" + target ;
     }
+    return true ;
 }
 
 void    Response::get_static_page()
@@ -73,8 +74,9 @@ void    Response::get_static_page()
 
     if ( ! this->_tranfer_encoding )
     {
-        this->get_path_of_page( path_of_page );
-        std::cout << "path_of_page " << path_of_page << std::endl;
+        if ( ! this->get_path_of_page( path_of_page ) )
+            return ;
+            
         this->page_content.open( path_of_page ) ;
         if ( ! this->page_content.is_open() )
             throw 404 ;
@@ -88,6 +90,7 @@ void    Response::get_static_page()
         this->_end_of_response = true ;
     else
         this->_tranfer_encoding = true ;
+
     this->generate_message(buffer, this->page_content.gcount() ) ;
 }
 
@@ -118,7 +121,6 @@ void    Response::generate_message( char * content, size_t size )
             this->message.append("HTTP/1.1 " + default_error_pages.getErrorMsg( this->status ) + "\r\nTransfer-Encoding: chunked\r\nServer: webserv/0.0\r\nContent-Type: text/html\r\n\r\n") ;
             this->is_first_message = false ;
         }
-
         this->message.append(ss.str() + "\r\n") ;
         this->message.append(content, size) ;
         this->message.append("\r\n") ;
@@ -198,15 +200,8 @@ void    Response::respond_list_files( const std::string & path , const std::stri
     std::string ls_files ;
     DIR *d ;
     struct dirent *f ;
-    struct stat s ;
-    struct tm *mod_time ;
     std::stringstream ss ;
-    std::stringstream size ;
-    std::string f_path ;
-    std::string new_target ;
-    
-    char time_str[100];
-    
+
     d = opendir(path.c_str()) ;
     if ( !d )
         throw 500 ;
@@ -222,33 +217,42 @@ void    Response::respond_list_files( const std::string & path , const std::stri
 
     while ( (f = readdir( d )) && f != NULL )
     {
-        new_target = target ;
-        f_path = path ;
-        f_path.append(f->d_name) ;
-        
-        if ( stat( f_path.c_str(), &s ) == -1 )
-            throw 500 ;
-        mod_time = localtime(&s.st_mtime);
-        
-        strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", mod_time);
-
-        size << f->d_reclen ; // to megabytes 1024^2
-        new_target.append(f->d_name) ;
-        ls_files.append("<tr><td><a href='" + new_target + "'>") ;
-        ls_files.append(f->d_name) ;
-        ls_files.append("</a></td><td>") ;
-        ls_files.append(size.str()) ;
-        ls_files.append(" bytes</td><td>") ;
-        ls_files.append(time_str) ;
-        ls_files.append("</td></tr>") ;
+        this->append_row( path, target, f, ls_files) ;
     }
 
-    ls_files.append("</tbody></table><hr><center><h5>webserv</h5></center><hr></body></html>");
+    if ( closedir(d) == -1 )
+        throw 500 ;
+
+    ls_files.append("</tbody></table><hr><center><h5>webserv</h5></center><hr></body></html>") ;
     ss << ls_files.length() ;
 
     this->message.append("HTTP/1.1 200 OK\r\nContent-Length: " + ss.str() + "\r\nContent-Type: text/html\r\n\r\n" + ls_files) ;
-    std::cout << this->message << std::endl ;
+}
 
+void Response::append_row( std::string  path , std::string target, struct dirent * f, std::string & ls_files )
+{
+    struct tm * time ;
+    char time_str[100] ;
+    std::stringstream size ;
+    struct stat s ;
+
+    path.append(f->d_name) ;
+
+    if ( stat( path.c_str(), &s ) == -1 )
+        throw 500 ;
+
+    time = localtime(&s.st_mtime) ;
+
+    if ( ! time || strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", time) == 0 )
+        throw 500 ;
+
+    size << f->d_reclen ; // to megabytes 1024^2
+    target.append(f->d_name) ;
+    ls_files.append("<tr><td><a href='" + target + "'>") ;
+    ls_files.append(f->d_name) ;
+    ls_files.append("</a></td><td>" + size.str() + " bytes</td><td>") ;
+    ls_files.append(time_str) ;
+    ls_files.append("</td></tr>") ;
 }
 
 bool    Response::is_folder( const std::string & path )

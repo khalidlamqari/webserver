@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/03 17:25:32 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/05 13:39:51 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,7 +77,6 @@ void    Response::error_response( short error )
     }
 
     err_page_path = this->find_error_page( error ) ;
-    std::cout << "the path of error page :  " << err_page_path << std::endl ;
     if ( err_page_path == "" )
     {
         this->responde_with_default_page( error );
@@ -86,7 +85,6 @@ void    Response::error_response( short error )
     {
         this->responde_with_overrided_page( error , err_page_path ) ;
         // this->_end_of_response = true ;
-        std::cout << "the path of error page :  " << err_page_path << std::endl ;
     }
 }
 

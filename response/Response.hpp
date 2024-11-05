@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/04 23:13:32 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/05 14:08:03 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,12 +41,12 @@ class Response
         LocationContext *           find_location( const std::string & target ) ;
         LocationContext *           find_exact_location( const std::string &target ) ;
         void                        remove_last_slash( std::string & target ) ;
-        void                        get_path_of_page( std::string & path_of_page ) ;
+        bool                        get_path_of_page( std::string & path_of_page ) ;
         
         // redirection 
         void                        redirection_handler( unsigned short status, const std::string & msg_or_file ) ;
-        LocationContext *           find_match_more_location( std::string & new_target );
-        
+        LocationContext *           find_match_more_location( std::string & new_target ) ;
+
         // error
         std::string                 find_error_page( unsigned  short error ) ;
         void                        error_response( short error ) ;
@@ -56,6 +56,7 @@ class Response
         // auto index
         void                        respond_list_files( const std::string & path , const std::string & target) ;
         bool                        is_folder( const std::string & path ) ;
+        void                        append_row( std::string  path , std::string target, struct dirent * f, std::string & ls_files );
         
     public:
 
