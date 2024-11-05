@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 10:28:23 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/05 13:43:12 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/05 15:35:21 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,8 +45,6 @@ Server::Server( ServerContext & server_context )
 
 void    Server::init_server( void )
 {
-    
-
     this->number_of_ports = this->server_context.get_ports().size() ;
 
     std::vector<unsigned short>::iterator it = this->server_context.get_ports().begin() ;
@@ -57,7 +55,6 @@ void    Server::init_server( void )
         this->fds[i].events = POLLIN ;
         it++ ;
     }
-
 }
 
 int Server::create_socket( int port )

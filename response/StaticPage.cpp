@@ -6,12 +6,12 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/05 14:20:11 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/05 15:33:53 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "../includes/main.hpp"
-# include <sys/stat.h> 
+# include <sys/stat.h>
 # include <dirent.h>
 #include <time.h>
 
@@ -93,21 +93,6 @@ void    Response::get_static_page()
 
     this->generate_message(buffer, this->page_content.gcount() ) ;
 }
-
-/*
-
-HTTP/1.1 200 OK
-Server: nginx/1.21.3
-Date: Tue, 29 Oct 2024 12:00:00 GMT
-Content-Type: text/html
-Content-Length: 2567
-Connection: keep-alive
-
-
-HTTP/1.1 200 OK
-Transfer-Encoding: chunked
-Content-Type: text/html
-*/
 
 void    Response::generate_message( char * content, size_t size )
 {
@@ -206,14 +191,16 @@ void    Response::respond_list_files( const std::string & path , const std::stri
     if ( !d )
         throw 500 ;
 
-    ls_files.append("<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
+    ls_files.append("<!DOCTYPE html><html lang=\"en\"><head><meta "
+    "charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">"
     "<title>" + target + "</title>"
     "<style>"
     "table{ padding-left: 100px;}"
     "td{ padding: 5px;}"
     "thead{ text-align: left;}"
     "</style>"
-    "</head><body><h1> Index of " + target + "</h1> <hr><table><thead><tr><th>Name</th><th>Size</th><th>Date Modified</th></tr></thead><tbody>");
+    "</head><body><h1> Index of " + target + "</h1> <hr><table><thead><tr><th>Name</th>"
+    "<th>Size</th><th>Date Modified</th></tr></thead><tbody>") ;
 
     while ( (f = readdir( d )) && f != NULL )
     {
