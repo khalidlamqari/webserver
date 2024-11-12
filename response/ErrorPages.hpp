@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/27 15:21:52 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/02 10:08:09 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/08 21:53:02 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,9 +43,5 @@ class ErrorPages
         std::string  getErrorPage( const std::string & error_message );
         
 };
-
-
-
-
 
 #endif

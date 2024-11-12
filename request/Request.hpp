@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 11:35:53 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/02 17:07:13 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/08 18:51:31 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,13 +42,13 @@ class Request
         
     public :
         std::map< std::string, std::vector<std::string> >   headers ;// key , value
-        
+    
         std::string                                         method ;
         std::string                                         request_target ;
         std::string                                         HTTP_version ;
         std::string                                         body ;
-        size_t                                              content_length;
-        size_t                                              counter_recv;
+        size_t                                              content_length ;
+        size_t                                              counter_recv ;
         bool                                                isReady ;
         
         

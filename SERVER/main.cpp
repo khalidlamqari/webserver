@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 09:49:46 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/02 08:59:25 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/09 15:59:32 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,7 +26,7 @@ int main(int argc, char *argv[])
     }
 
     file_name = argv[1];
-    
+
     if((file_name.length() <= 7) || (file_name.find(".config" ,file_name.length() - 7) == std::string::npos))
     {
         std::cerr << "Wrong file extension!" << std::endl;
@@ -37,7 +37,7 @@ int main(int argc, char *argv[])
     try
     {
         config_tokenizer( file_name, http_config );
-        http_config.show_info();
+        // http_config.show_info();
     }
     catch( const std::exception& e )
     {

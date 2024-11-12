@@ -32,7 +32,7 @@ int main(int argc, char *argv[])
     int servSock; /* Socket descriptor for server */
     int clntSock; /* Socket descriptor for client */
     struct sockaddr_in echoServAddr; /* Local address */
-    struct sockaddr_in echoClntAddr; /* Client address */ 
+    struct sockaddr_in echoClntAddr; /* Client address */
     unsigned short echoServPort; /* Server port */
     unsigned int clntLen; /* Length of client address data structure */
     if (argc != 3) /* Test for correct number of arguments */

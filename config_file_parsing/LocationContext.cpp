@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 20:30:49 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/03 12:43:54 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/09 15:29:01 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -128,7 +128,7 @@ bool   LocationContext::get_auto_index      ( void ) const
     return ( this->auto_index ) ;    
 }
 
-const std::vector<std::string>& LocationContext::get_allowed_methods ( void ) const
+std::vector<std::string>& LocationContext::get_allowed_methods ( void )  
 {
     return ( this->allowed_methods ) ;    
 }

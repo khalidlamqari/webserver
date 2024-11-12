@@ -9,37 +9,37 @@ void f()
 
 int main()
 {
-    atexit(f);
-    DIR * d ;
+    // atexit(f);
+    // DIR * d ;
 
-    struct dirent *f ;
+    // struct dirent *f ;
 
-    d = opendir("../utils") ;
-    if ( !d )
-        return 1 ;
-    else
-    {
-        std::cout << d << std::endl;
-    }
+    // d = opendir("../utils") ;
+    // if ( !d )
+    //     return 1 ;
+    // else
+    // {
+    //     std::cout << d << std::endl;
+    // }
     
-    while ( ( f = readdir(d) ) && d != NULL )
-    {
-        std::cout << f->d_name << std::endl;
-    }
+    // while ( ( f = readdir(d) ) && d != NULL )
+    // {
+    //     std::cout << f->d_name << std::endl;
+    // }
 
-    free(d) ;
+    // free(d) ;
 
     //---------------
-    // struct stat s ;
+    struct stat s ;
 
-    // if ( stat("../utils/split.cpp", &s) == -1 )
-    // {
-    //     std::cout << "stat() failed" << std::endl;
-    //     return 1;
-    // }
-    // // if ( S_ISDIR(s.st_mode) )
-    // if ( s.st_mode & S_IFDIR )
-    //     std::cout << "is a directory " << std::endl;
-    // else
-    //     std::cout << "is not a directory " << std::endl;
+    if ( stat("../utils/splfffit.cpp", &s) == -1 )
+    {
+        std::cout << "stat() failed" << std::endl;
+        return 1;
+    }
+    // if ( S_ISDIR(s.st_mode) )
+    if ( s.st_mode & S_IFDIR )
+        std::cout << "is a directory " << std::endl;
+    else
+        std::cout << "is not a directory " << std::endl;
 }

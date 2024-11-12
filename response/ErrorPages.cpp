@@ -6,14 +6,15 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/27 15:21:34 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/03 16:16:34 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/09 17:33:23 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "../includes/main.hpp"
+# include "ErrorPages.hpp"
 
 ErrorPages::ErrorPages()
 {
+    std::cout << "default error page created " << std::endl;
     this->init_pages() ;
 }
 
@@ -99,7 +100,7 @@ std::string  ErrorPages::getErrorPage( const std::string & error_message )
 {
     std::string html;
 
-    html.append ("<!DOCTYPE html>\n<html>\n<head><title>") ;
+    html.append ("<!DOCTYPE>\n<html>\n<head><title>") ;
     html.append( error_message ) ;
     html.append( "</title></head>\n<body>\n<center><h1>" ) ;
     html.append( error_message ) ;

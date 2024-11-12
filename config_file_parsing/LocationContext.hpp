@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/09 11:31:25 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/03 18:08:39 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/09 15:28:38 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,7 @@ class LocationContext {
     const std::string&                                         get_upload_dir      ( void ) const ;
     const std::string&                                         get_index           ( void ) const ;
     bool                                                       get_auto_index      ( void ) const ;
-    const std::vector<std::string>&                            get_allowed_methods ( void ) const ;
+     std::vector<std::string>&                            get_allowed_methods ( void )  ;
     const std::string&                                         get_location        ( void ) const ;
     bool                                                       is_exact_location   ( void ) const ;
     

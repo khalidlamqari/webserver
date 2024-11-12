@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 17:26:40 by klamqari          #+#    #+#             */
-/*   Updated: 2024/10/24 17:35:21 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/08 16:23:26 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -90,7 +90,7 @@ std::vector<std::string> Request::parse_header_values( const std::string & field
 
 bool isdelimiter( char c )
 {
-    std::string delimiters = ",;" ;
+    std::string delimiters = "," ;
     if (delimiters.find(c) == std::string::npos )
         return false ;
     return true ;

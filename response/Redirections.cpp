@@ -6,11 +6,11 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/31 22:33:17 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/03 11:47:32 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/08 19:58:03 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "../includes/main.hpp"
+# include "Response.hpp"
 
 /*
 **    HTTP/1.1 301 Moved Permanently

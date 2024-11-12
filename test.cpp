@@ -27,7 +27,6 @@ int main()
     listen( s, 5 );
     while (true)
     {
-
         n_fd = accept( s, (struct sockaddr * )&address, (socklen_t *)&( address.sin_len ) ) ;
         char message[1024] ;
         read( n_fd, message, 1024 ) ;

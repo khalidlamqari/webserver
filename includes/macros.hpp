@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/27 17:34:09 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/03 17:32:01 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/11 13:49:36 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,7 +15,7 @@
 #ifndef MACROS_HPP
 # define MACROS_HPP
 
-#define RESP_BUFF 1000 //(2^16)
+
 
 // Informational responses
 #define CONTINUE "100 Continue"

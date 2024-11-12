@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 10:28:23 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/05 15:35:21 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/11 22:58:52 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -153,7 +153,7 @@ void    Server::read_data_from_socket( int i )
         // {
             bytes_received = recv( this->fds[i].fd , buffer.data(), BUFFER_SIZE, MSG_DONTWAIT ) ; // MSG_DONTWAIT Makes the operation non-blocking.
             // std::cout << "bytes_received : " << bytes_received << std::endl ;
-
+            
             if (bytes_received == -1)
             {
                 if (errno == EWOULDBLOCK || errno == EAGAIN) {
@@ -173,30 +173,37 @@ void    Server::read_data_from_socket( int i )
             //     break; // Connection closed by the client
                     
             
-        
+            
             if (bytes_received >= 0 && bytes_received < (ssize_t) buffer.size()) {
                 buffer[bytes_received] = '\0';
             }
-    
-            if ( bytes_received > 0 && this->requests[i].get_request_method().empty() )
-                this->requests[i].appendMessage( buffer.data(), bytes_received ) ;
-            else 
-                this->requests[i].appendTobody( buffer.data(), bytes_received ) ;
-            
-                
 
+            // if ( bytes_received > 0 && this->requests[i].get_request_method().empty() )
+            //     this->requests[i].appendMessage( buffer.data(), bytes_received ) ;
+            // else 
+            //     this->requests[i].appendTobody( buffer.data(), bytes_received ) ;
+            
+                this->requests[i].appendMessage( buffer.data(), bytes_received ) ;
+                
+                message.append(buffer.data(), bytes_received);
+
+                std::cout << message << std::endl;
 
             // ------- 
-            if ( this->requests[i].get_request_method().empty() &&  requests[i].getMessage().find("\r\n\r\n") != std::string::npos )
+            size_t end_of_headres = requests[i].getMessage().find("\r\n\r\n") ;
+            if ( this->requests[i].get_request_method().empty() &&  end_of_headres != std::string::npos )
             {
                 try
                 {
                     this->requests[i].parseMessage() ;
+                    this->requests[i].appendTobody((char *)"", end_of_headres ) ;
+                    this->requests[i].isReady = true ;
                 }
                 catch ( int error )
                 {
-                    this->requests[i].setStatus( error ) ;
-                    std::cout << "Error : " << error << std::endl ;
+                    this->requests[i].setStatus( error ) ; // 200 for ignor the errors
+                    this->requests[i].isReady = true ;
+                    std::cout << "Error : ds " << error << std::endl ;
                 }
             }
             if ( ! this->requests[i].get_request_method().empty() && this->requests[i].content_length == this->requests[i].get_request_body().length())
@@ -205,7 +212,6 @@ void    Server::read_data_from_socket( int i )
                 // break ;
             }
 
-            
         // }
         
         // this->requests[i].isReady = true ;
@@ -227,31 +233,40 @@ void    Server::read_data_from_socket( int i )
 void    Server::send_response(ServerContext & server_context , int i)
 {
     std::string msg ;
+    ssize_t size ;
 
     if ( this->requests[i].isReady )
     {
-        print_request( this->requests[i] ) ;
+        // print_request( this->requests[i] ) ;
         std::cout << ".......................... i = " << i  << std::endl ;
         Response response( server_context, this->requests[i] ) ;
 
         while ( true ) // for testting
         {
-            std::cout << "send " << std::endl;
+            std::cout << "send" << std::endl;
             msg = response.getResponse() ;
-
-            ssize_t size = send( this->fds[i].fd, msg.c_str(), msg.length(), 0 ) ;
+            // std::cout << "[" << msg << "]" << std::endl;
+            
+            size = send( this->fds[i].fd, msg.c_str(), msg.length(), 0 ) ;
+            
             if ( size == -1 )
+            {
+                std::cout << "error " << std::endl;
                 throw std::runtime_error("send failure ") ;
+            }
 
-            if ( (response.tranfer_encoding() && response.getPageStream().gcount() == 0) ||  ( ! response.tranfer_encoding() && response.end_of_response() ))
+            if ( (response.tranfer_encoding() && response.getPageStream().gcount() == 0) ||  ( ! response.tranfer_encoding() && response.end_of_response() ) )
                 break ;
         }
-
+    
+    
+        std::cout << "here " << std::endl;
         if ( close(this->fds[i].fd) == -1 )
         {
             this->fds[i].fd = -1 ;
             throw std::runtime_error("close failure ") ;
         }
+        std::cout << "here " << std::endl;
 
         this->fds[i].fd = -1 ;
         this->requests[i].reuse() ;

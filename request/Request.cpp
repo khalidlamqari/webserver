@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 11:24:24 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/03 15:35:23 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/11 19:20:23 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ Request::Request(std::string message)
 
 void Request::parseStartLine(const std::string & line) 
 {
- 
+    std::cout << "start line : " << line << std::endl;
     std::vector<std::string> tokens ;
     if ( line[ line.length() - 1 ] != '\r' )
         throw 400 ;
@@ -50,8 +50,8 @@ void Request::parseStartLine(const std::string & line)
         throw 400 ;
 
     //  <HTTP Method>
-    if ( ! this->Valide_method(*start) )
-        throw 400 ;
+    // if ( ! this->Valide_method(*start) )
+    //     throw 400 ;
     this->method = *start ;
 
     // <Request-URI>
@@ -113,16 +113,16 @@ void Request::parseMessage()
         }
         size = size + line.length() + 1;
     }
-    if ( 2 != were_am_i )
-        throw 400 ;
-    check_valid_headres() ;
+    // if ( 2 != were_am_i )
+    //     throw 400 ;
+    // check_valid_headres() ;
 
 }
 
 bool Request::Valide_method( const std::string methodName )
 {
-    std::string methods[3] = { "GET" , "POST" , "HEAD" } ;
-    
+    std::string methods[4] = { "GET" , "POST" , "HEAD" , "DELETE" } ;
+
     for ( size_t i = 0 ; i < methods->length() ; i++ )
         if ( methods[i] == methodName )
             return ( true ) ;
@@ -194,8 +194,11 @@ void Request::appendMessage ( char * message , ssize_t bytes_received)
 
 void Request::appendTobody(  char * message , ssize_t bytes_received )
 {
-    if ( bytes_received > 0 )
-        this->body.append( message, bytes_received );
+    this->body =  this->message.substr( bytes_received + 4 ) ;
+    std::cout << this->body << std::endl;
+    // if ( bytes_received > 0 )
+    //     this->body.append( message, bytes_received );
+    (void)message ;
 }
 
 void Request::setStatus( short status )

@@ -6,11 +6,11 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/05 13:39:51 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/12 00:23:09 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "../includes/main.hpp"
+# include "Response.hpp"
 
 Response::Response ( ServerContext & server_context, Request & request) :\
                     server_context(server_context), request(request)
@@ -19,6 +19,7 @@ Response::Response ( ServerContext & server_context, Request & request) :\
     this->_tranfer_encoding = false ;
     this->is_first_message = true ;
     this->_location         = NULL ;
+    this->_running_post     = false ;
     // this->status            = 200 ;
     this->status = this->request.getStatus() ;
 }
@@ -32,10 +33,6 @@ void    Response::format_message( void )
     {
         this->error_response( this->status ) ;
     }
-    // else if ( this->is_cgi_request() )
-    // {
-    //     // brahim object cgi
-    // }
     else
     {
         try
@@ -69,13 +66,12 @@ const std::ifstream &         Response::getPageStream( void )
 void    Response::error_response( short error )
 {
     std::string err_page_path ;
-    
+
     if ( this->_tranfer_encoding )
     {
         this->responde_with_overrided_page( error , "" ) ; // if transfer already start
-        return ;   
+        return ;
     }
-
     err_page_path = this->find_error_page( error ) ;
     if ( err_page_path == "" )
     {
@@ -129,22 +125,34 @@ void Response::responde_with_default_page( short error )
 }
 
 // POST /cgi-bin/script.cgi HTTP/1.1
-bool    Response::is_cgi_request( void )
+bool    Response::is_cgi( const std::string & path , const std::string & cgi_extention )
 {
-    std::string uri = this->request.get_request_target() ;
-    // std::string uri = "/cgi-bin/script.cgi" ;
+    if ( cgi_extention.length() > path.length() || cgi_extention.empty() )
+        return ( false ) ;
 
-    if ( uri.length() > 4 && uri.substr( uri.length() - 4 , 4 ) == ".cgi")
+    size_t j = path.length() - 1 ;
+    for ( ssize_t i = cgi_extention.length() - 1 ; i >= 0 ; i-- )
     {
-        return true ;
+        if ( cgi_extention[i] != path[j--] )
+            return ( false ) ;
     }
-    return false ;
+    return ( true ) ;
 }
 
 bool Response::is_allowd_method()
 {
     if ( std::find( this->server_context.get_allowed_methods().begin(), this->server_context.get_allowed_methods().end(), \
-    this->request.get_request_method() ) !=  this->server_context.get_allowed_methods().end() ) 
+    this->request.get_request_method() ) !=  this->server_context.get_allowed_methods().end() )
+    {
+        return ( true ) ;
+    }
+    return ( false ) ;
+}
+
+bool Response::is_allowd_method_in_location()
+{
+    if ( std::find( this->_location->get_allowed_methods().begin(), this->_location->get_allowed_methods().end(), \
+    this->request.get_request_method() ) !=  this->_location->get_allowed_methods().end() )
     {
         return ( true ) ;
     }
@@ -167,7 +175,6 @@ std::string Response::find_error_page( unsigned short error )
     if ( this->_location )
     {
         std::vector<std::pair <unsigned short, std::string> > & pages = this->_location->get_error_pages() ;
-
         for ( i = pages.begin() ; i != pages.end() ; ++i )
         {
             if ( i->first == error )
@@ -187,6 +194,16 @@ std::string Response::find_error_page( unsigned short error )
     }
     
     return ( "" ) ;
+}
+
+void    Response::upload_data(const std::string & file_name, const std::string & data )
+{
+    
+    if ( this->files_to_upload.find(file_name) == this->files_to_upload.end() )
+    {
+        this->files_to_upload[file_name].open(this->server_context.get_upload_dir() + "/" + file_name);
+    }
+    this->files_to_upload[file_name] << data ;
 }
 
 bool Response::end_of_response()

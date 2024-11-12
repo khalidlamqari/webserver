@@ -9,13 +9,14 @@ MAIN_SRC = helper_functions.cpp
 MAIN_OBJECTS = $(MAIN_SRC:.cpp=.o)
 
 FUNS =  SERVER/main.cpp SERVER/Server.cpp request/Request.cpp request/ParseHeader.cpp utils/split.cpp utils/trim.cpp \
-		utils/helpers.cpp response/Response.cpp response/StaticPage.cpp response/Redirections.cpp response/ErrorPages.cpp
+		utils/helpers.cpp response/Response.cpp response/StaticPage.cpp response/Redirections.cpp response/ExecuteCgi.cpp \
+		response/ErrorPages.cpp response/Methods.cpp
 
 OBJS = ${FUNS:.cpp=.o}
 
 CC = c++
 
-FLAGS = -Wall -Wextra -Werror -std=c++98
+FLAGS = -Wall -Wextra -Werror -std=c++98 #-fsanitize=address
 
 NAME = webserver
 
