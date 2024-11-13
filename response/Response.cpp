@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/12 00:23:09 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/13 03:55:26 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,12 +22,12 @@ Response::Response ( ServerContext & server_context, Request & request) :\
     this->_running_post     = false ;
     // this->status            = 200 ;
     this->status = this->request.getStatus() ;
+    // this->get_path_of_page() ;
 }
- 
+
 void    Response::format_message( void )
 {
-    // this->status = this->request.getStatus() ;
-
+    this->status = this->request.getStatus() ;
     // responde cleint errors (parse error ... )
     if ( this->status != 200 )
     {
@@ -124,16 +124,15 @@ void Response::responde_with_default_page( short error )
     this->_end_of_response = true ;
 }
 
-// POST /cgi-bin/script.cgi HTTP/1.1
-bool    Response::is_cgi( const std::string & path , const std::string & cgi_extention )
+bool    Response::is_cgi()
 {
-    if ( cgi_extention.length() > path.length() || cgi_extention.empty() )
+    if ( this->_cgi_extention.length() > this->_path_.length() || this->_cgi_extention.empty() )
         return ( false ) ;
 
-    size_t j = path.length() - 1 ;
-    for ( ssize_t i = cgi_extention.length() - 1 ; i >= 0 ; i-- )
+    size_t j = this->_path_.length() - 1 ;
+    for ( ssize_t i = this->_cgi_extention.length() - 1 ; i >= 0 ; i-- )
     {
-        if ( cgi_extention[i] != path[j--] )
+        if ( this->_cgi_extention[i] != this->_path_[j--] )
             return ( false ) ;
     }
     return ( true ) ;

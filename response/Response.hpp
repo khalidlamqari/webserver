@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/12 03:23:32 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/13 03:49:59 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,9 +42,10 @@ class Response
         short                                   status;
         std::map< std::string , std::ofstream > files_to_upload ;
         bool                                    _running_post ;
+        std::string                             _path_ ;
+        std::string                             _cgi_extention ;
 
         void                                    format_message( void ) ;
-        bool                                    is_cgi( const std::string & path , const std::string & cgi_extention );
         bool                                    is_allowd_method() ;
         bool                                    is_allowd_method_in_location();
         void                                    get_static_page() ;
@@ -52,10 +53,11 @@ class Response
         LocationContext *                       find_location( const std::string & target ) ;
         LocationContext *                       find_exact_location( const std::string &target ) ;
         void                                    remove_last_slash( std::string & target ) ;
-        bool                                    get_path_of_page( std::string & path_of_page, std::string & cgi_extention ) ;
-        bool                                    path_from_location(std::string & path_of_page, std::string & cgi_extention , std::string & target, std::string & new_target);
-        bool                                    path_from_root(std::string & path_of_page, std::string & cgi_extention , std::string & target );
-        
+        bool                                    get_path_of_page() ;
+        bool                                    path_from_location( std::string & target, std::string & new_target);
+        bool                                    path_from_root( std::string & target );
+        void                                    read_and_format_msg();
+
         // redirection          
         void                                    redirection_handler( unsigned short status, const std::string & msg_or_file ) ;
         LocationContext *                       find_match_more_location( std::string & new_target ) ;
@@ -67,7 +69,7 @@ class Response
         void                                    responde_with_overrided_page( short error, std::string err_page_path ) ;
             
         // auto index           
-        void                                    respond_list_files( const std::string & path , const std::string & target) ;
+        void                                    respond_list_files( const std::string & target) ;
         bool                                    is_folder( const std::string & path ) ;
         void                                    append_row( std::string  path , std::string target, struct dirent * f, std::string & ls_files ) ;
                     
@@ -75,7 +77,7 @@ class Response
         void                                    execute_cgi() ;
             
         // methods          
-        void                                    delete_file( const std::string & path ) ;
+        void                                    delete_file( ) ;
             
         // upload files         
         void                                    upload_data(const std::string & file_name, const std::string & data );
@@ -93,7 +95,7 @@ class Response
 
         bool                        end_of_response() ;
         bool                        tranfer_encoding() ;
-
+        bool                         is_cgi( );
         ~Response() ;
 
 };

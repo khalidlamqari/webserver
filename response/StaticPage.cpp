@@ -6,107 +6,137 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/12 03:23:23 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/13 03:55:06 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "Response.hpp"
 
-bool    Response::path_from_location(std::string & path_of_page, std::string & cgi_extention , std::string & target, std::string & new_target )
+
+static void normalize_target(std::string &target)
+{
+    if ( target.find("..") == std::string::npos )
+        return ;
+    std::vector<std::string> directories = _split_(target, '/');
+    std::vector<std::string>::iterator it = directories.begin();
+    while (it != directories.end())
+    {
+        if (it == directories.begin() && *it == "..")
+            throw 403;
+        if (*it != ".." && it + 1 != directories.end() && *(it + 1) == "..")
+        {
+            it = directories.erase(it, it + 2);
+            if (it != directories.begin())
+                --it;
+        }
+        else
+            ++it;
+    }
+    target = "/";
+    for (std::vector<std::string>::iterator it = directories.begin() ; it != directories.end() ; ++it) 
+        target += "/" + *it;
+}
+
+bool    Response::path_from_location( std::string & target, std::string & new_target )
 {
     if ( ! (_location)->redirect_is_set )
     {
-        path_of_page = (_location)->get_root_directory() + "/" + target ;
-        if ( ( new_target == target || ( new_target + "/" ) == target ) && _location->get_auto_index() && this->is_folder( path_of_page ) )
+        this->_path_ = (_location)->get_root_directory() + "/" + target ;
+        if ( ( new_target == target || ( new_target + "/" ) == target ) && _location->get_auto_index() && this->is_folder( this->_path_ ) )
         {
-            this->respond_list_files( path_of_page, target ) ;
+            this->respond_list_files( target ) ;
             this->_end_of_response = true ;
             return false ;
         }
-        else if ( new_target != target && this->is_folder( path_of_page ) )
+        else if ( new_target != target && this->is_folder( this->_path_ ) )
             throw 403 ;
-        if ( this->is_folder( path_of_page ) )
-            path_of_page.append("/" + (_location)->get_index()) ;
+        if ( this->is_folder( this->_path_ ) )
+            this->_path_.append("/" + (_location)->get_index()) ;
     }
     else
     {
         redirection_handler( _location->get_redirection().first, _location->get_redirection().second ) ;
         return false ;
     }
-    cgi_extention = _location->get_cgi_extension();
+    this->_cgi_extention = _location->get_cgi_extension();
     return true ;
 }
 
-bool    Response::path_from_root(std::string & path_of_page, std::string & cgi_extention , std::string & target)
+bool    Response::path_from_root( std::string & target)
 {
-    path_of_page = this->server_context.get_root_directory() + "/" + target ;
-    if ( target == "/" && this->is_folder( path_of_page )  && this->server_context.get_auto_index() )
+    this->_path_ = this->server_context.get_root_directory() + "/" + target ;
+    if ( target == "/" && this->is_folder( this->_path_ )  && this->server_context.get_auto_index() )
     {
-        this->respond_list_files( path_of_page, target ) ;
+        this->respond_list_files( target ) ;
         this->_end_of_response = true ;
         return false ;
     }
-    else if ( target == "/" && this->is_folder( path_of_page ) )
-        path_of_page +=  this->server_context.get_index() ;
-    else if ( target != "/" && this->is_folder( path_of_page ) )
+    else if ( target == "/" && this->is_folder( this->_path_ ) )
+        this->_path_ +=  this->server_context.get_index() ;
+    else if ( target != "/" && this->is_folder( this->_path_ ) )
         throw 403 ;
     else
-        path_of_page = this->server_context.get_root_directory() + "/" + target ;
-    cgi_extention = this->server_context.get_cgi_extension();
+        this->_path_ = this->server_context.get_root_directory() + "/" + target ;
+    this->_cgi_extention = this->server_context.get_cgi_extension();
     return true ;
 }
 
-bool Response::get_path_of_page(std::string & path_of_page, std::string & cgi_extention  )
+bool Response::get_path_of_page(  )
 {
-    std::string                     target = this->request.get_request_target() ;
+    std::string           target = this->request.get_request_target() ;
+    normalize_target( target ) ;
     std::string new_target      = target ;
     _location                   = find_match_more_location( new_target ) ;
 
     if ( _location )
-    {
-        return ( this->path_from_location(path_of_page, cgi_extention, target, new_target) );
-    }
+        return ( this->path_from_location(target, new_target) );
     else
-    {
-        return ( this->path_from_root(path_of_page, cgi_extention, target) );
-    }
+        return ( this->path_from_root(target) );
     return true ;
 }
 
 void    Response::get_static_page()
 {
-    std::string                     path_of_page ;
-    char                            buffer[ RESP_BUFF ] = {0} ;
-    std::string                     cgi_extention ;
+    std::string     cgi_extention ;
 
-    if ( this->_running_post && ! this->_tranfer_encoding )
+    if ( this->_running_post )
     {
-        this->post_data() ;
+        this->post_data();
         return ;
     }
-    if ( ! this->_tranfer_encoding )
+    else if ( ! this->_tranfer_encoding )
     {
-        if ( ! this->get_path_of_page( path_of_page, cgi_extention ) )
+        if ( ! this->get_path_of_page( cgi_extention ) )
             return ;
+
         if ( ! ((this->_location && this->is_allowd_method_in_location() )\
             || (! this->_location && this->is_allowd_method())) )
             throw 405 ;
-        if (  this->request.get_request_method() == "DELETE" )
+
+        if ( this->request.get_request_method() == "DELETE" )
         {
-            this->delete_file( path_of_page ) ;
+            this->delete_file(  ) ;
             return ;
         }
         else if ( this->request.get_request_method() == "POST" )
         {
             this->_running_post = true ;
-            this->get_static_page();
+            this->post_data() ;
+            return ;
         }
+    }
+    this->read_and_format_msg() ;
+}
 
-        this->page_content.open( path_of_page ) ;
+void Response::read_and_format_msg()
+{
+    if ( !this->_tranfer_encoding )
+    {
+        this->page_content.open( this->_path_ ) ;
         if ( ! this->page_content.is_open() )
             throw 404 ;
     }
-
+    char    buffer[ RESP_BUFF ] = {0} ;
     this->page_content.read( buffer, (RESP_BUFF - 1)) ;
     if ( this->page_content.fail() && ! this->page_content.eof() )
         throw 500 ;
@@ -118,6 +148,44 @@ void    Response::get_static_page()
     this->generate_message(buffer, this->page_content.gcount() ) ;
 }
 
+std::string get_content_type( const std::string & file_name )
+{
+    std::string imgs[] = {".png",".avif", ".gif", ".webp", ".dmp", ".apng"} ;
+    std::string jpeg[] = {".jpg", ".jpeg", ".jfif", ".pjpeg", ".pjp"} ;
+    std::string ico[] = {".ico", ".cur"} ;
+    std::string texts[] = {".txt", ".html", ".htm", ".css", ".js"} ;
+    size_t size = sizeof(texts) / sizeof(texts[0]) ;
+    for (size_t i = 0; i < size ; ++i)
+    {
+        if ( file_name.find(texts[i], file_name.length() - texts[i].length()) != std::string::npos )
+        {
+            std::cout << " enter here |"  << texts[i] << "|" << std::endl;
+            if ( texts[i] == ".js" || texts[i] == ".javascript")
+                return ( "\r\nContent-Type: text/javascript; charset=utf-8") ;
+            return ( "\r\nContent-Type: text/" +  texts[i].erase(0, 1) + "; charset=utf-8") ;
+        }
+    }
+    size = sizeof(imgs) / sizeof(imgs[0]) ;
+    for (size_t i = 0; i < 6; ++i)
+    {
+        if ( file_name.find(imgs[i], file_name.length() - imgs[i].length()) != std::string::npos )
+            return ( "\r\nContent-Type: image/" +  imgs[i].erase(0, 1) ) ;
+    }
+    size = sizeof(jpeg) / sizeof( jpeg[0]) ;
+    for ( size_t i = 0; i < size ; ++i)
+    {
+        if ( file_name.find(file_name.length() - jpeg[i].length()) != std::string::npos)
+            return ( "\r\nContent-Type: image/jpeg" ) ;
+    }
+    size = sizeof(ico) / sizeof(ico[0]) ;
+    for (size_t i = 0; i < ico->length(); ++i)
+    {
+        if ( file_name.find(file_name.length() - ico[i].length()) != std::string::npos )
+            return ( "\r\nContent-Type: image/x-icon" ) ;
+    }
+    return ("") ;
+}
+
 void    Response::generate_message( char * content, size_t size )
 {
     std::ostringstream ss ;
@@ -127,7 +195,8 @@ void    Response::generate_message( char * content, size_t size )
     {
         if ( this->is_first_message )
         {
-            this->message.append("HTTP/1.1 " + default_error_pages.getErrorMsg( this->status ) + "\r\nTransfer-Encoding: chunked\r\nServer: webserv/0.0\n\r\n") ;
+            this->message.append("HTTP/1.1 " + default_error_pages.getErrorMsg( this->status ) +\
+            "\r\nTransfer-Encoding: chunked" + get_content_type(this->_path_) + "\r\nServer: webserv/0.0\n\r\n") ;
             this->is_first_message = false ;
         }
         this->message.append(ss.str()) ;
@@ -138,7 +207,7 @@ void    Response::generate_message( char * content, size_t size )
     else
     {
         this->message.append("HTTP/1.1 " + default_error_pages.getErrorMsg( this->status ) + "\r\nServer: webserv/0.0\r\n") ;
-        this->message.append("Content-Length: " + ss.str() + "\r\nContent-Type: text/html; charset=utf-8\r\nConnection: keep-alive\r\n\r\n") ; // Content-Type: text/html; charset=utf-8
+        this->message.append("Content-Length: " + ss.str() + get_content_type(this->_path_) + "\r\nConnection: keep-alive\r\n\r\n") ;
         this->message.append(content, size) ;
     }
 }
@@ -204,14 +273,14 @@ void Response::remove_last_slash( std::string & target )
         target = "" ;
 }
 
-void    Response::respond_list_files( const std::string & path , const std::string & target )
+void    Response::respond_list_files( const std::string & target )
 {
     std::string ls_files ;
     DIR *d ;
     struct dirent *f ;
     std::stringstream ss ;
 
-    d = opendir(path.c_str()) ;
+    d = opendir(this->_path_.c_str()) ;
     if ( !d )
         throw 500 ;
     ls_files.append("<!DOCTYPE html><html lang=\"en\"><head><meta "
@@ -226,7 +295,7 @@ void    Response::respond_list_files( const std::string & path , const std::stri
     "<th>Size</th><th>Date Modified</th></tr></thead><tbody>") ;
 
     while ( (f = readdir( d )) && f != NULL )
-        this->append_row( path, target, f, ls_files) ;
+        this->append_row( this->_path_, target, f, ls_files) ;
     if ( closedir(d) == -1 )
         throw 500 ;
     ls_files.append("</tbody></table><hr><center><h5>webserv</h5></center><hr></body></html>") ;
