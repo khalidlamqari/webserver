@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/13 03:55:26 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/14 13:48:44 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -126,16 +126,24 @@ void Response::responde_with_default_page( short error )
 
 bool    Response::is_cgi()
 {
+    try{
+        if ( process_target() == false )
+            return ((this->_is_cgi = false), false) ;
+    } catch (int x)
+    {
+        (void)x;
+        return ((this->_is_cgi = false), false) ;
+    }
     if ( this->_cgi_extention.length() > this->_path_.length() || this->_cgi_extention.empty() )
-        return ( false ) ;
+        return ((this->_is_cgi = false), false) ;
 
     size_t j = this->_path_.length() - 1 ;
     for ( ssize_t i = this->_cgi_extention.length() - 1 ; i >= 0 ; i-- )
     {
         if ( this->_cgi_extention[i] != this->_path_[j--] )
-            return ( false ) ;
+            return ((this->_is_cgi = false), false) ;
     }
-    return ( true ) ;
+    return ((this->_is_cgi = true), true) ;
 }
 
 bool Response::is_allowd_method()
@@ -163,8 +171,13 @@ bool Response::is_allowd_method_in_location()
 const std::string & Response::getResponse( void )
 {
     this->message = "";
+    if ( is_cgi() == true )
+        std::cout << "is a cgi " <<  this->_path_ << std::endl;
+    else
+        std::cout << "is not cgi " << this->_path_ << std::endl;
+        
+
     this->format_message() ;
-    
     return ( this->message ) ;
 }
 

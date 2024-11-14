@@ -6,11 +6,12 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/13 03:55:06 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/14 15:02:54 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "Response.hpp"
+
 
 
 static void normalize_target(std::string &target)
@@ -37,6 +38,8 @@ static void normalize_target(std::string &target)
         target += "/" + *it;
 }
 
+
+
 bool    Response::path_from_location( std::string & target, std::string & new_target )
 {
     if ( ! (_location)->redirect_is_set )
@@ -58,7 +61,7 @@ bool    Response::path_from_location( std::string & target, std::string & new_ta
         redirection_handler( _location->get_redirection().first, _location->get_redirection().second ) ;
         return false ;
     }
-    this->_cgi_extention = _location->get_cgi_extension();
+    // this->_cgi_extention = _location->get_cgi_extension();
     return true ;
 }
 
@@ -75,9 +78,9 @@ bool    Response::path_from_root( std::string & target)
         this->_path_ +=  this->server_context.get_index() ;
     else if ( target != "/" && this->is_folder( this->_path_ ) )
         throw 403 ;
-    else
-        this->_path_ = this->server_context.get_root_directory() + "/" + target ;
-    this->_cgi_extention = this->server_context.get_cgi_extension();
+    // else
+    //     this->_path_ = this->server_context.get_root_directory() + "/" + target ;
+    // this->_cgi_extention = this->server_context.get_cgi_extension();
     return true ;
 }
 
@@ -97,8 +100,6 @@ bool Response::get_path_of_page(  )
 
 void    Response::get_static_page()
 {
-    std::string     cgi_extention ;
-
     if ( this->_running_post )
     {
         this->post_data();
@@ -106,7 +107,7 @@ void    Response::get_static_page()
     }
     else if ( ! this->_tranfer_encoding )
     {
-        if ( ! this->get_path_of_page( cgi_extention ) )
+        if ( ! this->get_path_of_page( ) )
             return ;
 
         if ( ! ((this->_location && this->is_allowd_method_in_location() )\
@@ -118,12 +119,18 @@ void    Response::get_static_page()
             this->delete_file(  ) ;
             return ;
         }
-        else if ( this->request.get_request_method() == "POST" )
+        else if ( !this->_is_cgi && this->request.get_request_method() == "POST" )
         {
             this->_running_post = true ;
-            this->post_data() ;
+            this->post_data() ; // upload data
             return ;
         }
+        else if ( this->_is_cgi )
+        {
+            this->execute_cgi() ;
+            return ;
+        }
+        
     }
     this->read_and_format_msg() ;
 }
@@ -334,4 +341,45 @@ bool    Response::is_folder( const std::string & path )
     if ( S_IFDIR & s.st_mode )
         return ( true ) ;
     return ( false ) ;
+}
+
+
+bool                                    Response::process_target()
+{
+    std::string           target = this->request.get_request_target() ;
+    normalize_target( target ) ;
+    std::string new_target      = target ;
+    _location                   = find_match_more_location( new_target ) ;
+
+    if ( _location )
+    {
+        if ( ! (_location)->redirect_is_set )
+        {
+            this->_path_ = (_location)->get_root_directory() + "/" + target ;
+            if ( new_target != target && this->is_folder( this->_path_ ) )
+                return false ;
+            if ( this->is_folder( this->_path_ ) )
+                this->_path_.append("/" + (_location)->get_index()) ;
+        }
+        else
+            return false ;
+        this->_cgi_extention = _location->get_cgi_extension();
+        return true ;
+    }
+    else
+    {
+        this->_path_ = this->server_context.get_root_directory() + "/" + target ;
+        if ( target == "/" && this->is_folder( this->_path_ )  && this->server_context.get_auto_index() )
+        {
+            return false ;
+        }
+        else if ( target == "/" && this->is_folder( this->_path_ ) )
+            this->_path_ +=  this->server_context.get_index() ;
+        else if ( target != "/" && this->is_folder( this->_path_ ) )
+            return false ;
+            
+        this->_cgi_extention = this->server_context.get_cgi_extension();
+        return true ;
+    }
+    return true ;
 }

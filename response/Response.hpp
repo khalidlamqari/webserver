@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/13 03:49:59 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/14 15:02:29 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,6 +44,7 @@ class Response
         bool                                    _running_post ;
         std::string                             _path_ ;
         std::string                             _cgi_extention ;
+        bool                                    _is_cgi ;
 
         void                                    format_message( void ) ;
         bool                                    is_allowd_method() ;
@@ -83,6 +84,7 @@ class Response
         void                                    upload_data(const std::string & file_name, const std::string & data );
         void                                    post_data() ;
         
+        bool                                    process_target();
         
         
     public:
