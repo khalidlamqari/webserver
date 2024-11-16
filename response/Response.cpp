@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/14 13:48:44 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/16 06:32:15 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,11 +15,12 @@
 Response::Response ( ServerContext & server_context, Request & request) :\
                     server_context(server_context), request(request)
 {
-    this->_end_of_response = false ;
+    this->_end_of_response  = false ;
     this->_tranfer_encoding = false ;
-    this->is_first_message = true ;
+    this->is_first_message  = true ;
     this->_location         = NULL ;
     this->_running_post     = false ;
+    this->exit_stat         = -1;
     // this->status            = 200 ;
     this->status = this->request.getStatus() ;
     // this->get_path_of_page() ;
@@ -134,6 +135,7 @@ bool    Response::is_cgi()
         (void)x;
         return ((this->_is_cgi = false), false) ;
     }
+
     if ( this->_cgi_extention.length() > this->_path_.length() || this->_cgi_extention.empty() )
         return ((this->_is_cgi = false), false) ;
 
@@ -175,9 +177,9 @@ const std::string & Response::getResponse( void )
         std::cout << "is a cgi " <<  this->_path_ << std::endl;
     else
         std::cout << "is not cgi " << this->_path_ << std::endl;
-        
 
     this->format_message() ;
+    // std::cout << "this->message = \n"<< this->message <<std::endl;
     return ( this->message ) ;
 }
 
@@ -231,3 +233,4 @@ bool Response::tranfer_encoding()
 Response::~Response() 
 {
 }
+

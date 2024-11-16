@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 10:28:23 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/11 22:58:52 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/14 17:35:14 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -266,7 +266,7 @@ void    Server::send_response(ServerContext & server_context , int i)
             this->fds[i].fd = -1 ;
             throw std::runtime_error("close failure ") ;
         }
-        std::cout << "here " << std::endl;
+        std::cout << "closed " << std::endl;
 
         this->fds[i].fd = -1 ;
         this->requests[i].reuse() ;

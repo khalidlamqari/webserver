@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/14 15:02:29 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/16 01:44:51 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,7 +45,12 @@ class Response
         std::string                             _path_ ;
         std::string                             _cgi_extention ;
         bool                                    _is_cgi ;
-
+        int                                     s_fds[2] ;
+        int                                     exit_stat ;
+        pid_t                                   pid ;
+        
+        
+        
         void                                    format_message( void ) ;
         bool                                    is_allowd_method() ;
         bool                                    is_allowd_method_in_location();
@@ -76,7 +81,8 @@ class Response
                     
         // cgi          
         void                                    execute_cgi() ;
-            
+        void                                    read_cgi_output() ;
+        void                                    setup_environment();
         // methods          
         void                                    delete_file( ) ;
             

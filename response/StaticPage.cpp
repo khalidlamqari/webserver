@@ -6,12 +6,11 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/14 15:02:54 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/16 06:38:53 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "Response.hpp"
-
 
 
 static void normalize_target(std::string &target)
@@ -100,6 +99,7 @@ bool Response::get_path_of_page(  )
 
 void    Response::get_static_page()
 {
+
     if ( this->_running_post )
     {
         this->post_data();
@@ -107,6 +107,7 @@ void    Response::get_static_page()
     }
     else if ( ! this->_tranfer_encoding )
     {
+        std::cout << "in mian condition" << std::endl;
         if ( ! this->get_path_of_page( ) )
             return ;
 
@@ -126,13 +127,41 @@ void    Response::get_static_page()
             return ;
         }
         else if ( this->_is_cgi )
-        {
             this->execute_cgi() ;
-            return ;
-        }
-        
     }
-    this->read_and_format_msg() ;
+
+    if (this->_is_cgi && this->exit_stat == 0 )
+        this->read_cgi_output() ;
+    else
+        this->read_and_format_msg() ;
+}
+
+void Response::read_cgi_output()
+{
+    ssize_t n ;
+
+    std::cout << "readding from socketpair parent process" << std::endl;
+
+    if ( ! this->_tranfer_encoding )
+    {
+        if ( close(this->s_fds[1]) == -1)
+            throw 500 ;
+    }
+    char    buffer[ RESP_BUFF ] = {0} ;
+
+    n = read(this->s_fds[0], buffer, (RESP_BUFF - 1)) ;
+    if ( n == -1 )
+        throw 500 ;
+    buffer[n] = '\0' ;
+    if ( n <  (RESP_BUFF - 1) )
+    {
+        std::cout << "Response ended"   << std::endl;
+        this->_end_of_response = true ;
+    }
+    else
+        this->_tranfer_encoding = true ;
+    std::cout << "n = " << n << std::endl;
+    this->generate_message(buffer, n ) ;
 }
 
 void Response::read_and_format_msg()
@@ -152,6 +181,7 @@ void Response::read_and_format_msg()
         this->_end_of_response = true ;
     else
         this->_tranfer_encoding = true ;
+
     this->generate_message(buffer, this->page_content.gcount() ) ;
 }
 
@@ -181,15 +211,18 @@ std::string get_content_type( const std::string & file_name )
     size = sizeof(jpeg) / sizeof( jpeg[0]) ;
     for ( size_t i = 0; i < size ; ++i)
     {
-        if ( file_name.find(file_name.length() - jpeg[i].length()) != std::string::npos)
+        if ( file_name.find(jpeg[i], file_name.length() - jpeg[i].length()) != std::string::npos)
             return ( "\r\nContent-Type: image/jpeg" ) ;
     }
     size = sizeof(ico) / sizeof(ico[0]) ;
     for (size_t i = 0; i < ico->length(); ++i)
     {
-        if ( file_name.find(file_name.length() - ico[i].length()) != std::string::npos )
+        if ( file_name.find(ico[i] ,file_name.length() - ico[i].length()) != std::string::npos )
             return ( "\r\nContent-Type: image/x-icon" ) ;
     }
+    if ( file_name.find(".mp4", file_name.length() - 4) != std::string::npos )
+        return ( "\r\nContent-Type: video/mp4" ) ;
+            
     return ("") ;
 }
 

@@ -6,10 +6,26 @@
     <title>Document</title>
 </head>
 <body>
+    <h1>
+        <?php echo "hello brahim" ?>
+    </h1>
+
+    <h1>
+        <?php echo "hello world" ?>
+    </h1>
+    <p>
+    <?php echo "Request Method: " . $_SERVER['REQUEST_METHOD'];?>
+    </p><br>
+    <p>
     <?php
-        echo "hello sidi brahim"
+    echo "Request Method: " . $_SERVER['_'];
     ?>
-    <h1>hello world</h1>
-    <h1>Home Page </h1>
+    </p><br>
+    <h1>
+    <?php
+    echo "Request Method: " . $_SERVER['USER'] . "<br>"; 
+    echo "CONTENT_LENGTH : " . $_SERVER['CONTENT_LENGTH'];
+    ?>
+    </h1>
 </body>
 </html>
