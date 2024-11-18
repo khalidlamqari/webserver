@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/16 06:32:15 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/18 01:41:47 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -173,13 +173,9 @@ bool Response::is_allowd_method_in_location()
 const std::string & Response::getResponse( void )
 {
     this->message = "";
-    if ( is_cgi() == true )
-        std::cout << "is a cgi " <<  this->_path_ << std::endl;
-    else
-        std::cout << "is not cgi " << this->_path_ << std::endl;
-
+    is_cgi();
     this->format_message() ;
-    // std::cout << "this->message = \n"<< this->message <<std::endl;
+    // std::cout << "message : " << this->message << std::endl;
     return ( this->message ) ;
 }
 

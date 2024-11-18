@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 10:28:23 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/14 17:35:14 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/17 00:17:39 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -252,11 +252,14 @@ void    Server::send_response(ServerContext & server_context , int i)
             if ( size == -1 )
             {
                 std::cout << "error " << std::endl;
-                throw std::runtime_error("send failure ") ;
+                // throw std::runtime_error("send failure ") ;
             }
-
-            if ( (response.tranfer_encoding() && response.getPageStream().gcount() == 0) ||  ( ! response.tranfer_encoding() && response.end_of_response() ) )
+            if ( response.is_cgi() && response.end_of_response() )
                 break ;
+
+            if ( !response.is_cgi() && (( response.tranfer_encoding() && response.getPageStream().gcount() == 0) ||  ( ! response.tranfer_encoding() && response.end_of_response() )) )
+                break ;
+
         }
     
     

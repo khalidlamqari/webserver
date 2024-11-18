@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/16 01:44:51 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/18 04:41:58 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,13 +43,16 @@ class Response
         std::map< std::string , std::ofstream > files_to_upload ;
         bool                                    _running_post ;
         std::string                             _path_ ;
+        std::string                             _path_info ;
+        std::string                             _target ;
+        
         std::string                             _cgi_extention ;
         bool                                    _is_cgi ;
         int                                     s_fds[2] ;
         int                                     exit_stat ;
         pid_t                                   pid ;
         
-        
+
         
         void                                    format_message( void ) ;
         bool                                    is_allowd_method() ;
@@ -63,7 +66,7 @@ class Response
         bool                                    path_from_location( std::string & target, std::string & new_target);
         bool                                    path_from_root( std::string & target );
         void                                    read_and_format_msg();
-
+        void                                    get_pathinfo_form_target();
         // redirection          
         void                                    redirection_handler( unsigned short status, const std::string & msg_or_file ) ;
         LocationContext *                       find_match_more_location( std::string & new_target ) ;
@@ -73,23 +76,24 @@ class Response
         void                                    error_response( short error ) ;
         void                                    responde_with_default_page( short error ) ;
         void                                    responde_with_overrided_page( short error, std::string err_page_path ) ;
-            
+
         // auto index           
         void                                    respond_list_files( const std::string & target) ;
         bool                                    is_folder( const std::string & path ) ;
         void                                    append_row( std::string  path , std::string target, struct dirent * f, std::string & ls_files ) ;
-                    
-        // cgi          
+
+        // cgi
         void                                    execute_cgi() ;
         void                                    read_cgi_output() ;
-        void                                    setup_environment();
+        void                                    setup_environment(char ***env);
+
         // methods          
         void                                    delete_file( ) ;
-            
+
         // upload files         
         void                                    upload_data(const std::string & file_name, const std::string & data );
         void                                    post_data() ;
-        
+
         bool                                    process_target();
         
         
