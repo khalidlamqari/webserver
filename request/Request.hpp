@@ -5,76 +5,160 @@
 /*                                                    +:+ +:+         +:+     */
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/10/10 11:35:53 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/08 18:51:31 by klamqari         ###   ########.fr       */
+/*   Created: 2024/11/04 17:07:06 by ymafaman          #+#    #+#             */
+/*   Updated: 2024/11/20 04:04:03 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#pragma once
-
 #ifndef REQUEST_HPP
+# define REQUEST_HPP
 
-#define REQUEST_HPP
+#include "../server_setup/Server.hpp"
+#include <string>
+#include <sstream>
+#include <iostream>
+#include <vector>
+#include <map>
 
-# include "../includes/main.hpp"
+typedef struct  s_part {
 
-/*
-*    HTTP-message = start-line
-*                    *( header-field CRLF )
-*                    CRLF
-*                    [ message-body ]
-*/
+    std::string file_name;
+    std::string file_content;
+    std::string content_type;
+	bool		header_parsed;
+	bool		is_complete;
+    bool        is_new;
 
-class Request
-{
-    private :
-        // status-line = <HTTP Method>  <Request-URI>  <HTTP Version>
-        // request-line = method SP request-target SP HTTP-version CRLF
-        
-        std::string                 message ;
-        int                       status ;
-        void                        parseStartLine(const std::string & line) ;
-        bool                        Valide_method( const std::string methodName );
-        
-        void                        parseHeader(const std::string & line ) ;
-        std::vector<std::string>    parse_header_values(const std::string & field_value);
-        void                        check_valid_headres();
-        
+    std::string unparsed_bytes;
+
+} t_part;
+
+class Request {
+
     public :
-        std::map< std::string, std::vector<std::string> >   headers ;// key , value
-    
-        std::string                                         method ;
-        std::string                                         request_target ;
-        std::string                                         HTTP_version ;
-        std::string                                         body ;
-        size_t                                              content_length ;
-        size_t                                              counter_recv ;
-        bool                                                isReady ;
-        
-        
-        
-        void                                                        parseMessage() ;
-        
-        /* Setters */
-        void                                                        setMessage( std::string message ) ;
-        const std::string                                           & getMessage( void ) ;
-        void                                                        appendMessage(  char * message , ssize_t bytes_received ) ;
-        void                                                        appendTobody(  char * message , ssize_t bytes_received ) ;
-        void                                                        setStatus( short status ) ;
+
+        /* Constructors */
+        Request( void );
+
+        /* Destructor */
+        ~Request();
 
         /* Getters */
-        const std::string                                           & get_request_method( void ) const ;
-        const std::string                                           & get_request_target( void ) const ;
-        const std::string                                           & get_request_body  ( void ) const ;
-        std::map < std::string, std::vector<std::string> >          & get_request_headers( void ) ;
-        short                                                       getStatus( void ) ;
+		t_part &	get_latest_part();
+        size_t      get_total_chunks_length();
+        std::string get_target();
+        std::string get_query();
+        std::string get_method();
+        std::string get_body();
+        size_t      getContentLength();
+        std::string get_boundary();
+        bool    hasParsedStartLine();
+        bool    hasParsedHeaders();
+        bool    hasParsedBody();
+        bool    hasIncompletePart();
+        bool    hostIsSet();
+        bool    ContentLengthIsSet();
+        bool    isBadRequest();
+        bool    isReady();
+        bool    isChunked();
+        bool    isPersistent();
+        bool    isMultipart();
+        std::string getUnparsedMsg();
+        std::string get_version();
 
-        void                                                        reuse();
+        bool    hasReachedFirstPart( void );       
+        bool    hasReachedLastPart( void ); 
+        size_t   hasAnUndoneChunk( void ); 
 
-        Request(std::string message) ;
-        Request() ;
-        ~Request() ;
+        /* Setters */
+        void      set_total_chunks_length(size_t total_length);
+		void	set_new_part( t_part & new_part );
 
+        void    set_method( const std::string & method );
+        void    set_version( const std::string & version );
+        void    set_target( const std::string & target );
+        void    set_query( std::string query );
+        void    set_body( const std::string & body );
+		void	set_content_length( const size_t & length );
+        void    set_boundary( const std::string & boundary );
+        void    setHasIncompletePart( bool & incomplete );
+        void    markStartLineParsed( const bool & parsed ); // TODO: remove argument ?
+        void    markHeadersParsed( const bool & parsed );
+        void    markBodyParsed( const bool & parsed );
+        void    markAsReady( const bool & ready );
+        void    markAsBad( int i );
+        void    markAsChunked();
+        void    markAsPersistent( const bool& persist);
+        void    markContentLengthAsSet();
+        void    markAsMultipart();
+        void    markHostAsSet();
+        void    markFirstPartAsReached();
+        void    markLastPartAsReached();
+        void    set_parsingErrorCode( short code );
+        void    storeUnparsedMsg(const std::string & msg );
+        void    markAsHasUndoneChunk( bool undone, size_t size_left );
+
+        /* Methods */
+        void    resetUnparsedMsg();
+        void    setHeader( const std::string& name, const std::string& value );
+
+        void    print_headrs();
+        void    print_files();
+
+        void    drop_last_part();
+
+        struct ClientSocket * get_ClientSocket() { return this->clientsocket ; }
+        void set_ClientSocket(struct ClientSocket * clientsocket) { this->clientsocket = clientsocket ; }
+        std::map<std::string, std::string> & get_headers() {return this->headers ;}
+        const std::string & get_request_method() {return this->method ; }
+        
+        const std::string & get_request_target() { return this->target ; }
+        
+
+        
+    private : 
+
+        std::map<std::string, std::string>  headers;
+        std::string                         method;
+        std::string                         version;
+        std::string                         target;
+        std::string                         body;
+        std::string                         query;
+        std::string                         content_type;
+
+        bool                                start_line_is_parsed;
+        bool                                headers_parsed;
+        bool                                body_is_parsed;
+        bool                                content_length_is_set;
+        bool                                is_ready;
+
+        bool                                is_chunked;
+        bool                                is_persistent;
+        bool                                is_multipart;
+        bool                                host_is_set;
+
+        /*  */
+        bool                                is_bad;
+        short                               parsingErrorCode;
+
+        /* */
+        std::string                         unparsed_msg;
+        size_t		                        content_length;
+        size_t                              total_chunks_length;
+
+        std::string                         boundary;
+
+        // Content parsing :
+        std::vector <t_part>    parts;     			// This vector stores the parts of the body, only parts with the type of file are stored.
+        std::string				content;            // Where normal content will be stored, this content is gonna be passed to the cgi program.
+        bool					first_part_reached; // In case of a multipart body.
+        bool					last_part_reached;
+        bool					has_incomplete_part;
+        bool                    undone_chunk;
+        size_t                  size_left;
+        struct ClientSocket *          clientsocket ;
 };
 
-# endif
+
+
+#endif

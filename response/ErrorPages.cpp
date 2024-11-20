@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/27 15:21:34 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/09 17:33:23 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/20 04:27:37 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,6 @@
 
 ErrorPages::ErrorPages()
 {
-    std::cout << "default error page created " << std::endl;
     this->init_pages() ;
 }
 

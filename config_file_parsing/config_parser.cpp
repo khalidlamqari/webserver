@@ -3,19 +3,18 @@
 /*                                                        :::      ::::::::   */
 /*   config_parser.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ymafaman <ymafaman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/09 15:04:07 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/10/23 10:55:38 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/09 16:14:38 by ymafaman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "config_parse.hpp"
-#include <unistd.h>
+#include "../webserv.hpp"
 
 /* Removing the escape characters from the token before storing it */
 
-token_info normalize_token(std::string token, unsigned int line_num)
+static token_info normalize_token(std::string token, unsigned int line_num)
 {
     token_info  info;
     bool        removed_one;
@@ -100,7 +99,7 @@ token_info normalize_token(std::string token, unsigned int line_num)
     return info;
 }
 
-std::string get_next_chunk(std::string token)
+static std::string get_next_chunk(std::string token)
 {
     unsigned int    escape_char_counter;
     char            quote;
@@ -141,7 +140,7 @@ std::string get_next_chunk(std::string token)
 
 /* this function's job is to only store tokens and skip comments */
 
-bool    has_unmatched_quote(std::string token)
+static bool    has_unmatched_quote(std::string token)
 {
     unsigned int    escape_char_counter;
     bool            unmatched_quote_found;
@@ -171,7 +170,7 @@ bool    has_unmatched_quote(std::string token)
     return unmatched_quote_found;
 }
 
-void    append_token_to_queue(std::string token, std::queue<token_info>& tokens_queue, unsigned int line_num)
+static void    append_token_to_queue(std::string token, std::queue<token_info>& tokens_queue, unsigned int line_num)
 {
     std::string chunk;
     size_t      chunk_pos;
@@ -190,13 +189,18 @@ void    append_token_to_queue(std::string token, std::queue<token_info>& tokens_
     }
 }
 
-char    quote_first(std::string str)
+static char    quote_first(std::string str)
 {    
     for (size_t i = 0; i < str.length(); i++)
     {
-        if (((i == 0) && (str[i] == '"' || str[i] == '\'')) || ((str[i - 1] != '\\') && (str[i] == '"' || str[i] == '\'')))
+        if ((i == 0) && (str[i] == '"' || str[i] == '\''))
         {
             return str[i];
+        }
+        else if (i != 0)
+        {
+            if ((str[i - 1] != '\\') && (str[i] == '"' || str[i] == '\''))
+                return str[i];
         }
         else if (is_space(str[i]))
         {
@@ -207,7 +211,7 @@ char    quote_first(std::string str)
     return '-';
 }
 
-void    remove_leading_spaces(std::stringstream& strm)
+static void    remove_leading_spaces(std::stringstream& strm)
 {
     while ((strm.tellg() != -1) && ((size_t) strm.tellg() != strm.str().length()) && (strm.peek() == 32 || (strm.peek() >= 9 && strm.peek() <= 13)))
     {
@@ -216,7 +220,7 @@ void    remove_leading_spaces(std::stringstream& strm)
     }
 }
 
-std::string get_quoted_string(std::stringstream& strm, char quote)
+static std::string get_quoted_string(std::stringstream& strm, char quote)
 {
     std::string quoted;
     static int  counter;
@@ -267,7 +271,7 @@ std::string get_quoted_string(std::stringstream& strm, char quote)
     return quoted;
 }
 
-void    tokenize_config(std::queue<token_info>& tokens_queue, std::string file_name)
+static void    tokenize_config(std::queue<token_info>& tokens_queue, std::string file_name)
 {
     std::stringstream   strm;
     unsigned int        line_num;
@@ -293,7 +297,7 @@ void    tokenize_config(std::queue<token_info>& tokens_queue, std::string file_n
         while ((strm.tellg() != -1) && ((size_t) strm.tellg() != strm.str().length())) // the second condition is for "qeqwe"
         {
             remove_leading_spaces(strm);
-            
+
             quote = quote_first(strm.str().substr(strm.tellg()));
             if (quote != '-')
             {
@@ -324,14 +328,38 @@ void    tokenize_config(std::queue<token_info>& tokens_queue, std::string file_n
         }
         line_num++;
     }
+    file.close(); // file has to be closed in all cases try to open it in main!
 }
 
+static void    validate_config(const HttpContext& http_config )
+{
+    const std::vector<ServerContext> servers = http_config.get_servers();
 
-void    config_tokenizer(std::string file_name, HttpContext & http_config)
+    if (servers.size() == 0)
+    {
+        throw std::invalid_argument("Configuration Error: Please specify at least one server within the Http context.");
+    }
+
+    std::vector<ServerContext>::const_iterator it = http_config.get_servers().begin();
+    std::vector<ServerContext>::const_iterator end = http_config.get_servers().end();
+
+    for (; it < end; it++)
+    {
+        if (it->get_host() == "")
+            throw std::invalid_argument("Configuration Error: Hostname required for server definition but not provided."); 
+
+        if (it->get_root_directory() == "")
+            throw std::invalid_argument("Configuration Error: Root directory required for server definition but not provided."); 
+
+        if (it->get_ports().size() == 0)
+            throw std::invalid_argument("Configuration Error: Please specify a port for all servers to listen on."); 
+    }
+
+}
+
+void    parse_config_file(std::string file_name, HttpContext& http_config)
 {
     std::queue<token_info>  tokens_queue;
-    // HttpContext             http_config;
-
 
     tokenize_config(tokens_queue, file_name);
 
@@ -340,6 +368,7 @@ void    config_tokenizer(std::string file_name, HttpContext & http_config)
         std::cerr << "empty" << std::endl;
         exit (1);
     }
+
     if (tokens_queue.front().token != "http")
     {
         if (tokens_queue.front().token == ";" || tokens_queue.front().token == "{" || tokens_queue.front().token == "}")
@@ -351,13 +380,7 @@ void    config_tokenizer(std::string file_name, HttpContext & http_config)
     }
     tokens_queue.pop();
 
-    // while (!tokens_queue.empty())
-    // {
-    //     std::cout << tokens_queue.front().token << std::endl;
-    //     tokens_queue.pop();
-    // }
-
     store_config(http_config, tokens_queue, file_name, "http");
 
-    
+    validate_config(http_config);
 }

@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/18 06:59:13 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/20 06:12:19 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -150,6 +150,8 @@ void Response::read_cgi_output()
         this->_end_of_response = true ;
     else
         this->_tranfer_encoding = true ;
+
+    printf("message : %s\n", buffer ) ;
     this->generate_message(buffer, n ) ;
 }
 
@@ -185,7 +187,6 @@ std::string get_content_type( const std::string & file_name )
     {
         if ( file_name.find(texts[i], file_name.length() - texts[i].length()) != std::string::npos )
         {
-            std::cout << " enter here |"  << texts[i] << "|" << std::endl;
             if ( texts[i] == ".js" || texts[i] == ".javascript")
                 return ( "\r\nContent-Type: text/javascript; charset=utf-8") ;
             return ( "\r\nContent-Type: text/" +  texts[i].erase(0, 1) + "; charset=utf-8") ;
@@ -221,11 +222,12 @@ void    Response::generate_message( char * content, size_t size )
 {
     std::ostringstream ss ;
 
-    ss << std::hex << size ;
+    
     if ( this->_tranfer_encoding )
     {
         if ( this->is_first_message )
         {
+            ss << std::hex << size ;
             this->message.append("HTTP/1.1 " + default_error_pages.getErrorMsg( this->status ) +\
             "\r\nTransfer-Encoding: chunked" + get_content_type(this->_path_) + "\r\nServer: webserv/0.0\n\r\n") ;
             this->is_first_message = false ;
@@ -238,6 +240,7 @@ void    Response::generate_message( char * content, size_t size )
     }
     else
     {
+        ss << size ;
         this->message.append("HTTP/1.1 " + default_error_pages.getErrorMsg( this->status ) + "\r\nServer: webserv/0.0\r\n") ;
         this->message.append("Content-Length: " + ss.str() + get_content_type(this->_path_) + "\r\nConnection: keep-alive\r\n\r\n") ;
         this->message.append(content, size) ;
@@ -265,13 +268,13 @@ LocationContext * Response::find_match_more_location( std::string & new_target )
 
 LocationContext * Response::find_exact_location(const std::string &target)
 {
-    std::vector<LocationContext> & locations = this->server_context.get_locations() ;
+    const std::vector<LocationContext> & locations = this->server_context.get_locations() ;
 
-    for (std::vector<LocationContext>::iterator i = locations.begin(); i != locations.end(); ++i)
+    for (std::vector<LocationContext>::const_iterator i = locations.begin(); i != locations.end(); ++i)
     {
         if (i->get_location() == target && i->is_exact_location() )
         {
-            return &(*i) ;
+            return (LocationContext *)&(*i) ;
         }
     }
     return ( NULL );
@@ -279,13 +282,13 @@ LocationContext * Response::find_exact_location(const std::string &target)
 
 LocationContext * Response::find_location(const std::string &target)
 {
-    std::vector<LocationContext> & locations = this->server_context.get_locations();
+    const std::vector<LocationContext> & locations = this->server_context.get_locations();
 
-    for (std::vector<LocationContext>::iterator i = locations.begin(); i != locations.end(); ++i)
+    for (std::vector<LocationContext>::const_iterator i = locations.begin(); i != locations.end(); ++i)
     {
         if (i->get_location() == target && ! i->is_exact_location() )
         {
-            return &(*i) ;
+            return (LocationContext *)&(*i) ;
         }
     }
     return ( NULL );
@@ -376,15 +379,15 @@ void                                    Response::get_pathinfo_form_target()
 
     this->_path_info = this->_target.substr(4 + pos);
     this->_target    = this->_target.substr(0, 4 + pos);
-    std::cout << "path info : " << this->_path_info << "\nnew target : " << this->_target << std::endl;
+    // std::cout << "path info : " << this->_path_info << "\nnew target : " << this->_target << std::endl;
 
 }
 
-bool                                    Response::process_target()
+bool    Response::process_target()
 {
     this->_target = this->request.get_request_target() ;
     normalize_target( this->_target ) ;
-    this->get_pathinfo_form_target();
+    this->get_pathinfo_form_target() ;
     std::string new_target      = this->_target ;
     _location                   = find_match_more_location( new_target ) ;
 

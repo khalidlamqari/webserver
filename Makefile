@@ -1,45 +1,96 @@
-CONFIG_PARSE_SRCS = config_file_parsing/config_parser.cpp config_file_parsing/HttpContext.cpp config_file_parsing/config_storing.cpp \
-					config_file_parsing/config_exception_throw.cpp  config_file_parsing/token_name_checker.cpp config_file_parsing/config_values_extracter.cpp \
-					config_file_parsing/ServerContext.cpp config_file_parsing/LocationContext.cpp
+SERVER_SRCS			=	server_setup/server.cpp \
+						server_setup/polling.cpp  \
+						server_setup/ClientHandler.cpp \
+						server_setup/KqueueWrapper.cpp
+
+UTILS_SRCS			=	response/ErrorPages.cpp Utils/helper_functions.cpp Utils/split.cpp Utils/trim.cpp Utils/helpers.cpp
+
+CONFIG_PARSE_SRCS	=	config_file_parsing/config_exception_throw.cpp \
+						config_file_parsing/config_storing.cpp \
+						config_file_parsing/config_values_extracter.cpp \
+						config_file_parsing/config_parser.cpp \
+						config_file_parsing/token_name_checker.cpp \
+
+CONTEXTS_SRCS		=	Contexts/HttpContext.cpp \
+						Contexts/LocationContext.cpp \
+						Contexts/ServerContext.cpp \
+
+MAIN_SRCS			=	main.cpp
+
+REQUEST_SRCS		=	Request/Request.cpp \
+						Request/start_line_parser.cpp \
+						Request/headers_parser.cpp \
+						Request/body_parser.cpp
+
+RESPONSE_SRCS	=	 response/Response.cpp response/StaticPage.cpp response/Redirections.cpp response/ExecuteCgi.cpp \
+					 response/Methods.cpp
+
+RESPONSE_OBJS = ${RESPONSE_SRCS:.cpp=.o}
+#-------------------------------------------------------------------------------------------------------------------------------#
 
 CONFIG_PARSE_OBJECTS = $(CONFIG_PARSE_SRCS:.cpp=.o)
 
-MAIN_SRC = helper_functions.cpp
+UTILS_OBJECTS = $(UTILS_SRCS:.cpp=.o)
 
-MAIN_OBJECTS = $(MAIN_SRC:.cpp=.o)
+CONTEXTS_OBJECTS = $(CONTEXTS_SRCS:.cpp=.o)
 
-FUNS =  SERVER/main.cpp SERVER/Server.cpp request/Request.cpp request/ParseHeader.cpp utils/split.cpp utils/trim.cpp \
-		utils/helpers.cpp response/Response.cpp response/StaticPage.cpp response/Redirections.cpp response/ExecuteCgi.cpp \
-		response/ErrorPages.cpp response/Methods.cpp
+SERVER_OBJECTS = $(SERVER_SRCS:.cpp=.o)
 
-OBJS = ${FUNS:.cpp=.o}
+MAIN_OBJECTS = $(MAIN_SRCS:.cpp=.o)
 
-CC = c++
+REQUEST_OBJECTS = $(REQUEST_SRCS:.cpp=.o)
+
+#-------------------------------------------------------------------------------------------------------------------------------#
+
+CPP = c++
 
 FLAGS = -Wall -Wextra -Werror -std=c++98 #-fsanitize=address
 
-NAME = webserver
+NAME = webserv
 
-RM = rm -f
+#-------------------------------------------------------------------------------------------------------------------------------#
 
-all: $(NAME)
+all : $(NAME)
 
-%.o : %.cpp includes/main.hpp SERVER/Server.hpp request/Request.hpp response/Response.hpp response/ErrorPages.hpp \
-		includes/macros.hpp
-	$(CC) $(FLAGS) -c $< -o $@
+$(NAME) : $(CONFIG_PARSE_OBJECTS) $(UTILS_OBJECTS) $(CONTEXTS_OBJECTS) $(SERVER_OBJECTS) $(MAIN_OBJECTS) $(REQUEST_OBJECTS) $(RESPONSE_OBJS)
+		$(CPP) $(FLAGS)  $(RESPONSE_OBJS) $(CONFIG_PARSE_OBJECTS) $(UTILS_OBJECTS) $(CONTEXTS_OBJECTS) $(SERVER_OBJECTS) $(MAIN_OBJECTS) $(REQUEST_OBJECTS) -o $(NAME)
 
-$(NAME): $(OBJS) $(CONFIG_PARSE_OBJECTS) $(MAIN_OBJECTS)
-	$(CC) $(FLAGS) $(OBJS)  $(CONFIG_PARSE_OBJECTS) $(MAIN_OBJECTS) -o $(NAME)
+Utils/%.o : Utils/%.cpp
+	$(CPP) $(FLAGS) -c $< -o $@
 
-config_file_parsing/%.o :	config_file_parsing/%.cpp config_file_parsing/HttpContext.hpp \
-							config_file_parsing/ServerContext.hpp config_file_parsing/LocationContext.hpp \
-							config_file_parsing/config_parse.hpp
+config_file_parsing/%.o : config_file_parsing/%.cpp
+	$(CPP) $(FLAGS) -c $< -o $@
+
+Contexts/%.o : Contexts/%.cpp
+	$(CPP) $(FLAGS) -c $< -o $@
+
+server_setup/%.o : server_setup/%.cpp
+	$(CPP) $(FLAGS) -c $< -o $@
+
+Request/%.o : Request/%.cpp
+	$(CPP) $(FLAGS) -c $< -o $@
+
+response/%.o : response/%.cpp
+	$(CPP) $(FLAGS) -c $< -o $@
+
+
+%.o : %.cpp
+	$(CPP) $(FLAGS) -c $< -o $@
+
+#-------------------------------------------------------------------------------------------------------------------------------#
 
 clean :
-	$(RM) $(OBJS)
+	rm -rf $(CONTEXTS_OBJECTS)
 	rm -rf $(CONFIG_PARSE_OBJECTS)
+	rm -rf $(UTILS_OBJECTS)
+	rm -rf $(SERVER_OBJECTS)
+	rm -rf $(MAIN_OBJECTS)
+	rm -rf $(REQUEST_OBJECTS)
+	rm -rf $(RESPONSE_OBJS)
 
 fclean : clean
-	$(RM) $(NAME)
+	rm -rf $(NAME)
 
 re : fclean all
+
+.PHONY : clean

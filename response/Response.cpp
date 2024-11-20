@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/18 01:41:47 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/20 03:56:30 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,14 +21,14 @@ Response::Response ( ServerContext & server_context, Request & request) :\
     this->_location         = NULL ;
     this->_running_post     = false ;
     this->exit_stat         = -1;
-    // this->status            = 200 ;
-    this->status = this->request.getStatus() ;
+    this->status            = 200 ;
+    // this->status = this->request.getStatus() ;
     // this->get_path_of_page() ;
 }
 
 void    Response::format_message( void )
 {
-    this->status = this->request.getStatus() ;
+    // this->status = this->request.getStatus() ;
     // responde cleint errors (parse error ... )
     if ( this->status != 200 )
     {
@@ -181,10 +181,10 @@ const std::string & Response::getResponse( void )
 
 std::string Response::find_error_page( unsigned short error )
 {
-    std::vector<std::pair <unsigned short, std::string> >::iterator i ;
+    std::vector<std::pair <unsigned short, std::string> >::const_iterator i ;
     if ( this->_location )
     {
-        std::vector<std::pair <unsigned short, std::string> > & pages = this->_location->get_error_pages() ;
+        const std::vector<std::pair <unsigned short, std::string> > & pages = this->_location->get_error_pages() ;
         for ( i = pages.begin() ; i != pages.end() ; ++i )
         {
             if ( i->first == error )
@@ -194,7 +194,8 @@ std::string Response::find_error_page( unsigned short error )
         }
     }
 
-    std::vector<std::pair <unsigned short, std::string> > & pages = this->server_context.get_error_pages() ;
+    const std::vector<std::pair <unsigned short, std::string> > & pages = this->server_context.get_error_pages() ;
+    
     for ( i = pages.begin() ; i != pages.end() ; ++i )
     {
         if ( i->first == error )

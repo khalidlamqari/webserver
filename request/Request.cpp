@@ -3,257 +3,352 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ymafaman <ymafaman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/10/10 11:24:24 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/11 19:20:23 by klamqari         ###   ########.fr       */
+/*   Created: 2024/11/05 11:06:28 by ymafaman          #+#    #+#             */
+/*   Updated: 2024/11/19 08:48:32 by ymafaman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "Request.hpp"
+#include "Request.hpp"
 
-Request::Request(std::string message)
+Request::Request( void )
 {
-    this->message = message ;
-    this->content_length = 0;
-    this->counter_recv = 0;
-    this->isReady = false ;
-    this->status = 200 ;
+    start_line_is_parsed = false;
+    headers_parsed = false;
+    body_is_parsed = false;
+    is_chunked = false;
+    is_persistent = true;
+    is_bad = false;
+    is_multipart = false;
+    content_length_is_set = false;
+    host_is_set = false;
+    content_length = 0;
+    content_type = "text/plain";
+    first_part_reached = false;
+    last_part_reached = false;
+    has_incomplete_part = false;
+    undone_chunk = false;
+    size_left = 0;
+    total_chunks_length = 0;
+    is_ready = false;
 }
 
-/*
-*
-*    CR (carriage return), CRLF (CR LF) LF (line feed)
-*
-*    typically parse the request-line into its component parts
-*    by splitting on whitespace . since no whitespace is allowed in the three components
-*
-*    -- ERROR--
-*    Recipients of an invalid request-line SHOULD respond with either a
-*    400 (Bad Request) error or a 301 (Moved Permanently)
-*
-*/
-
-
-void Request::parseStartLine(const std::string & line) 
+Request::~Request()
 {
-    std::cout << "start line : " << line << std::endl;
-    std::vector<std::string> tokens ;
-    if ( line[ line.length() - 1 ] != '\r' )
-        throw 400 ;
-    tokens = split(line) ;
-    std::vector<std::string>::iterator start = tokens.begin();
-    // std::vector<std::string>::iterator end = tokens.end();
-
-    // start line should be 3 elements <HTTP Method>  <Request-URI>  <HTTP Version>
-    if ( tokens.size() != 3 )
-        throw 400 ;
-
-    //  <HTTP Method>
-    // if ( ! this->Valide_method(*start) )
-    //     throw 400 ;
-    this->method = *start ;
-
-    // <Request-URI>
-    this->request_target = *(++start);
-
-    // <HTTP Version>
-    if ( (*(++start)) != "HTTP/1.1" ) // should trim(*start first)
-        throw 400 ;
-    this->HTTP_version = "HTTP/1.1" ;
-
-    // while ( start != end )
-    // {
-    //     std::cout << "|" << *start << "|" << std::endl;
-    //     start++;
-    // }
-
-}
-
-
-/*
-*   body
-*   a Content-Length header  field is normally sent in a POST request even when the value is 0  (indicating an empty payload body).
-*   
-*   A user agent SHOULD NOT send a  Content-Length header field 
-*   when the request message does not contain  a payload body 
-*   and the method semantics do not anticipate such a  body.
-*/
-
-void Request::parseMessage()
-{
-    std::string line ;
-    std::istringstream stream(this->message) ; // Treat the string as an input stream 
-    size_t size = 0 ; 
-    short   were_am_i = 0 ;
-                        /*
-                        * 0 = start line 
-                        * 1 = header line
-                        * 2 = body line
-                        */
- 
-    while ( getline( stream , line ) )
-    {
-        if ( 0 == were_am_i )
-        {
-            parseStartLine( line ) ;
-            were_am_i = 1 ;
-        }
-        else if ( 1 == were_am_i )
-        {
-            if (line.length() == 1 && line[0] == '\r') // CRLF
-                were_am_i = 2 ;
-            else
-                parseHeader( line ) ;
-        }
-        else if ( 2 == were_am_i ) // read the body
-        {
-            this->body.resize( this->message.length() - size - 1) ;
-            stream.read( &this->body[0], (this->message.length() - size - 1) ) ;
-        }
-        size = size + line.length() + 1;
-    }
-    // if ( 2 != were_am_i )
-    //     throw 400 ;
-    // check_valid_headres() ;
-
-}
-
-bool Request::Valide_method( const std::string methodName )
-{
-    std::string methods[4] = { "GET" , "POST" , "HEAD" , "DELETE" } ;
-
-    for ( size_t i = 0 ; i < methods->length() ; i++ )
-        if ( methods[i] == methodName )
-            return ( true ) ;
-            
-    return ( false ) ;
-}
-
-/*
-*   A user agent SHOULD NOT send a  Content-Length header field when the request message does not contain  a payload body
-*   
-*   A server MAY reject a request that contains a message body but not a  Content-Length by responding with 
-*   411 (Length Required).
-*/
-
-void Request::check_valid_headres()
-{
-    std::map< std::string , std::vector<std::string> >::iterator header ;
- 
-    // header = this->get_request_headers();
     
-    header = this->headers.find("Host") ;
-    if ( header == this->headers.end() ) // should check the value
-        throw 400 ;
-    else
-    {
-        if ( header->second.size() != 1 )
-            throw 400;
-    }
-
-    header = this->headers.find("Content-Length") ;
-    
-    if ( header != this->headers.end() )
-    {
-        if ( header->second.size() != 1  ||  ! is_all_digit((*(header->second.begin()))) || (std::atoi( (*(header->second.begin())).c_str() )) <  0 )
-        {
-            std::cout << "error in content lenght header " << std::endl;
-            throw 411 ;
-        }
-        this->content_length = std::atoi( (*(header->second.begin())).c_str() ) ;
-        if (  this->body.length() != (size_t) std::atoi( (*(header->second.begin())).c_str() ) )
-        {
-            std::cout << "error in content lenght header " << std::endl;
-            throw 411 ;
-        }
-    }
-    else
-    {
-        if ( ! this->body.empty() )
-            throw 411 ; // 411 (Length Required).
-    }
 }
 
-Request::Request() {}
+/* Getters */
+
+size_t      Request::get_total_chunks_length()
+{
+    return this->total_chunks_length;
+}
+
+bool    Request::hasParsedStartLine()
+{
+    return this->start_line_is_parsed;
+}
+
+bool    Request::hasParsedHeaders()
+{
+    return this->headers_parsed;
+}
+
+bool    Request::hasParsedBody()
+{
+    return this->body_is_parsed;
+}
+
+bool    Request::hostIsSet()
+{
+    return this->host_is_set;
+}
+
+bool    Request::hasReachedFirstPart( void )
+{
+    return first_part_reached;
+}
+
+bool    Request::hasReachedLastPart( void )
+{
+    return last_part_reached;
+}
+
+bool    Request::isBadRequest()
+{
+    return this->is_bad;
+}
+
+bool    Request::ContentLengthIsSet()
+{
+    return this->content_length_is_set;
+}
+
+bool    Request::isReady()
+{
+    return this->is_ready;
+}
+
+bool    Request::isChunked()
+{
+    return this->is_chunked;
+}
+
+bool    Request::isPersistent()
+{
+    return this->is_persistent;
+}
+
+bool    Request::isMultipart()
+{
+    return this->is_multipart;
+}
+
+std::string Request::get_target()
+{
+    return this->target;
+}
+
+std::string Request::get_query()
+{
+    return this->query;
+}
+
+std::string Request::get_method()
+{
+    return this->method;
+}
+
+std::string Request::get_version()
+{
+    return this->version;
+}
+
+std::string Request::get_body()
+{
+    return this->body;
+}
+
+std::string Request::getUnparsedMsg()
+{
+    return this->unparsed_msg;
+}
+
+size_t      Request::getContentLength()
+{
+    return this->content_length;
+}
+
+std::string Request::get_boundary()
+{
+    return this->boundary;
+}
+
+bool    Request::hasIncompletePart()
+{
+    return this->has_incomplete_part;   
+}
+
+
+t_part &	Request::get_latest_part()
+{
+    if (!parts.size() || parts.back().is_complete)
+    {
+        t_part  new_part;
+        new_part.is_complete = false;
+        new_part.is_new = true;
+        new_part.header_parsed = false;
+        new_part.content_type = "text/plain";
+        parts.push_back(new_part);
+    }
+    return this->parts.back();
+}
+
+size_t    Request::hasAnUndoneChunk( void )
+{
+    return this->size_left;
+}
 
 /* Setters */
 
-void Request::setMessage( std::string message )
+void      Request::set_total_chunks_length(size_t total_length)
 {
-    std::cout << "message : \n" << message << std::endl;
-    this->message = message ;
+    this->total_chunks_length += total_length;
 }
 
-void Request::appendMessage ( char * message , ssize_t bytes_received)
+void	Request::set_new_part( t_part & new_part )
 {
-    // (void)bytes_received ;
-    if ( bytes_received > 0 )
-        this->message.append( message, bytes_received ) ;
+    this->parts.push_back(new_part);
 }
 
-void Request::appendTobody(  char * message , ssize_t bytes_received )
+void    Request::set_method( const std::string& method )
 {
-    this->body =  this->message.substr( bytes_received + 4 ) ;
-    std::cout << this->body << std::endl;
-    // if ( bytes_received > 0 )
-    //     this->body.append( message, bytes_received );
-    (void)message ;
+    this->method = method;
 }
 
-void Request::setStatus( short status )
+void    Request::set_version( const std::string& version )
 {
-    this->status = status ;
+    if (version == "HTTP/1.0")
+        this->is_persistent = false;
+
+    this->version = version;
 }
 
-/* getters */
-
-const std::string   &  Request::getMessage( void )
+void    Request::set_target( const std::string& target )
 {
-    return ( this->message ) ;
+    this->target = target;
 }
 
-const std::string   & Request::get_request_method( void ) const
+void    Request::set_query( std::string query )
 {
-    return ( this->method ) ;
+    this->query = query;
 }
 
-const std::string   & Request::get_request_target( void ) const
+void	Request::set_content_length( const size_t & length )
 {
-    return ( this->request_target ) ;
+    this->content_length = length;
+    this->content_length_is_set = true;
 }
 
-const std::string   & Request::get_request_body  ( void ) const
+void    Request::set_boundary( const std::string & boundary )
 {
-    return ( this->body ) ;
-}
-
-std::map < std::string, std::vector<std::string> >    & Request::get_request_headers( void )
-{
-    return ( this->headers ) ;
-}
-
-short  Request::getStatus( void )
-{
-    return ( this->status ) ;   
+    this->boundary = boundary;
 }
 
 
-void   Request::reuse()
+void    Request::markStartLineParsed( const bool& parsed )
 {
-    this->message = "";
-    this->body = "";
-    this->method = "" ;
-    this->HTTP_version = "" ;
-    this->request_target = "" ;
-    this->isReady = false ;
-    std::map< std::string, std::vector<std::string> >   headers ;
-    this->headers = headers ;
-    this->content_length = 0;
-    this->status = 200 ;
+    this->start_line_is_parsed = parsed;
+}
+
+void    Request::markHeadersParsed( const bool & parsed )
+{
+    this->headers_parsed = parsed;
+}
+
+void    Request::markBodyParsed( const bool & parsed )
+{
+    this->body_is_parsed = parsed;
+}
+
+void    Request::markAsBad( int i )
+{
+    // Testing
+    std::cout << i << std::endl;
+    this->is_bad = true;
+    throw "Bad request!";
+}
+
+void    Request::markAsChunked()
+{
+    this->is_chunked = true;
+}
+
+void    Request::markAsReady( const bool & ready )
+{
+    this->is_ready = ready;
+}
+
+void    Request::markAsPersistent( const bool& persist )
+{
+    this->is_persistent = persist;
+}
+
+void    Request::markContentLengthAsSet()
+{
+    this->content_length_is_set = true;
+}
+
+void    Request::markAsMultipart()
+{
+    this->is_multipart = true;
+}
+
+void    Request::markHostAsSet()
+{
+    this->host_is_set = true;
+}
+
+void    Request::markFirstPartAsReached()
+{
+    this->first_part_reached = true;
+}
+
+void    Request::markLastPartAsReached()
+{
+    this->last_part_reached = true;
+}
+
+void    Request::set_parsingErrorCode( short code )
+{
+    this->parsingErrorCode = code;
+}
+
+void    Request::storeUnparsedMsg(const std::string & msg )
+{
+    this->unparsed_msg.append(msg);
+}
+
+void    Request::setHasIncompletePart( bool & incomplete )
+{
+    this->has_incomplete_part = incomplete;
+}
+
+void    Request::markAsHasUndoneChunk( bool undone, size_t size_left )
+{
+    if (undone)
+        this->size_left = size_left;
+    else
+        this->size_left = 0;
+    this->undone_chunk = undone;
+}
+
+/* Methods */
+
+void    Request::resetUnparsedMsg()
+{
+    this->unparsed_msg.clear();
+}
+
+void    Request::setHeader( const std::string& name, const std::string& value )
+{   
+    if (name == "TRANSFER-ENCODING" && value == "chunked")
+        this->markAsChunked();    
+
+    this->headers[name] = value;
+}
+
+void    Request::set_body( const std::string & body )
+{
+    this->body += body;
+}
+
+// Testing
+
+void    Request::print_headrs()
+{
+    std::cout << "Headers : " << std::endl;
+    std::map<std::string, std::string>::iterator it = this->headers.begin();
+    std::map<std::string, std::string>::iterator end = this->headers.end();
+    for ( ; it != end; it++)
+        std::cout << (*it).first << ": " << (*it).second << std::endl;
 }
 
 
-Request::~Request() 
+
+void    Request::print_files()
 {
+    for (std::vector<t_part>::iterator i = parts.begin(); i != parts.end(); i++)
+    {
+        // std::cout << "{"  ;
+        std::cout << i->file_content << std::endl;
+        // std::cout << "}" << std::endl;      
+    }
+}
+
+void    Request::drop_last_part()
+{
+    this->parts.pop_back();
 }

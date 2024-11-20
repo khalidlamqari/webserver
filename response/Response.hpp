@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/18 04:41:58 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/20 04:23:36 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -21,10 +21,9 @@
 # include <dirent.h>
 #include <time.h>
 #include <fstream>
-
+#include "../Request/Request.hpp"
 class Request ;
- 
-
+class ErrorPage;
 static ErrorPages default_error_pages ;
 
 class Response

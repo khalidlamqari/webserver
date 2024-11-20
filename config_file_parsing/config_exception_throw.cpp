@@ -6,11 +6,11 @@
 /*   By: ymafaman <ymafaman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/11 17:08:12 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/10/14 18:17:21 by ymafaman         ###   ########.fr       */
+/*   Updated: 2024/11/01 18:55:58 by ymafaman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "config_parse.hpp"
+#include "../webserv.hpp"
 
 void    throw_config_parse_exception(std::string type, std::string token, std::string file_name, unsigned int line_num)
 {
@@ -109,6 +109,12 @@ void    throw_wrong_value_exception(std::string directive, std::string wrong_val
     else if (directive == "return")
     {
         error_info << "webserv : invalid return code \"" + wrong_value + "\" in " + file_name + ":";
+        error_info <<  line_num;
+        throw std::invalid_argument(error_info.str());
+    }
+    else if (directive == "max_body_size")
+    {
+        error_info << "webserv : value \"" + wrong_value + "\" must be a number between 0 and 12500000000 in " + file_name + ":";
         error_info <<  line_num;
         throw std::invalid_argument(error_info.str());
     }

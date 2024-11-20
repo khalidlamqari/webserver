@@ -3,14 +3,14 @@
 /*                                                        :::      ::::::::   */
 /*   config_values_extracter.cpp                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
+/*   By: ymafaman <ymafaman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/12 15:44:35 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/10/15 11:10:28 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/01 18:56:14 by ymafaman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "config_parse.hpp"
+#include "../webserv.hpp"
 
 bool    extract_autoindex_value(std::queue<token_info>& tokens_queue, std::string file_name)
 {
@@ -42,7 +42,7 @@ bool    extract_autoindex_value(std::queue<token_info>& tokens_queue, std::strin
     else
         throw_wrong_value_exception("wrong args num", "autoindex", file_name, tokens_queue.front().line_num);
 
-    return value; // this line is added to silence the warnings at compilation.
+    return value; 
 }
 
 std::pair <unsigned short, std::string> extract_error_page_info(std::queue<token_info>& tokens_queue, std::string file_name)
@@ -84,7 +84,7 @@ std::pair <unsigned short, std::string> extract_error_page_info(std::queue<token
     else
         throw_wrong_value_exception("wrong args num", "autoindex", file_name, tokens_queue.front().line_num);
 
-    return std::make_pair(error_code, token);  // this line is added to silence the warnings at compilation.
+    return std::make_pair(error_code, token);  
 }
 
 std::string extract_cgi_extension(std::queue<token_info>& tokens_queue, std::string file_name)
@@ -115,7 +115,7 @@ std::string extract_cgi_extension(std::queue<token_info>& tokens_queue, std::str
     else
         throw_wrong_value_exception("wrong args num", "cgi_extention", file_name, tokens_queue.front().line_num);
 
-    return cgi_extension;  // this line is added to silence the warnings at compilation.
+    return cgi_extension;  
 }
 
 std::vector<unsigned short>  extract_port_number(std::queue<token_info>& tokens_queue, std::string file_name)
@@ -152,7 +152,7 @@ std::vector<unsigned short>  extract_port_number(std::queue<token_info>& tokens_
     else
         throw_wrong_value_exception("wrong args num", "listen", file_name, tokens_queue.front().line_num);
 
-    return port_nums;  // this line is added to silence the warnings at compilation.
+    return port_nums;  
 }
 
 std::string    extract_root_dir(std::queue<token_info>& tokens_queue, std::string file_name)
@@ -181,7 +181,7 @@ std::string    extract_root_dir(std::queue<token_info>& tokens_queue, std::strin
     else
         throw_wrong_value_exception("wrong args num", "root", file_name, tokens_queue.front().line_num);
 
-    return root;  // this line is added to silence the warnings at compilation.
+    return root;  
 }
 
 std::string extract_upload_dir(std::queue<token_info>& tokens_queue, std::string file_name)
@@ -210,7 +210,7 @@ std::string extract_upload_dir(std::queue<token_info>& tokens_queue, std::string
     else
         throw_wrong_value_exception("wrong args num", "upload_dir", file_name, tokens_queue.front().line_num);
 
-    return directory;  // this line is added to silence the warnings at compilation.
+    return directory;  
 }
 
 std::string extract_index(std::queue<token_info>& tokens_queue, std::string file_name)
@@ -241,7 +241,7 @@ std::string extract_index(std::queue<token_info>& tokens_queue, std::string file
         throw_config_parse_exception("wrong args num", "index", file_name, tokens_queue.front().line_num);
     }
 
-    return index;  // this line is added to silence the warnings at compilation.
+    return index;  
 }
 
 std::vector<std::string>    extract_srv_names(std::queue<token_info>& tokens_queue, std::string file_name)
@@ -272,7 +272,35 @@ std::vector<std::string>    extract_srv_names(std::queue<token_info>& tokens_que
     else if ((token == "{" || token == "}") && tokens_queue.front().is_sep)
         throw_config_parse_exception("unterminated", "server_names", file_name, tokens_queue.front().line_num);
 
-    return names; // this line is added to silence the warnings at compilation.
+    return names; 
+}
+
+size_t    extract_max_body_size(std::queue<token_info>& tokens_queue, std::string file_name)
+{
+    std::string     token;
+    size_t          size = 0;
+
+    tokens_queue.pop();
+    token = tokens_queue.front().token;
+
+    if ((token == ";" || token == "{" || token == "}") && tokens_queue.front().is_sep)
+        throw_config_parse_exception("Unexpected", token, file_name, tokens_queue.front().line_num);
+    else if (!is_all_digits(token) || token.length() > 11 || (token.length() == 11 && token > "12500000000"))
+        throw_wrong_value_exception("max_body_size", token, file_name, tokens_queue.front().line_num);
+    else
+        size = std::stoul(token);
+    
+    tokens_queue.pop();
+    token = tokens_queue.front().token;
+
+    if (token == ";" && tokens_queue.front().is_sep)
+    {
+        tokens_queue.pop();
+    }
+    else if ((token == "{" || token == "}") && tokens_queue.front().is_sep)
+        throw_config_parse_exception("unterminated", "server_names", file_name, tokens_queue.front().line_num);
+
+    return size;
 }
 
 std::vector<std::string>    extract_allowed_methods(std::queue<token_info>& tokens_queue, std::string file_name)
@@ -308,7 +336,7 @@ std::vector<std::string>    extract_allowed_methods(std::queue<token_info>& toke
     else if ((token == "{" || token == "}") && tokens_queue.front().is_sep)
         throw_config_parse_exception("unterminated", "allowed_methods", file_name, tokens_queue.front().line_num);
 
-    return methods; // this line is added to silence the warnings at compilation.
+    return methods; 
 }
 
 std::pair <unsigned short, std::string> extract_redirection_info(std::queue<token_info>& tokens_queue, std::string file_name)
@@ -350,5 +378,34 @@ std::pair <unsigned short, std::string> extract_redirection_info(std::queue<toke
     else
         throw_wrong_value_exception("wrong args num", "return", file_name, tokens_queue.front().line_num);
 
-    return redirection_info; // this line is added to silence the warnings at compilation.
+    return redirection_info; 
+}
+
+std::string extract_host_name(std::queue<token_info>& tokens_queue, std::string file_name)
+{
+    std::string token;
+    std::string host;
+
+    tokens_queue.pop();
+    token = tokens_queue.front().token;
+
+    if ((token == ";" || token == "{" || token == "}") && tokens_queue.front().is_sep)
+        throw_config_parse_exception("Unexpected", token, file_name, tokens_queue.front().line_num);
+    else
+        host = token;
+
+    tokens_queue.pop();
+    token = tokens_queue.front().token;
+
+    if (token == ";" && tokens_queue.front().is_sep)
+    {
+        tokens_queue.pop();
+        return host;
+    }
+    else if ((token == "{" || token == "}") && tokens_queue.front().is_sep)
+        throw_config_parse_exception("unterminated", "host", file_name, tokens_queue.front().line_num);
+    else
+        throw_wrong_value_exception("wrong args num", "host", file_name, tokens_queue.front().line_num);
+
+    return host;  
 }

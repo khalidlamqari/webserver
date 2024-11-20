@@ -1,2 +1,2 @@
-# webserver
-web server
+# Webserv
+A HTTP server in C++ 98
