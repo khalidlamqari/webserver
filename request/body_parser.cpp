@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 16:59:44 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/20 00:50:05 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/23 04:13:16 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -258,7 +258,7 @@ static bool	final_boundary_reached(const std::string & boundary, std::string & c
 {
 	std::string close_boundary = boundary;	
 
-	close_boundary.insert(0, "--");
+	close_boundary.insert(0, "--"); 
 	close_boundary.insert(0, CRLF);
 	close_boundary.append("--");
 	close_boundary.append(CRLF);
@@ -280,8 +280,19 @@ static void	extract_part_content(Request & request, t_part & part, std::string &
 			request.markAsBad(66);
 
 		if (!part.file_name.empty())
-			part.file_content.append(valid_data); // this will be changed by writing directly at the file.
+		{
+			if (part.file_content == NULL )
+			{
+				// request.get_ClientSocket()->response->getUploadDir() +
+				// std::cout << "part.file_name " << part.file_name << std::endl;
+				part.file_content = new std::ofstream(part.file_name, std::ios::out |std::ios::trunc | std::ios::binary);
+			}
+			*(part.file_content) << valid_data ; // this will be changed by writing directly at the file.
+			// std::cout << "valid_data " << valid_data << std::endl;
+			
+		}
 
+		valid_data.clear();
 		content.erase(0, crlf_pos);
 
 		if (final_boundary_reached(request.get_boundary(), content))
@@ -306,10 +317,9 @@ static void	extract_part_content(Request & request, t_part & part, std::string &
 		}
 		else
 		{
-			part.file_content.append(CRLF);
+			*(part.file_content) << CRLF;
 			content.erase(0, 2);
 		}
-
 		crlf_pos = content.find(CRLF);
 	}
 	
@@ -318,15 +328,16 @@ static void	extract_part_content(Request & request, t_part & part, std::string &
 			return request.markAsBad(66);
 
 	if (!part.file_name.empty())
-		part.file_content.append(content);
+		*(part.file_content) << content;
 	content.clear();
 }
 
 static void	extract_part(Request & request, std::string & content)
 {
+	// request.get_ClientSocket()->response->getUploadDir() ;
 	t_part &			latest_part = request.get_latest_part(); // TODO : i gotta drop the onse that are not files!
 	std::string			dashed_boundary_crlf;
-	
+
 	dashed_boundary_crlf = request.get_boundary();
 	dashed_boundary_crlf.insert(0, "--");
 	dashed_boundary_crlf.append("\r\n");
@@ -356,7 +367,9 @@ static void	extract_part(Request & request, std::string & content)
 	// when getting here the file name might or might not be set, only post the file if it s set! because that will be the only case where the part is related to a file input.
 	// if it s a file then directly open it to start writing at it!
 	if (latest_part.header_parsed)
+	{
 		extract_part_content(request, latest_part, content);
+	}
 	else
 	{
 		latest_part.unparsed_bytes = content; // in case we only got a part of a the headers not all of them.
@@ -367,6 +380,11 @@ static void	extract_part(Request & request, std::string & content)
 	{
 		std::cout << "last_part droped" << std::endl;	
 		request.drop_last_part();
+	}
+	if (latest_part.is_complete && !latest_part.file_name.empty())
+	{
+		if (latest_part.file_content)
+			latest_part.file_content->close();
 	}
 }
 

@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/20 06:12:19 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/23 03:59:39 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,39 +97,38 @@ bool Response::get_path_of_page(  )
 
 void    Response::get_static_page()
 {
-    if ( this->_running_post )
-    {
-        this->post_data() ;
-        return ;
-    }
-    else if ( ! this->_tranfer_encoding )
+    // if ( this->_running_post )
+    // {
+    //     this->post_data() ;
+    //     return ;
+    // }
+    
+    if ( ! this->_tranfer_encoding )
     {
         if ( ! this->get_path_of_page( ) )
             return ;
-
         if ( ! ((this->_location && this->is_allowd_method_in_location() )\
             || (! this->_location && this->is_allowd_method())) )
             throw 405 ;
-
         if ( this->request.get_request_method() == "DELETE" )
         {
             this->delete_file(  ) ;
             return ;
         }
-        else if ( !this->_is_cgi && this->request.get_request_method() == "POST" )
-        {
-            this->_running_post = true ;
-            this->post_data() ; // upload data
-            return ;
-        }
-        else if ( this->_is_cgi )
+        // else if ( !this->_is_cgi && this->request.get_request_method() == "POST" )
+        // {
+        //     this->_running_post = true ;
+        //     this->post_data() ; // upload data
+        //     return ;
+        // }
+        else if ( this->_is_cgi && this->request.get_request_method() == "POST" )
             this->execute_cgi() ;
     }
-    
     if (this->_is_cgi && this->exit_stat == 0 )
         this->read_cgi_output() ;
     else
         this->read_and_format_msg() ;
+   
 }
 
 void Response::read_cgi_output()
@@ -157,21 +156,25 @@ void Response::read_cgi_output()
 
 void Response::read_and_format_msg()
 {
+    char    buffer[ RESP_BUFF ] = {0} ;
+
     if ( !this->_tranfer_encoding )
     {
         this->page_content.open( this->_path_ ) ;
         if ( ! this->page_content.is_open() )
             throw 404 ;
     }
-    char    buffer[ RESP_BUFF ] = {0} ;
     this->page_content.read( buffer, (RESP_BUFF - 1)) ;
     if ( this->page_content.fail() && ! this->page_content.eof() )
         throw 500 ;
     buffer[this->page_content.gcount()] = '\0' ;
-    if ( this->page_content.eof() )
+    if ( this->page_content.gcount() == 0)
         this->_end_of_response = true ;
     else
         this->_tranfer_encoding = true ;
+    
+    // if ( this->_tranfer_encoding && this->page_content.gcount() != 0 )
+    //     this->_end_of_response = false ;
 
     this->generate_message(buffer, this->page_content.gcount() ) ;
 }
@@ -222,16 +225,15 @@ void    Response::generate_message( char * content, size_t size )
 {
     std::ostringstream ss ;
 
-    
     if ( this->_tranfer_encoding )
     {
+        ss << std::hex << size ;
         if ( this->is_first_message )
         {
-            ss << std::hex << size ;
             this->message.append("HTTP/1.1 " + default_error_pages.getErrorMsg( this->status ) +\
             "\r\nTransfer-Encoding: chunked" + get_content_type(this->_path_) + "\r\nServer: webserv/0.0\n\r\n") ;
             this->is_first_message = false ;
-            std::cout << "message : " << this->message << std::endl;
+            // std::cout << "message : " << this->message << std::endl;
         }
         this->message.append(ss.str()) ;
         this->message.append("\r\n") ;
@@ -379,8 +381,6 @@ void                                    Response::get_pathinfo_form_target()
 
     this->_path_info = this->_target.substr(4 + pos);
     this->_target    = this->_target.substr(0, 4 + pos);
-    // std::cout << "path info : " << this->_path_info << "\nnew target : " << this->_target << std::endl;
-
 }
 
 bool    Response::process_target()
@@ -393,6 +393,7 @@ bool    Response::process_target()
 
     if ( _location )
     {
+        _upload_dir = _location->get_upload_dir();
         if ( ! (_location)->redirect_is_set )
         {
             this->_path_ = (_location)->get_root_directory() + "/" + this->_target ;
@@ -408,6 +409,7 @@ bool    Response::process_target()
     }
     else
     {
+        _upload_dir =  this->server_context.get_upload_dir();
         this->_path_ = this->server_context.get_root_directory() + "/" + this->_target ;
         if ( this->_target == "/" && this->is_folder( this->_path_ )  && this->server_context.get_auto_index() )
         {
@@ -417,10 +419,9 @@ bool    Response::process_target()
             this->_path_ +=  this->server_context.get_index() ;
         else if ( this->_target != "/" && this->is_folder( this->_path_ ) )
             return false ;
-            
+
         this->_cgi_extention = this->server_context.get_cgi_extension();
         return true ;
     }
-    
     return true ;
 }

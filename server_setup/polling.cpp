@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/30 15:08:50 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/20 05:07:03 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/23 03:15:28 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,7 +93,17 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
                 try
                 {
                     respond_to_client(client_info);
-                    switch_interest(client_info, kqueue_fd, EVFILT_WRITE, EVFILT_READ); // Interest is gonna be switched only if the response has been entirely sent.
+                    if ( client_info->response->end_of_response() )
+                    {
+                        std::cout << "end response " << std::endl;
+                        delete client_info->request;
+                        delete client_info->response;
+                        client_info->request = NULL;
+                        client_info->response = NULL;
+                        client_info->request = new Request();
+                        client_info->request->set_ClientSocket(client_info);
+                        switch_interest(client_info, kqueue_fd, EVFILT_WRITE, EVFILT_READ); // Interest is gonna be switched only if the response has been entirely sent.
+                    }
                 }
                 catch(const std::exception& e)
                 {

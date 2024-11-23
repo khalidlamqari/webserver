@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/04 17:07:06 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/20 04:04:03 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/22 23:47:34 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,11 +19,12 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <fstream>
 
 typedef struct  s_part {
 
     std::string file_name;
-    std::string file_content;
+    std::ofstream *file_content;
     std::string content_type;
 	bool		header_parsed;
 	bool		is_complete;

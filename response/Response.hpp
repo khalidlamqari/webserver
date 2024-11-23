@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/20 04:23:36 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/22 23:18:09 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,7 +39,7 @@ class Response
         std::ifstream                           page_content ;
         LocationContext *                       _location;
         short                                   status;
-        std::map< std::string , std::ofstream > files_to_upload ;
+        std::string                             _upload_dir ;
         bool                                    _running_post ;
         std::string                             _path_ ;
         std::string                             _path_info ;
@@ -90,7 +90,7 @@ class Response
         void                                    delete_file( ) ;
 
         // upload files         
-        void                                    upload_data(const std::string & file_name, const std::string & data );
+        // void                                    upload_data(const std::string & file_name, const std::string & data );
         void                                    post_data() ;
 
         bool                                    process_target();
@@ -102,6 +102,7 @@ class Response
 
         /* Getters */
         const std::string &         getResponse  ( void ) ;
+        const std::string &         getUploadDir  ( void ) ;
         const std::ifstream &       getPageStream( void ) ;
 
         bool                        end_of_response() ;

@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/20 03:56:30 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/23 04:03:47 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,6 +24,31 @@ Response::Response ( ServerContext & server_context, Request & request) :\
     this->status            = 200 ;
     // this->status = this->request.getStatus() ;
     // this->get_path_of_page() ;
+
+    try{
+        if ( process_target() == false )
+            this->_is_cgi = false;
+    } catch (int x)
+    {
+        (void)x;
+        this->_is_cgi = false ;
+    }
+    if ( this->_cgi_extention.length() > this->_path_.length() || this->_cgi_extention.empty() )
+        this->_is_cgi = false;
+
+    size_t j = this->_path_.length() - 1 ;
+    for ( ssize_t i = this->_cgi_extention.length() - 1 ; i >= 0 ; i-- )
+    {
+        if ( this->_cgi_extention[i] != this->_path_[j--] )
+            (this->_is_cgi = false) ;
+    }
+    std::cout << "_upload_dir : " << _upload_dir << std::endl;
+    if ( this->_is_cgi )
+    {
+        this->s_fds[0] = open("test_cgi.txt", O_CREAT | O_APPEND );
+        // if ( socketpair(AF_UNIX, SOCK_STREAM, 0, this->s_fds) == -1 )
+        //     throw std::runtime_error("socketpair failed") ;
+    }
 }
 
 void    Response::format_message( void )
@@ -50,14 +75,6 @@ void    Response::format_message( void )
         }
     }
 }
-
-/*
-**    HTTP/1.1 400 Bad Request
-**    Content-Type: text/html
-**    Content-Length: 173
-**    Connection: close
-**    Server: nginx
-*/
 
 const std::ifstream &         Response::getPageStream( void )
 {
@@ -125,27 +142,27 @@ void Response::responde_with_default_page( short error )
     this->_end_of_response = true ;
 }
 
-bool    Response::is_cgi()
+bool    Response::is_cgi() 
 {
-    try{
-        if ( process_target() == false )
-            return ((this->_is_cgi = false), false) ;
-    } catch (int x)
-    {
-        (void)x;
-        return ((this->_is_cgi = false), false) ;
-    }
+    // try{
+    //     if ( process_target() == false )
+    //         return ((this->_is_cgi = false), false) ;
+    // } catch (int x)
+    // {
+    //     (void)x;
+    //     return ((this->_is_cgi = false), false) ;
+    // }
 
-    if ( this->_cgi_extention.length() > this->_path_.length() || this->_cgi_extention.empty() )
-        return ((this->_is_cgi = false), false) ;
+    // if ( this->_cgi_extention.length() > this->_path_.length() || this->_cgi_extention.empty() )
+    //     return ((this->_is_cgi = false), false) ;
 
-    size_t j = this->_path_.length() - 1 ;
-    for ( ssize_t i = this->_cgi_extention.length() - 1 ; i >= 0 ; i-- )
-    {
-        if ( this->_cgi_extention[i] != this->_path_[j--] )
-            return ((this->_is_cgi = false), false) ;
-    }
-    return ((this->_is_cgi = true), true) ;
+    // size_t j = this->_path_.length() - 1 ;
+    // for ( ssize_t i = this->_cgi_extention.length() - 1 ; i >= 0 ; i-- )
+    // {
+    //     if ( this->_cgi_extention[i] != this->_path_[j--] )
+    //         return ((this->_is_cgi = false), false) ;
+    // }
+    return ((this->_is_cgi)) ;
 }
 
 bool Response::is_allowd_method()
@@ -172,9 +189,12 @@ bool Response::is_allowd_method_in_location()
 
 const std::string & Response::getResponse( void )
 {
+    
     this->message = "";
-    is_cgi();
+    if ( this->_end_of_response )
+        return ( this->message ) ;
     this->format_message() ;
+
     // std::cout << "message : " << this->message << std::endl;
     return ( this->message ) ;
 }
@@ -207,16 +227,6 @@ std::string Response::find_error_page( unsigned short error )
     return ( "" ) ;
 }
 
-void    Response::upload_data(const std::string & file_name, const std::string & data )
-{
-    
-    if ( this->files_to_upload.find(file_name) == this->files_to_upload.end() )
-    {
-        this->files_to_upload[file_name].open(this->server_context.get_upload_dir() + "/" + file_name);
-    }
-    this->files_to_upload[file_name] << data ;
-}
-
 bool Response::end_of_response()
 {
     return ( this->_end_of_response ) ;
@@ -231,3 +241,7 @@ Response::~Response()
 {
 }
 
+const std::string & Response::getUploadDir  ( void ) 
+{
+    return this->_upload_dir ;
+}

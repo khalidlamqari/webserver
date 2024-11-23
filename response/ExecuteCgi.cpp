@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 19:31:45 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/20 04:05:39 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/23 04:01:11 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,8 +82,8 @@ void Response::execute_cgi( void )
         NULL,
     };
 
-    if ( socketpair(AF_UNIX, SOCK_STREAM, 0, this->s_fds) == -1 )
-        throw 500 ;
+    // if ( socketpair(AF_UNIX, SOCK_STREAM, 0, this->s_fds) == -1 )
+    //     throw 500 ;
 
     this->pid = fork() ;
     if ( this->pid == 0 )

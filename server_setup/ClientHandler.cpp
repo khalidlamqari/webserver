@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:37:00 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/20 06:10:49 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/23 03:56:23 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,25 +52,25 @@ void    accept_client_connection(ListenerSocket *listener, int kqueue_fd, std::v
 
 static  const ServerContext * get_server_context(ClientSocket * clientsocket)
 {
-    // std::string host = clientsocket->request->get_headers().find("HOST")->second ;
+    std::string host = clientsocket->request->get_headers().find("HOST")->second ;
     
-    // for (std::vector<const ServerContext*>::iterator i = clientsocket->get_servers().begin() ; i != clientsocket->get_servers().end() ; ++i)
-    // {
-    //     std::vector<std::string>::const_iterator b = (*i)->get_server_names().begin();
-    //     std::vector<std::string>::const_iterator e = (*i)->get_server_names().end();
+    for (std::vector<const ServerContext*>::iterator i = clientsocket->get_servers().begin() ; i != clientsocket->get_servers().end() ; ++i)
+    {
+        std::vector<std::string>::const_iterator b = (*i)->get_server_names().begin();
+        std::vector<std::string>::const_iterator e = (*i)->get_server_names().end();
         
-    //     for ( std::vector<std::string>::const_iterator j = b ; j != e ; ++j)
-    //     {
-    //         if ( host == *j )
-    //         {
-    //             return ( *i ) ;
-    //         }
-    //     }
-    // }
+        for ( std::vector<std::string>::const_iterator j = b ; j != e ; ++j)
+        {
+            if ( host == *j )
+            {
+                return ( *i ) ;
+            }
+        }
+    }
     // if ( (*(clientsocket->get_servers().begin()))->get_server_names().begin() )
     
     //     std::cout << "Host: " << *((*(clientsocket->get_servers().begin()))->get_server_names().begin()) << std::endl;
-    
+
     return (clientsocket->get_servers().front()) ;
 }
 
@@ -97,11 +97,10 @@ void    determine_parsing_stage(Request & request, std::string & rcvdMsg)
         parse_headers(request, rcvdMsg);
         return determine_parsing_stage(request, rcvdMsg);
     }
-    
+
     if (request.hasParsedHeaders())
     {
-        std::cout << "iny" << std::endl;
-        const ServerContext *  servercontext = get_server_context( request.get_ClientSocket() );
+        const ServerContext *  servercontext = get_server_context( request.get_ClientSocket() ); 
         std::cout << servercontext->get_index() << std::endl;
         request.get_ClientSocket()->response = new Response( *((ServerContext*)servercontext) , request) ;
     }
@@ -163,27 +162,6 @@ void    handle_client_request(ClientSocket* client_info)
     parse_client_request(*(client_info->request), rcvdMsg);
 }
 
-/*
-
-HTTP/1.1 200 OK
-Server: webserv/0.0
-Content-Length: de
-Content-Type: text/html; charset=utf-8
-Connection: keep-alive
-
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-</head>
-<body>
-    <h1> x file </h1>
-</body>
-</html>
-
-*/
 void    respond_to_client(ClientSocket* client_info)
 {
     std::string rsp;
@@ -196,20 +174,26 @@ void    respond_to_client(ClientSocket* client_info)
     // rsp += "\r\n";
     // rsp += "123";
     
+    // while ( true )
+    // {
+        // std::cout << "sendding" << std::endl;
+        rsp = client_info->response->getResponse();
+       
+        if (send(client_info->get_sock_fd(), (void *) rsp.c_str(), rsp.length(), 0) == -1)
+            throw std::runtime_error("send failed");
 
-    rsp = client_info->response->getResponse();
-    if (send(client_info->get_sock_fd(), (void *) rsp.c_str(), rsp.length(), 0) == -1)
+    //     if ( client_info->response->end_of_response() )
+    //         break ;
+    // }
 
-    std::cout << "message : " << rsp.c_str()  << std::endl;
-
-    if ( client_info->response->end_of_response() )
-    {
-        std::cout << "end responding" << std::endl;
-        delete client_info->request;
-        delete client_info->response;
-        client_info->request = NULL;
-        client_info->response = NULL;
-        client_info->request = new Request();
-        client_info->request->set_ClientSocket(client_info);
-    }
+    // if ( client_info->response->end_of_response() )
+    // {
+    //     std::cout << "end response " << std::endl;
+    //     delete client_info->request;
+    //     delete client_info->response;
+    //     client_info->request = NULL;
+    //     client_info->response = NULL;
+    //     client_info->request = new Request();
+    //     client_info->request->set_ClientSocket(client_info);
+    // }
 }

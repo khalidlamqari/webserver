@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/09 11:31:25 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/20 03:51:57 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/22 22:38:12 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -77,7 +77,7 @@ class LocationContext {
 
         std::string                                             cgi_extension;
 
-        std::string                                             upload_dir;
+        std::string                                             upload_dir; 
 
         std::string                                             index;
 

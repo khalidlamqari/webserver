@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   Request.cpp                                        :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ymafaman <ymafaman@student.42.fr>          +#+  +:+       +#+        */
+/*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:06:28 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/19 08:48:32 by ymafaman         ###   ########.fr       */
+/*   Updated: 2024/11/23 03:28:01 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,11 @@ Request::Request( void )
 
 Request::~Request()
 {
-    
+    std::vector<t_part>::iterator it = this->parts.begin();
+    for ( size_t i = 0 ; i < this->parts.size() ; ++i )
+    {
+        delete (*it).file_content;
+    }
 }
 
 /* Getters */
@@ -152,15 +156,17 @@ bool    Request::hasIncompletePart()
 }
 
 
-t_part &	Request::get_latest_part()
+t_part &	Request::get_latest_part( )
 {
     if (!parts.size() || parts.back().is_complete)
     {
-        t_part  new_part;
+        // this->get_ClientSocket()->response->getUploadDir();
+        t_part  new_part; 
         new_part.is_complete = false;
         new_part.is_new = true;
         new_part.header_parsed = false;
         new_part.content_type = "text/plain";
+        new_part.file_content = NULL ;
         parts.push_back(new_part);
     }
     return this->parts.back();
@@ -343,7 +349,7 @@ void    Request::print_files()
     for (std::vector<t_part>::iterator i = parts.begin(); i != parts.end(); i++)
     {
         // std::cout << "{"  ;
-        std::cout << i->file_content << std::endl;
+        // std::cout << i->file_content ;
         // std::cout << "}" << std::endl;      
     }
 }
