@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/23 03:59:39 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/23 07:54:58 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,15 +42,16 @@ bool    Response::path_from_location( std::string & target, std::string & new_ta
     if ( ! (_location)->redirect_is_set )
     {
         this->_path_ = (_location)->get_root_directory() + "/" + target ;
+
         if ( ( new_target == target || ( new_target + "/" ) == target ) && _location->get_auto_index() && this->is_folder( this->_path_ ) )
         {
             this->respond_list_files( target ) ;
             this->_end_of_response = true ;
             return false ;
         }
-        else if ( new_target != target && this->is_folder( this->_path_ ) )
+        else if ( !( new_target == target || ( new_target + "/" ) == target ) && this->is_folder( this->_path_ ) )
             throw 403 ;
-        if ( this->is_folder( this->_path_ ) )
+        else if ( this->is_folder( this->_path_ ) )
             this->_path_.append("/" + (_location)->get_index()) ;
     }
     else
@@ -88,6 +89,7 @@ bool Response::get_path_of_page(  )
     std::string new_target      = this->_target ;
     _location                   = find_match_more_location( new_target ) ;
 
+    
     if ( _location )
         return ( this->path_from_location(this->_target, new_target) );
     else
@@ -115,6 +117,7 @@ void    Response::get_static_page()
             this->delete_file(  ) ;
             return ;
         }
+
         // else if ( !this->_is_cgi && this->request.get_request_method() == "POST" )
         // {
         //     this->_running_post = true ;
@@ -168,13 +171,13 @@ void Response::read_and_format_msg()
     if ( this->page_content.fail() && ! this->page_content.eof() )
         throw 500 ;
     buffer[this->page_content.gcount()] = '\0' ;
-    if ( this->page_content.gcount() == 0)
+    if ( this->page_content.eof())
         this->_end_of_response = true ;
     else
         this->_tranfer_encoding = true ;
-    
-    // if ( this->_tranfer_encoding && this->page_content.gcount() != 0 )
-    //     this->_end_of_response = false ;
+
+    if ( this->_tranfer_encoding && this->page_content.gcount() != 0 )
+        this->_end_of_response = false ;
 
     this->generate_message(buffer, this->page_content.gcount() ) ;
 }
@@ -233,7 +236,6 @@ void    Response::generate_message( char * content, size_t size )
             this->message.append("HTTP/1.1 " + default_error_pages.getErrorMsg( this->status ) +\
             "\r\nTransfer-Encoding: chunked" + get_content_type(this->_path_) + "\r\nServer: webserv/0.0\n\r\n") ;
             this->is_first_message = false ;
-            // std::cout << "message : " << this->message << std::endl;
         }
         this->message.append(ss.str()) ;
         this->message.append("\r\n") ;
@@ -253,9 +255,9 @@ LocationContext * Response::find_match_more_location( std::string & new_target )
 {
     LocationContext * location = NULL ;
 
-    location = this->find_exact_location( new_target ) ;
-    if ( location )
-        return ( location ) ;
+    // location = this->find_exact_location( new_target ) ;
+    // if ( location )
+    //     return ( location ) ;
     while ( true )
     {
         location =    this->find_location( new_target ) ;
@@ -367,7 +369,7 @@ bool    Response::is_folder( const std::string & path )
     struct stat s ;
 
     if ( stat( path.c_str(), &s ) == -1)
-        throw 404 ;
+        return ( false ) ;
     if ( S_IFDIR & s.st_mode )
         return ( true ) ;
     return ( false ) ;

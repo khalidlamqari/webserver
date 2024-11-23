@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/22 23:18:09 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/23 04:38:09 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,6 +108,7 @@ class Response
         bool                        end_of_response() ;
         bool                        tranfer_encoding() ;
         bool                         is_cgi( );
+        int *                       get_pair_fds();
         ~Response() ;
 
 };

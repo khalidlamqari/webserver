@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 16:59:44 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/23 04:13:16 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/23 04:40:02 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -411,7 +411,7 @@ static void	process_chunck(Request & request, std::string & chunk_content)
 	}
 	else
 		chunk_content.clear();
-	
+
 }
 
 size_t	hex_to_size_t(Request & request, const std::string & chunk_size)
@@ -506,6 +506,10 @@ std::string	find_chunk_content(Request & request, std::string & msg)
 	msg.erase(0, chunk_length);
 	return chunk_content;
 }
+static void write_to_cgi_input(Request & request, std::string & content )
+{
+	write(request.get_ClientSocket()->response->get_pair_fds()[0],  content.c_str(), content.length());
+}
 
 void    parse_body(Request & request, std::string & msg)
 {
@@ -514,7 +518,12 @@ void    parse_body(Request & request, std::string & msg)
 	chunk_content = find_chunk_content(request, msg);
 	while (!chunk_content.empty() && !request.hasParsedBody())
 	{
-		process_chunck(request, chunk_content);
+		if ( request.get_ClientSocket()->response->is_cgi() )
+		{
+			write_to_cgi_input( request, chunk_content );
+		}
+		else
+			process_chunck(request, chunk_content);
 		chunk_content.clear();
 		chunk_content = find_chunk_content(request, msg);
 	}

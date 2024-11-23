@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:06:28 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/23 03:28:01 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/23 06:14:40 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,11 +36,11 @@ Request::Request( void )
 
 Request::~Request()
 {
-    std::vector<t_part>::iterator it = this->parts.begin();
-    for ( size_t i = 0 ; i < this->parts.size() ; ++i )
-    {
-        delete (*it).file_content;
-    }
+    // std::vector<t_part>::iterator it = this->parts.begin();
+    // for ( size_t i = 0 ; i < this->parts.size() ; ++i )
+    // {
+    //     delete (*it).file_content;
+    // }
 }
 
 /* Getters */

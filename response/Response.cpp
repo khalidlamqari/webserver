@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/23 04:03:47 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/23 06:58:30 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,7 +42,7 @@ Response::Response ( ServerContext & server_context, Request & request) :\
         if ( this->_cgi_extention[i] != this->_path_[j--] )
             (this->_is_cgi = false) ;
     }
-    std::cout << "_upload_dir : " << _upload_dir << std::endl;
+    // std::cout << "_upload_dir : " << _upload_dir << std::endl;
     if ( this->_is_cgi )
     {
         this->s_fds[0] = open("test_cgi.txt", O_CREAT | O_APPEND );
@@ -244,4 +244,9 @@ Response::~Response()
 const std::string & Response::getUploadDir  ( void ) 
 {
     return this->_upload_dir ;
+}
+
+int * Response::get_pair_fds()
+{
+    return ( this->s_fds );
 }

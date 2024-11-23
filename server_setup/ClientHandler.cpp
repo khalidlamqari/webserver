@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:37:00 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/23 03:56:23 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/23 06:23:34 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -166,34 +166,8 @@ void    respond_to_client(ClientSocket* client_info)
 {
     std::string rsp;
 
-    // rsp += "HTTP/1.1 200 OK\r\n";
-    // rsp += "Server: WebServer\r\n";
-    // rsp += "Content-Type: text/html\r\n";
-    // rsp += "Content-Length: 3\r\n";
-    // rsp += "Connection: keep-alive\r\n";
-    // rsp += "\r\n";
-    // rsp += "123";
+    rsp = client_info->response->getResponse();
     
-    // while ( true )
-    // {
-        // std::cout << "sendding" << std::endl;
-        rsp = client_info->response->getResponse();
-       
-        if (send(client_info->get_sock_fd(), (void *) rsp.c_str(), rsp.length(), 0) == -1)
-            throw std::runtime_error("send failed");
-
-    //     if ( client_info->response->end_of_response() )
-    //         break ;
-    // }
-
-    // if ( client_info->response->end_of_response() )
-    // {
-    //     std::cout << "end response " << std::endl;
-    //     delete client_info->request;
-    //     delete client_info->response;
-    //     client_info->request = NULL;
-    //     client_info->response = NULL;
-    //     client_info->request = new Request();
-    //     client_info->request->set_ClientSocket(client_info);
-    // }
+    if (send(client_info->get_sock_fd(), (void *) rsp.c_str(), rsp.length(), 0) == -1)
+        throw std::runtime_error("send failed");
 }
