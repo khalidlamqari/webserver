@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 16:59:44 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/23 04:40:02 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/25 06:08:17 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -289,7 +289,6 @@ static void	extract_part_content(Request & request, t_part & part, std::string &
 			}
 			*(part.file_content) << valid_data ; // this will be changed by writing directly at the file.
 			// std::cout << "valid_data " << valid_data << std::endl;
-			
 		}
 
 		valid_data.clear();
@@ -506,6 +505,7 @@ std::string	find_chunk_content(Request & request, std::string & msg)
 	msg.erase(0, chunk_length);
 	return chunk_content;
 }
+
 static void write_to_cgi_input(Request & request, std::string & content )
 {
 	write(request.get_ClientSocket()->response->get_pair_fds()[0],  content.c_str(), content.length());
@@ -521,6 +521,8 @@ void    parse_body(Request & request, std::string & msg)
 		if ( request.get_ClientSocket()->response->is_cgi() )
 		{
 			write_to_cgi_input( request, chunk_content );
+			close(request.get_ClientSocket()->response->get_pair_fds()[0]);
+			request.markBodyParsed(true);
 		}
 		else
 			process_chunck(request, chunk_content);

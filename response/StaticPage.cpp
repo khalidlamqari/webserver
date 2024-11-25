@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/23 07:54:58 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/25 09:55:48 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -41,8 +41,6 @@ bool    Response::path_from_location( std::string & target, std::string & new_ta
 {
     if ( ! (_location)->redirect_is_set )
     {
-        this->_path_ = (_location)->get_root_directory() + "/" + target ;
-
         if ( ( new_target == target || ( new_target + "/" ) == target ) && _location->get_auto_index() && this->is_folder( this->_path_ ) )
         {
             this->respond_list_files( target ) ;
@@ -59,39 +57,26 @@ bool    Response::path_from_location( std::string & target, std::string & new_ta
         redirection_handler( _location->get_redirection().first, _location->get_redirection().second ) ;
         return false ;
     }
-    // this->_cgi_extention = _location->get_cgi_extension();
     return true ;
 }
 
 bool    Response::path_from_root( std::string & target)
 {
-    this->_path_ = this->server_context.get_root_directory() + "/" + target ;
     if ( target == "/" && this->is_folder( this->_path_ )  && this->server_context.get_auto_index() )
     {
         this->respond_list_files( target ) ;
         this->_end_of_response = true ;
         return false ;
     }
-    else if ( target == "/" && this->is_folder( this->_path_ ) )
-        this->_path_ +=  this->server_context.get_index() ;
-    else if ( target != "/" && this->is_folder( this->_path_ ) )
+    else if ( target != "/" && this->is_folder( this->_path_ ))
         throw 403 ;
-    // else
-    //     this->_path_ = this->server_context.get_root_directory() + "/" + target ;
-    // this->_cgi_extention = this->server_context.get_cgi_extension();
     return true ;
 }
 
-bool Response::get_path_of_page(  )
+bool Response::get_path_of_page()
 {
-    // std::string           target = this->request.get_request_target() ;
-    // normalize_target( target ) ;
-    std::string new_target      = this->_target ;
-    _location                   = find_match_more_location( new_target ) ;
-
-    
     if ( _location )
-        return ( this->path_from_location(this->_target, new_target) );
+        return ( this->path_from_location(this->_target, this->_new_target) );
     else
         return ( this->path_from_root(this->_target) );
     return true ;
@@ -99,67 +84,52 @@ bool Response::get_path_of_page(  )
 
 void    Response::get_static_page()
 {
-    // if ( this->_running_post )
-    // {
-    //     this->post_data() ;
-    //     return ;
-    // }
-    
     if ( ! this->_tranfer_encoding )
     {
-        if ( ! this->get_path_of_page( ) )
+        if ( ! this->get_path_of_page() )
             return ;
-        if ( ! ((this->_location && this->is_allowd_method_in_location() )\
-            || (! this->_location && this->is_allowd_method())) )
+        if ( ! ((this->_location && this->is_allowd_method_in_location() ) || (! this->_location && this->is_allowd_method())) )
             throw 405 ;
         if ( this->request.get_request_method() == "DELETE" )
         {
-            this->delete_file(  ) ;
+            this->delete_file() ;
             return ;
         }
-
-        // else if ( !this->_is_cgi && this->request.get_request_method() == "POST" )
-        // {
-        //     this->_running_post = true ;
-        //     this->post_data() ; // upload data
-        //     return ;
-        // }
-        else if ( this->_is_cgi && this->request.get_request_method() == "POST" )
-            this->execute_cgi() ;
     }
-    if (this->_is_cgi && this->exit_stat == 0 )
+
+    if (this->_is_cgi && this->exit_stat == 0)
         this->read_cgi_output() ;
     else
         this->read_and_format_msg() ;
-   
 }
 
 void Response::read_cgi_output()
 {
     ssize_t n ;
+    char    buffer[ RESP_BUFF ] ;// = {0}
 
     if ( ! this->_tranfer_encoding )
     {
         if ( close(this->s_fds[1]) == -1)
-            throw 500 ;
+            throw std::runtime_error("close failed") ;
     }
-    char    buffer[ RESP_BUFF ] = {0} ;
     n = read(this->s_fds[0], buffer, (RESP_BUFF - 1)) ;
     if ( n == -1 )
-        throw 500 ;
-    buffer[n] = '\0' ;
-    if ( n == 0 )
+        throw std::runtime_error("read failed") ;
+    buffer[n] = '\0';
+    if ( n < (RESP_BUFF - 1) )
         this->_end_of_response = true ;
     else
         this->_tranfer_encoding = true ;
 
-    printf("message : %s\n", buffer ) ;
+    if ( this->_tranfer_encoding && n != 0 )
+        this->_end_of_response = false ;
     this->generate_message(buffer, n ) ;
 }
 
 void Response::read_and_format_msg()
 {
-    char    buffer[ RESP_BUFF ] = {0} ;
+    char    buffer[ RESP_BUFF ]  ; // = {0}
 
     if ( !this->_tranfer_encoding )
     {
@@ -170,16 +140,16 @@ void Response::read_and_format_msg()
     this->page_content.read( buffer, (RESP_BUFF - 1)) ;
     if ( this->page_content.fail() && ! this->page_content.eof() )
         throw 500 ;
-    buffer[this->page_content.gcount()] = '\0' ;
+    buffer[this->page_content.gcount()] = '\0';
     if ( this->page_content.eof())
-        this->_end_of_response = true ;
+        this->_end_of_response = true;
     else
-        this->_tranfer_encoding = true ;
+        this->_tranfer_encoding = true;
 
     if ( this->_tranfer_encoding && this->page_content.gcount() != 0 )
-        this->_end_of_response = false ;
+        this->_end_of_response = false;
 
-    this->generate_message(buffer, this->page_content.gcount() ) ;
+    this->generate_message( buffer, this->page_content.gcount() );
 }
 
 std::string get_content_type( const std::string & file_name )
@@ -247,7 +217,8 @@ void    Response::generate_message( char * content, size_t size )
         ss << size ;
         this->message.append("HTTP/1.1 " + default_error_pages.getErrorMsg( this->status ) + "\r\nServer: webserv/0.0\r\n") ;
         this->message.append("Content-Length: " + ss.str() + get_content_type(this->_path_) + "\r\nConnection: keep-alive\r\n\r\n") ;
-        this->message.append(content, size) ;
+        if (  this->request.get_request_method() != "HEAD" )
+            this->message.append(content, size) ;
     }
 }
 
@@ -263,7 +234,7 @@ LocationContext * Response::find_match_more_location( std::string & new_target )
         location =    this->find_location( new_target ) ;
         if ( location )
             return ( location ) ;
-        this->remove_last_slash( new_target ) ;
+        this->remove_last_slash( new_target ) ; // /about
         if ( new_target == "" )
             return ( NULL ) ;
     }
@@ -375,7 +346,7 @@ bool    Response::is_folder( const std::string & path )
     return ( false ) ;
 }
 
-void                                    Response::get_pathinfo_form_target()
+void    Response::get_pathinfo_form_target()
 {
     size_t pos = this->_target.find(".php/");
     if (pos == std::string::npos)
@@ -388,18 +359,18 @@ void                                    Response::get_pathinfo_form_target()
 bool    Response::process_target()
 {
     this->_target = this->request.get_request_target() ;
-    normalize_target( this->_target ) ;
+    normalize_target( this->_target ) ; // throw 403 should set it in status of this object
     this->get_pathinfo_form_target() ;
-    std::string new_target      = this->_target ;
-    _location                   = find_match_more_location( new_target ) ;
+    _new_target      = this->_target ;
+    _location        = find_match_more_location( _new_target ) ;
 
     if ( _location )
     {
         _upload_dir = _location->get_upload_dir();
         if ( ! (_location)->redirect_is_set )
         {
-            this->_path_ = (_location)->get_root_directory() + "/" + this->_target ;
-            if ( new_target != this->_target && this->is_folder( this->_path_ ) )
+            this->_path_ = (_location)->get_root_directory() + this->_target ;
+            if ( !( _new_target == this->_target || ( _new_target + "/" ) == this->_target ) && this->is_folder( this->_path_ ) )
                 return false ;
             if ( this->is_folder( this->_path_ ) )
                 this->_path_.append("/" + (_location)->get_index()) ;
@@ -407,12 +378,12 @@ bool    Response::process_target()
         else
             return false ;
         this->_cgi_extention = _location->get_cgi_extension();
-        return true ;
+        return false ;
     }
     else
     {
         _upload_dir =  this->server_context.get_upload_dir();
-        this->_path_ = this->server_context.get_root_directory() + "/" + this->_target ;
+        this->_path_ = this->server_context.get_root_directory() + this->_target ;
         if ( this->_target == "/" && this->is_folder( this->_path_ )  && this->server_context.get_auto_index() )
         {
             return false ;
@@ -423,7 +394,7 @@ bool    Response::process_target()
             return false ;
 
         this->_cgi_extention = this->server_context.get_cgi_extension();
-        return true ;
+        return false ;
     }
-    return true ;
+    return false ;
 }

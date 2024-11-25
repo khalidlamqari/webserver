@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   server.cpp                                         :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ymafaman <ymafaman@student.42.fr>          +#+  +:+       +#+        */
+/*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/28 15:07:44 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/19 05:45:13 by ymafaman         ###   ########.fr       */
+/*   Updated: 2024/11/25 08:58:02 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,7 +46,6 @@ struct addrinfo *my_get_addrinfo(const char * host)
     }
     return res;
 }
-
 
 void    initialize_sockets_on_port(struct addrinfo *list, std::vector<struct ListenerSocket>& active_sockets, const ServerContext& server, unsigned short port)
 {
@@ -100,7 +99,7 @@ void    initialize_sockets_on_port(struct addrinfo *list, std::vector<struct Lis
         }
         n_sock++;
 
-        if (listen(fd, 128) == -1) // This tells the TCP/IP stack to start accept incoming TCP connections on the port the socket is binded to. 128 because in The mac im working on 128 is the maximum number of pending connections
+        if (listen(fd, 10000) == -1) // This tells the TCP/IP stack to start accept incoming TCP connections on the port the socket is binded to. 128 because in The mac im working on 128 is the maximum number of pending connections
             throw std::runtime_error("Webserv : listen() failed");
     }   
 

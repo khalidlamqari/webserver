@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 16:08:35 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/20 03:28:34 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/25 05:53:07 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,7 +74,7 @@ struct Socket
         this->servers.push_back(new_server);
     }
 
-private : 
+private :
 
     int                                 sock_fd;
     char                                type;       // 'L' for ListenerSocket | 'C' for client socket
@@ -102,6 +102,12 @@ struct ClientSocket : public Socket
     }
 };
 
+struct CgiProcess : public Socket
+{
+    Request * request;
+    Response * response;
+};
+
 /*                              Sockets                              */
 void    setup_servers(const HttpContext& http_config, std::vector<struct ListenerSocket>&  activeListners);
 
@@ -112,11 +118,11 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
 void    register_socket_in_kqueue(int kqueue_fd, Socket * sock_data, short filter);
 int     create_kqueue( void );
 
-/*                              Cient Management                              */
+/*                              Client Management                              */
 void    accept_client_connection(ListenerSocket *listener, int kqueue_fd, std::vector<ClientSocket*>& activeClients);
 void    delete_client(std::vector<ClientSocket *>& activeClients, int fd);
 void    handle_client_request(ClientSocket* client_info);
-void    respond_to_client(ClientSocket* client_info);
+void    respond_to_client(ClientSocket* client_info, int kqueue_fd, int n_events, struct kevent * events);
 
 
 

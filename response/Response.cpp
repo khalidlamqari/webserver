@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/23 06:58:30 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/25 05:47:29 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,6 +15,7 @@
 Response::Response ( ServerContext & server_context, Request & request) :\
                     server_context(server_context), request(request)
 {
+    // std::cout << "Response created" << std::endl;
     this->_end_of_response  = false ;
     this->_tranfer_encoding = false ;
     this->is_first_message  = true ;
@@ -22,6 +23,8 @@ Response::Response ( ServerContext & server_context, Request & request) :\
     this->_running_post     = false ;
     this->exit_stat         = -1;
     this->status            = 200 ;
+    this->p_is_running      = false ;
+    this->_is_cgi           = false ;
     // this->status = this->request.getStatus() ;
     // this->get_path_of_page() ;
 
@@ -33,21 +36,19 @@ Response::Response ( ServerContext & server_context, Request & request) :\
         (void)x;
         this->_is_cgi = false ;
     }
-    if ( this->_cgi_extention.length() > this->_path_.length() || this->_cgi_extention.empty() )
-        this->_is_cgi = false;
 
-    size_t j = this->_path_.length() - 1 ;
-    for ( ssize_t i = this->_cgi_extention.length() - 1 ; i >= 0 ; i-- )
+    if ( !this->_cgi_extention.empty() &&  (this->_path_.length() - this->_cgi_extention.length() > 0) && (this->_path_.find(this->_cgi_extention, this->_path_.length() - this->_cgi_extention.length()) != std::string::npos))
     {
-        if ( this->_cgi_extention[i] != this->_path_[j--] )
-            (this->_is_cgi = false) ;
+        this->_is_cgi = true;
     }
-    // std::cout << "_upload_dir : " << _upload_dir << std::endl;
+    
     if ( this->_is_cgi )
     {
-        this->s_fds[0] = open("test_cgi.txt", O_CREAT | O_APPEND );
-        // if ( socketpair(AF_UNIX, SOCK_STREAM, 0, this->s_fds) == -1 )
-        //     throw std::runtime_error("socketpair failed") ;
+        // this->s_fds[0] = open("test_cgi.txt", O_WRONLY | O_CREAT | O_APPEND , 0777 );
+        if ( socketpair(AF_UNIX, SOCK_STREAM, 0, this->s_fds) == -1 )
+            throw std::runtime_error("socketpair failed") ;
+        // close(this->s_fds[1]);
+        std::cout << "socket pair created" << std::endl;
     }
 }
 
@@ -55,9 +56,11 @@ void    Response::format_message( void )
 {
     // this->status = this->request.getStatus() ;
     // responde cleint errors (parse error ... )
-    if ( this->status != 200 )
+    // if ( this->status != 200 )
+    if ( this->request.isBadRequest() )
     {
-        this->error_response( this->status ) ;
+        // this->error_response( this->status ) ;
+        this->error_response( 200 ) ;
     }
     else
     {
@@ -74,11 +77,6 @@ void    Response::format_message( void )
             this->error_response( error ) ;
         }
     }
-}
-
-const std::ifstream &         Response::getPageStream( void )
-{
-    return ( this->page_content ) ;
 }
 
 void    Response::error_response( short error )
@@ -144,25 +142,7 @@ void Response::responde_with_default_page( short error )
 
 bool    Response::is_cgi() 
 {
-    // try{
-    //     if ( process_target() == false )
-    //         return ((this->_is_cgi = false), false) ;
-    // } catch (int x)
-    // {
-    //     (void)x;
-    //     return ((this->_is_cgi = false), false) ;
-    // }
-
-    // if ( this->_cgi_extention.length() > this->_path_.length() || this->_cgi_extention.empty() )
-    //     return ((this->_is_cgi = false), false) ;
-
-    // size_t j = this->_path_.length() - 1 ;
-    // for ( ssize_t i = this->_cgi_extention.length() - 1 ; i >= 0 ; i-- )
-    // {
-    //     if ( this->_cgi_extention[i] != this->_path_[j--] )
-    //         return ((this->_is_cgi = false), false) ;
-    // }
-    return ((this->_is_cgi)) ;
+    return (this->_is_cgi) ;
 }
 
 bool Response::is_allowd_method()
@@ -249,4 +229,24 @@ const std::string & Response::getUploadDir  ( void )
 int * Response::get_pair_fds()
 {
     return ( this->s_fds );
+}
+
+const std::ifstream &         Response::getPageStream( void )
+{
+    return ( this->page_content ) ;
+}
+
+pid_t   Response::get_process_id()
+{
+    return ( this->pid ) ;
+}
+
+int   Response::get_exit_stat()
+{
+    return ( this->exit_stat ) ;
+}
+
+void    Response::set_exit_stat(int stat)
+{
+    this->exit_stat = stat;
 }

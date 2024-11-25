@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/30 15:08:50 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/23 06:28:07 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/25 06:09:02 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,12 +28,16 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
 {
     std::vector<ClientSocket*>  activeClients;
     struct kevent               events[1000]; // TODO
-    int                         n_events;
+    int                         n_events = 0;
 
     while (true)
     {
-        ft_memset(events, 0, sizeof(events));
-        
+        for ( int i = 0 ; i < n_events; ++i)
+        {
+            ft_memset(&events[i], 0, sizeof(events[i]));
+        }
+        // ft_memset(events, 0, sizeof(events));
+
         if ((n_events = kevent(kqueue_fd, NULL, 0, events, 1000, 0)) == -1)
         {
             close_sockets_on_error(activeListners);
@@ -46,7 +50,7 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
             if((events[i].flags & EV_EOF || events[i].flags & EV_ERROR)
              || (events[i].fflags & EV_EOF || events[i].fflags & EV_ERROR))
             {
-                std::cout << "Client disconected!" << std::endl;
+                // std::cout << "Client disconected!" << std::endl;
                 delete_client(activeClients, events[i].ident);
                 close(events[i].ident);
             }
@@ -92,18 +96,7 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
 
                 try
                 {
-                    respond_to_client(client_info);
-                    if ( client_info->response->end_of_response() )
-                    {
-                        std::cout << "end response " << std::endl;
-                        delete client_info->request;
-                        delete client_info->response;
-                        client_info->request = NULL;
-                        client_info->response = NULL;
-                        client_info->request = new Request();
-                        client_info->request->set_ClientSocket(client_info);
-                        switch_interest(client_info, kqueue_fd, EVFILT_WRITE, EVFILT_READ); // Interest is gonna be switched only if the response has been entirely sent.
-                    }
+                    respond_to_client(client_info, kqueue_fd, n_events, events );
                 }
                 catch(const std::exception& e)
                 {

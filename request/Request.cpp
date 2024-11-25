@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:06:28 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/23 06:14:40 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/25 01:04:20 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,6 +14,7 @@
 
 Request::Request( void )
 {
+    // std::cout << "Request created" << std::endl;
     start_line_is_parsed = false;
     headers_parsed = false;
     body_is_parsed = false;

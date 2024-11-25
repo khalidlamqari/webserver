@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   KqueueWrapper.cpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ymafaman <ymafaman@student.42.fr>          +#+  +:+       +#+        */
+/*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:33:49 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/05 11:34:36 by ymafaman         ###   ########.fr       */
+/*   Updated: 2024/11/24 04:42:34 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -36,7 +36,7 @@ void    register_listeners_in_kqueue(int kqueue_fd, std::vector<struct ListenerS
     std::vector<struct ListenerSocket>::iterator it = activeListners.begin();
     std::vector<struct ListenerSocket>::iterator end = activeListners.end();
 
-    for ( ; it != end; it++)
+    for ( ; it != end; it++) 
         register_socket_in_kqueue(kqueue_fd, &it->get_instance(), EVFILT_READ);
 }
 
