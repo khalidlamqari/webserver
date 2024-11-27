@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   helper_functions.cpp                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ymafaman <ymafaman@student.42.fr>          +#+  +:+       +#+        */
+/*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/11 21:38:05 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/08 20:24:10 by ymafaman         ###   ########.fr       */
+/*   Updated: 2024/11/25 22:16:48 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -68,6 +68,7 @@ void    close_client_sockets_on_error(std::vector<struct ClientSocket *>& client
     {
         close((*it)->get_sock_fd());
         delete (*it)->request;
+        delete (*it)->response;
         delete *it;   
     }
 }

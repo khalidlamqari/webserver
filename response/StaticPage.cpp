@@ -6,23 +6,22 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/25 09:55:48 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/27 14:38:18 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "Response.hpp"
 
-
-static void normalize_target(std::string &target)
+static bool normalize_target(std::string &target)
 {
     if ( target.find("..") == std::string::npos )
-        return ;
+        return false ;
     std::vector<std::string> directories = _split_(target, '/');
     std::vector<std::string>::iterator it = directories.begin();
     while (it != directories.end())
     {
         if (it == directories.begin() && *it == "..")
-            throw 403;
+            return true;
         if (*it != ".." && it + 1 != directories.end() && *(it + 1) == "..")
         {
             it = directories.erase(it, it + 2);
@@ -35,6 +34,7 @@ static void normalize_target(std::string &target)
     target = "/";
     for (std::vector<std::string>::iterator it = directories.begin() ; it != directories.end() ; ++it) 
         target += "/" + *it;
+    return false ;
 }
 
 bool    Response::path_from_location( std::string & target, std::string & new_target )//index.php/path/info
@@ -97,10 +97,10 @@ void    Response::get_static_page()
         }
     }
 
-    if (this->_is_cgi && this->exit_stat == 0)
-        this->read_cgi_output() ;
+    if (this->_is_cgi ) //&& this->exit_stat == 0
+        this->read_cgi_output();
     else
-        this->read_and_format_msg() ;
+        this->read_and_format_msg();
 }
 
 void Response::read_cgi_output()
@@ -117,14 +117,18 @@ void Response::read_cgi_output()
     if ( n == -1 )
         throw std::runtime_error("read failed") ;
     buffer[n] = '\0';
-    if ( n < (RESP_BUFF - 1) )
-        this->_end_of_response = true ;
-    else
-        this->_tranfer_encoding = true ;
+    // std::cout << "buffer " << buffer << std::endl;
+    if ( n == 0 )
+        this->_end_of_response = true;
+    // if ( this->exit_stat != -1)
+    //     this->_end_of_response = true;
+    //     // this->_tranfer_encoding = true;
+    // else
+    this->_tranfer_encoding = true;
 
-    if ( this->_tranfer_encoding && n != 0 )
-        this->_end_of_response = false ;
-    this->generate_message(buffer, n ) ;
+    // if ( this->_tranfer_encoding && n != 0 )
+    //     this->_end_of_response = false;
+    this->generate_message(buffer, n );
 }
 
 void Response::read_and_format_msg()
@@ -205,40 +209,43 @@ void    Response::generate_message( char * content, size_t size )
         {
             this->message.append("HTTP/1.1 " + default_error_pages.getErrorMsg( this->status ) +\
             "\r\nTransfer-Encoding: chunked" + get_content_type(this->_path_) + "\r\nServer: webserv/0.0\n\r\n") ;
-            this->is_first_message = false ;
+            this->is_first_message = false;
         }
-        this->message.append(ss.str()) ;
-        this->message.append("\r\n") ;
-        this->message.append(content, size) ;
-        this->message.append("\r\n") ;
+        this->message.append(ss.str());
+        this->message.append("\r\n");
+        this->message.append(content, size);
+        this->message.append("\r\n");
     }
     else
     {
         ss << size ;
-        this->message.append("HTTP/1.1 " + default_error_pages.getErrorMsg( this->status ) + "\r\nServer: webserv/0.0\r\n") ;
-        this->message.append("Content-Length: " + ss.str() + get_content_type(this->_path_) + "\r\nConnection: keep-alive\r\n\r\n") ;
+        this->message.append("HTTP/1.1 " + default_error_pages.getErrorMsg( this->status ) + "\r\nServer: webserv/0.0\r\n");
+        this->message.append("Content-Length: " + ss.str() + get_content_type(this->_path_) + "\r\n");
+        if ( this->status != 200 ) // should check header (connection) too
+            this->message.append("Connection: close\r\n");
+        else
+            this->message.append("Connection: keep-alive\r\n");
+        this->message.append("\r\n");
+
         if (  this->request.get_request_method() != "HEAD" )
-            this->message.append(content, size) ;
+            this->message.append(content, size);
     }
 }
 
 LocationContext * Response::find_match_more_location( std::string & new_target )
 {
-    LocationContext * location = NULL ;
+    LocationContext * location = NULL;
 
-    // location = this->find_exact_location( new_target ) ;
-    // if ( location )
-    //     return ( location ) ;
     while ( true )
     {
-        location =    this->find_location( new_target ) ;
+        location =    this->find_location( new_target );
         if ( location )
-            return ( location ) ;
-        this->remove_last_slash( new_target ) ; // /about
+            return ( location );
+        this->remove_last_slash( new_target );
         if ( new_target == "" )
-            return ( NULL ) ;
+            return ( NULL );
     }
-    return ( NULL ) ;
+    return ( NULL );
 }
 
 LocationContext * Response::find_exact_location(const std::string &target)
@@ -261,7 +268,7 @@ LocationContext * Response::find_location(const std::string &target)
 
     for (std::vector<LocationContext>::const_iterator i = locations.begin(); i != locations.end(); ++i)
     {
-        if (i->get_location() == target && ! i->is_exact_location() )
+        if (i->get_location() == target )
         {
             return (LocationContext *)&(*i) ;
         }
@@ -358,43 +365,31 @@ void    Response::get_pathinfo_form_target()
 
 bool    Response::process_target()
 {
-    this->_target = this->request.get_request_target() ;
-    normalize_target( this->_target ) ; // throw 403 should set it in status of this object
-    this->get_pathinfo_form_target() ;
-    _new_target      = this->_target ;
-    _location        = find_match_more_location( _new_target ) ;
+    this->_target = this->request.get_request_target() ; // ff.php
+    if (normalize_target( this->_target ) )
+        this->status = 403;
+    this->get_pathinfo_form_target();
+    _new_target      = this->_target;
+    _location        = find_match_more_location( _new_target );
 
     if ( _location )
     {
         _upload_dir = _location->get_upload_dir();
         if ( ! (_location)->redirect_is_set )
         {
-            this->_path_ = (_location)->get_root_directory() + this->_target ;
-            if ( !( _new_target == this->_target || ( _new_target + "/" ) == this->_target ) && this->is_folder( this->_path_ ) )
-                return false ;
-            if ( this->is_folder( this->_path_ ) )
-                this->_path_.append("/" + (_location)->get_index()) ;
+            this->_path_ = (_location)->get_root_directory() + this->_target;
+            if ( (_new_target == this->_target || ( _new_target + "/" ) == this->_target) && this->is_folder( this->_path_ ) )
+                this->_path_.append("/" + (_location)->get_index());
+            this->_cgi_extention = _location->get_cgi_extension();
         }
-        else
-            return false ;
-        this->_cgi_extention = _location->get_cgi_extension();
-        return false ;
     }
     else
     {
         _upload_dir =  this->server_context.get_upload_dir();
         this->_path_ = this->server_context.get_root_directory() + this->_target ;
-        if ( this->_target == "/" && this->is_folder( this->_path_ )  && this->server_context.get_auto_index() )
-        {
-            return false ;
-        }
-        else if ( this->_target == "/" && this->is_folder( this->_path_ ) )
-            this->_path_ +=  this->server_context.get_index() ;
-        else if ( this->_target != "/" && this->is_folder( this->_path_ ) )
-            return false ;
-
         this->_cgi_extention = this->server_context.get_cgi_extension();
-        return false ;
+        if ( this->_target == "/" )
+            this->_path_ +=  this->server_context.get_index() ;
     }
     return false ;
 }

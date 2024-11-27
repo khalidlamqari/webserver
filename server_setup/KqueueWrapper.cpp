@@ -6,14 +6,14 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:33:49 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/24 04:42:34 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/27 10:13:28 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
 int create_kqueue( void )
-{
+{ 
     int fd;
     if ((fd = kqueue()) == -1)
         throw std::runtime_error(std::string("Webserv : kqueue failed, reason : ") + strerror(errno)); // TODO : close all sockets on error

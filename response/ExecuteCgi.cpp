@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 19:31:45 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/25 09:49:09 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/27 15:06:01 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,7 +23,6 @@
 (char *)"QUERY_STRING=param1=value1&param2=value2",
 
 */
-
 
 void    Response::setup_environment(char ***env)
 {
@@ -56,6 +55,7 @@ void Response::execute_cgi( void )
         (char *)this->_path_.c_str(),
         NULL,
     };
+    std::cout << "this->_path_ " << this->_path_ << std::endl;
     this->pid = fork() ;
     if ( this->pid == 0 )
     {
@@ -65,5 +65,6 @@ void Response::execute_cgi( void )
         if (dup2(this->s_fds[1], 1) == -1)
             exit(1) ;
         execve(av[0], av, env) ;
+        exit(1);
     }
 }

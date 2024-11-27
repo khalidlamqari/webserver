@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:37:00 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/25 07:20:59 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/27 19:25:32 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ void delete_client(std::vector<ClientSocket *>& activeClients, int fd)
             delete (*it)->response;
             delete (*it);
             activeClients.erase(it);
-            std::cout << "client deleted ! " << std::endl;
+            //std::cout << "client deleted ! " << std::endl;
             return ;
         }
     }
@@ -46,7 +46,6 @@ void    accept_client_connection(ListenerSocket *listener, int kqueue_fd, std::v
     new_client->set_servers(listener->get_servers());
     new_client->request = new Request();
     new_client->request->set_ClientSocket(new_client);
-
     activeClients.push_back(new_client);
     register_socket_in_kqueue(kqueue_fd, activeClients.back(), EVFILT_READ);
 }
@@ -105,7 +104,7 @@ void    determine_parsing_stage(Request & request, std::string & rcvdMsg)
     if ( request.get_method() != "POST")
     {
         request.markBodyParsed(true);
-        request.markAsReady(true);   
+        request.markAsReady(true);
         return ;
     }
     if (!request.hasParsedBody())
@@ -145,68 +144,71 @@ void    handle_client_request(ClientSocket* client_info)
 
     buffer[rcvdSize] = '\0';
     rcvdMsg.append(buffer, rcvdSize);
-    
-    // size_t crlf_pos;
-    // crlf_pos = rcvdMsg.find(CRLF);
-    // while (crlf_pos != std::string::npos)
-    // {
-    //     rcvdMsg.insert(crlf_pos, ".");
-    //     crlf_pos = rcvdMsg.find(CRLF, crlf_pos + 3);
-    // }
-    // std::cerr << rcvdMsg << std::endl;
-    // std::cout << "--------------" << std::endl;
-    // return ;
     parse_client_request(*(client_info->request), rcvdMsg);
 }
 
 void    respond_to_client(ClientSocket* client_info, int kqueue_fd, int n_events, struct kevent * events)
 {
-    // (void)events;
+    // (void)events;  
     // (void)n_events;
     // if ( ! ((client_info->response.get _location && this->is_allowd_method_in_location() )|| (! this->_location && this->is_allowd_method())) )
 
     if ( ! client_info->request->isBadRequest() && client_info->response->is_cgi() && !client_info->response->p_is_running && client_info->response->get_exit_stat() == -1 )
     {
-        struct kevent ev;
-        CgiProcess * process = new CgiProcess();
-        process->request = client_info->request;
-        process->response = client_info->response;
-        process->set_type('P');
-        ft_memset(&ev, 0, sizeof(struct kevent));
+        
+        CgiProcess * porc = new CgiProcess();
+        porc->request = client_info->request;
+        porc->response = client_info->response;
+        porc->set_type('P');
         client_info->response->execute_cgi();
-        EV_SET(&ev, client_info->response->get_process_id(), EVFILT_PROC, EV_ADD | EV_ENABLE , NOTE_EXIT, 0, (void *) process );
+        
+        /* add process to kqueue */
+        struct kevent ev;
+        ft_memset(&ev, 0, sizeof(struct kevent));
+        EV_SET(&ev, client_info->response->get_process_id(), EVFILT_PROC, EV_ADD | EV_ENABLE , NOTE_EXIT, 0, (void *)porc );
         if (kevent(kqueue_fd, &ev, 1, NULL, 0, NULL) == -1)
             throw std::runtime_error(std::string("Webserv : kevent(4) failed, reason : ") + strerror(errno));
         client_info->response->p_is_running = true ;
+        std::cout << "process running " << std::endl;
+
+        /* add socketpair to kqueue */
+        CgiInfo * child = new CgiInfo();
+        child->set_type('G');
+        child->response = client_info->response;
+        fcntl(child->response->get_pair_fds()[0], F_SETFL, O_NONBLOCK);
+        ft_memset(&ev, 0, sizeof(struct kevent));
+        EV_SET(&ev, child->response->get_pair_fds()[0], EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, (void *) child);
+        if (kevent(kqueue_fd, &ev, 1, NULL, 0, NULL) == -1)
+            throw std::runtime_error(std::string("Webserv : kevent(4) failed, reason : ") + strerror(errno));
+        
+        
+        
     }
 
-    if ( ! client_info->request->isBadRequest() && client_info->response->is_cgi() && client_info->response->p_is_running && client_info->response->get_exit_stat() == -1)
+    if ( !client_info->request->isBadRequest() && client_info->response->is_cgi() && client_info->response->p_is_running && client_info->response->get_exit_stat() == -1)
     {
+        
         for (int i = 0; i < n_events; i++)
         {
-            if (((CgiProcess *) events[i].udata)->get_type() == 'P' && ((CgiProcess *) events[i].udata)->response == client_info->response && events[i].filter == EVFILT_PROC && events[i].fflags & NOTE_EXIT )
+            if (((Socket *) events[i].udata)->get_type() == 'G' && ((CgiInfo *) events[i].udata)->response == client_info->response &&  events[i].filter == EVFILT_READ)
             {
-                client_info->response->set_exit_stat(0);
+                std::cout << "((CgiInfo *) events[i].udata)->get_type() == 'G'" << std::endl;
+                CgiInfo  * child = (CgiInfo *) events[i].udata;
+                std::cout << "send cgi" << std::endl;
+                std::string rsp;
+                rsp = child->response->getResponse();
+                if (send(client_info->get_sock_fd(), (void *) rsp.c_str(), rsp.length(), 0) == -1)
+                    throw std::runtime_error("send failed");
                 break ;
             }
         }
     }
-
-    if ( !client_info->response->is_cgi() || ( client_info->response->is_cgi() && client_info->response->get_exit_stat() != -1 ))
+    else if ( !client_info->response->is_cgi() )
     {
+        std::cout << "send" << std::endl;
         std::string rsp;
         rsp = client_info->response->getResponse();
         if (send(client_info->get_sock_fd(), (void *) rsp.c_str(), rsp.length(), 0) == -1)
             throw std::runtime_error("send failed");
-        if ( client_info->response->end_of_response() )
-        {
-            delete client_info->request;
-            delete client_info->response;
-            client_info->request = NULL;
-            client_info->response = NULL;
-            client_info->request = new Request();
-            client_info->request->set_ClientSocket(client_info);
-            switch_interest(client_info, kqueue_fd, EVFILT_WRITE, EVFILT_READ); // Interest is gonna be switched only if the response has been entirely sent.
-        }
     }
 }

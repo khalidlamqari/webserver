@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/25 05:47:29 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/27 14:31:52 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,54 +15,32 @@
 Response::Response ( ServerContext & server_context, Request & request) :\
                     server_context(server_context), request(request)
 {
-    // std::cout << "Response created" << std::endl;
-    this->_end_of_response  = false ;
-    this->_tranfer_encoding = false ;
-    this->is_first_message  = true ;
-    this->_location         = NULL ;
-    this->_running_post     = false ;
+    this->_end_of_response  = false;
+    this->_tranfer_encoding = false;
+    this->is_first_message  = true;
+    this->_location         = NULL;
     this->exit_stat         = -1;
-    this->status            = 200 ;
-    this->p_is_running      = false ;
-    this->_is_cgi           = false ;
-    // this->status = this->request.getStatus() ;
-    // this->get_path_of_page() ;
+    this->status            = 200;
+    this->p_is_running      = false;
+    this->_is_cgi           = false;
 
-    try{
-        if ( process_target() == false )
-            this->_is_cgi = false;
-    } catch (int x)
-    {
-        (void)x;
-        this->_is_cgi = false ;
-    }
-
-    if ( !this->_cgi_extention.empty() &&  (this->_path_.length() - this->_cgi_extention.length() > 0) && (this->_path_.find(this->_cgi_extention, this->_path_.length() - this->_cgi_extention.length()) != std::string::npos))
+    process_target();
+    
+    if ( !request.isBadRequest() && !this->_cgi_extention.empty() &&  (this->_path_.length() - this->_cgi_extention.length() > 0) && (this->_path_.find(this->_cgi_extention, this->_path_.length() - this->_cgi_extention.length()) != std::string::npos))
     {
         this->_is_cgi = true;
     }
-    
+
     if ( this->_is_cgi )
     {
-        // this->s_fds[0] = open("test_cgi.txt", O_WRONLY | O_CREAT | O_APPEND , 0777 );
         if ( socketpair(AF_UNIX, SOCK_STREAM, 0, this->s_fds) == -1 )
             throw std::runtime_error("socketpair failed") ;
-        // close(this->s_fds[1]);
-        std::cout << "socket pair created" << std::endl;
     }
 }
 
 void    Response::format_message( void )
 {
-    // this->status = this->request.getStatus() ;
-    // responde cleint errors (parse error ... )
-    // if ( this->status != 200 )
-    if ( this->request.isBadRequest() )
-    {
-        // this->error_response( this->status ) ;
-        this->error_response( 200 ) ;
-    }
-    else
+    if ( !this->request.isBadRequest() )
     {
         try
         {
@@ -70,25 +48,28 @@ void    Response::format_message( void )
         }
         catch ( int error )
         {
-            // this->_end_of_response = true ;
             this->_tranfer_encoding = false ;
             this->is_first_message = true ;
             this->status = error ;
             this->error_response( error ) ;
         }
     }
+    else
+    {
+        this->error_response( 404 ) ;
+    }
 }
 
 void    Response::error_response( short error )
 {
-    std::string err_page_path ;
+    std::string err_page_path;
 
-    if ( this->_tranfer_encoding )
+    if (this->_tranfer_encoding)
     {
-        this->responde_with_overrided_page( error , "" ) ; // if transfer already start
+        this->responde_with_overrided_page( error , this->_path_ );
         return ;
     }
-    err_page_path = this->find_error_page( error ) ;
+    err_page_path = this->find_error_page( error );
     if ( err_page_path == "" )
     {
         this->responde_with_default_page( error );
@@ -96,35 +77,24 @@ void    Response::error_response( short error )
     else
     {
         this->responde_with_overrided_page( error , err_page_path ) ;
-        // this->_end_of_response = true ;
     }
 }
 
 void Response::responde_with_overrided_page( short error , std::string err_page_path )
 {
+    (void)error;
     if ( ! this->_tranfer_encoding )
     {
-        this->page_content.open( err_page_path ) ;
-        if ( ! this->page_content.is_open() )
-        {
-            this->responde_with_default_page( error ) ;
-            return ;
-        }
+        this->_path_ = err_page_path ;
     }
-
-    char    buffer[ RESP_BUFF ] = {0} ;
-    this->page_content.read( buffer, RESP_BUFF - 1 ) ; // TODO: should check if reading is done or not
-    if ( this->page_content.fail() && ! this->page_content.eof() )
+    try
     {
-        this->responde_with_default_page( 500 ) ;
-        return ;
+        this->read_and_format_msg();
     }
-    buffer[this->page_content.gcount()] = '\0' ;
-    if ( this->page_content.eof())
-        this->_end_of_response = true ;
-    else
-        this->_tranfer_encoding = true ;
-    this->generate_message(buffer, this->page_content.gcount() ) ;
+    catch(int err)
+    {
+        this->responde_with_default_page( err );
+    }
 }
 
 void Response::responde_with_default_page( short error )
@@ -169,13 +139,11 @@ bool Response::is_allowd_method_in_location()
 
 const std::string & Response::getResponse( void )
 {
-    
     this->message = "";
     if ( this->_end_of_response )
         return ( this->message ) ;
     this->format_message() ;
 
-    // std::cout << "message : " << this->message << std::endl;
     return ( this->message ) ;
 }
 
@@ -193,23 +161,28 @@ std::string Response::find_error_page( unsigned short error )
             }
         }
     }
-
-    const std::vector<std::pair <unsigned short, std::string> > & pages = this->server_context.get_error_pages() ;
-    
-    for ( i = pages.begin() ; i != pages.end() ; ++i )
+    else
     {
-        if ( i->first == error )
+        const std::vector<std::pair <unsigned short, std::string> > & pages = this->server_context.get_error_pages() ;
+        for ( i = pages.begin() ; i != pages.end() ; ++i )
         {
-            return ( this->server_context.get_root_directory() + "/" + i->second ) ; 
+            if ( i->first == error )
+            {
+                return ( this->server_context.get_root_directory() + "/" + i->second ) ; 
+            }
         }
     }
-    
     return ( "" ) ;
 }
 
 bool Response::end_of_response()
 {
     return ( this->_end_of_response ) ;
+}
+
+void Response::set_end_of_response(bool stat)
+{
+    this->_end_of_response = stat;
 }
 
 bool Response::tranfer_encoding()

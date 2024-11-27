@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 16:08:35 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/25 05:53:07 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/27 19:16:48 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,6 +37,7 @@
 #define TMOUT_NSEC 2000 
 #define READ_BUFFER_SIZE 11024
 class Response;
+class HttpContext;
 struct Socket
 {
     void    set_type( char type )
@@ -103,6 +104,12 @@ struct ClientSocket : public Socket
 };
 
 struct CgiProcess : public Socket
+{
+    Request * request;
+    Response * response;
+};
+
+struct CgiInfo : public Socket
 {
     Request * request;
     Response * response;

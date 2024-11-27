@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/25 09:52:37 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/27 14:32:12 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -83,17 +83,11 @@ class Response
         void                                    append_row( std::string  path , std::string target, struct dirent * f, std::string & ls_files ) ;
 
         // cgi
-        // void                                    execute_cgi() ;
         void                                    read_cgi_output() ;
         void                                    setup_environment(char ***env);
 
         // methods          
         void                                    delete_file( ) ;
-        void                                    head();
-
-        // upload files         
-        // void                                    upload_data(const std::string & file_name, const std::string & data );
-        void                                    post_data() ;
 
         bool                                    process_target();
         
@@ -106,18 +100,18 @@ class Response
         const std::string &         getResponse  ( void ) ;
         const std::string &         getUploadDir  ( void ) ;
         const std::ifstream &       getPageStream( void ) ;
-
         bool                        end_of_response() ;
         bool                        tranfer_encoding() ;
+        int *                       get_pair_fds();
+        pid_t                       get_process_id();
+        int                         get_exit_stat();
+        
         // cgi
         void                        execute_cgi() ;
         bool                        is_cgi( );
-        
-        int *                       get_pair_fds();
-        pid_t                       get_process_id();
         bool                        p_is_running;
-        int                         get_exit_stat();
         void                        set_exit_stat(int stat);
+        void                        set_end_of_response(bool stat);
         ~Response() ;
 
 };
