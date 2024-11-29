@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:37:00 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/27 19:25:32 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/29 08:48:06 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -45,6 +45,7 @@ void    accept_client_connection(ListenerSocket *listener, int kqueue_fd, std::v
     new_client->set_sock_fd(client_sock_fd);
     new_client->set_servers(listener->get_servers());
     new_client->request = new Request();
+    new_client->response = NULL ;
     new_client->request->set_ClientSocket(new_client);
     activeClients.push_back(new_client);
     register_socket_in_kqueue(kqueue_fd, activeClients.back(), EVFILT_READ);
@@ -96,9 +97,9 @@ void    determine_parsing_stage(Request & request, std::string & rcvdMsg)
 
     if (request.hasParsedHeaders())
     {
-        const ServerContext *  servercontext = get_server_context( request.get_ClientSocket() ); 
+        const ServerContext *  servercontext = get_server_context( request.get_ClientSocket() );
         // std::cout << servercontext->get_index() << std::endl;
-        request.get_ClientSocket()->response = new Response( *((ServerContext*)servercontext) , request) ;
+        request.get_ClientSocket()->response = new Response( *((ServerContext*)servercontext) , request);
     }
     // only read the body if the method is not get or head! or if content length is not 0...
     if ( request.get_method() != "POST")
@@ -149,19 +150,21 @@ void    handle_client_request(ClientSocket* client_info)
 
 void    respond_to_client(ClientSocket* client_info, int kqueue_fd, int n_events, struct kevent * events)
 {
-    // (void)events;  
-    // (void)n_events;
-    // if ( ! ((client_info->response.get _location && this->is_allowd_method_in_location() )|| (! this->_location && this->is_allowd_method())) )
-
-    if ( ! client_info->request->isBadRequest() && client_info->response->is_cgi() && !client_info->response->p_is_running && client_info->response->get_exit_stat() == -1 )
+    if (client_info->response->get_parse_stat() != 200 || !client_info->response->is_cgi())
     {
-        
+        std::string rsp = client_info->response->getResponse();
+        if (send(client_info->get_sock_fd(), (void *)rsp.c_str(), rsp.length(), 0) == -1)
+            throw std::runtime_error("send failed");
+        return ;
+    }
+    if ( client_info->response->is_cgi() && !client_info->response->p_is_running && client_info->response->get_exit_stat() == -1 )
+    {
         CgiProcess * porc = new CgiProcess();
         porc->request = client_info->request;
         porc->response = client_info->response;
         porc->set_type('P');
         client_info->response->execute_cgi();
-        
+
         /* add process to kqueue */
         struct kevent ev;
         ft_memset(&ev, 0, sizeof(struct kevent));
@@ -177,38 +180,23 @@ void    respond_to_client(ClientSocket* client_info, int kqueue_fd, int n_events
         child->response = client_info->response;
         fcntl(child->response->get_pair_fds()[0], F_SETFL, O_NONBLOCK);
         ft_memset(&ev, 0, sizeof(struct kevent));
-        EV_SET(&ev, child->response->get_pair_fds()[0], EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, (void *) child);
+        EV_SET(&ev, child->response->get_pair_fds()[0], EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, (void *)child);
         if (kevent(kqueue_fd, &ev, 1, NULL, 0, NULL) == -1)
             throw std::runtime_error(std::string("Webserv : kevent(4) failed, reason : ") + strerror(errno));
-        
-        
-        
     }
 
-    if ( !client_info->request->isBadRequest() && client_info->response->is_cgi() && client_info->response->p_is_running && client_info->response->get_exit_stat() == -1)
+    if ( client_info->response->is_cgi() && client_info->response->p_is_running && client_info->response->get_exit_stat() == -1)
     {
-        
         for (int i = 0; i < n_events; i++)
         {
             if (((Socket *) events[i].udata)->get_type() == 'G' && ((CgiInfo *) events[i].udata)->response == client_info->response &&  events[i].filter == EVFILT_READ)
             {
-                std::cout << "((CgiInfo *) events[i].udata)->get_type() == 'G'" << std::endl;
                 CgiInfo  * child = (CgiInfo *) events[i].udata;
-                std::cout << "send cgi" << std::endl;
-                std::string rsp;
-                rsp = child->response->getResponse();
+                std::string rsp = child->response->getResponse();
                 if (send(client_info->get_sock_fd(), (void *) rsp.c_str(), rsp.length(), 0) == -1)
                     throw std::runtime_error("send failed");
                 break ;
             }
         }
-    }
-    else if ( !client_info->response->is_cgi() )
-    {
-        std::cout << "send" << std::endl;
-        std::string rsp;
-        rsp = client_info->response->getResponse();
-        if (send(client_info->get_sock_fd(), (void *) rsp.c_str(), rsp.length(), 0) == -1)
-            throw std::runtime_error("send failed");
     }
 }

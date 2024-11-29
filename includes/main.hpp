@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 09:50:31 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/23 02:57:38 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/29 18:23:12 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,8 @@ std::string trim(const std::string & str ) ;
 bool is_all_WS( const std::string & str ) ;
 bool is_all_digit(const std::string & str) ;
 std::vector<std::string> _split_(const std::string & str, char c) ;
-
+bool    is_dir( const std::string & path );
+bool is_file(std::string path);
 
 
 #endif

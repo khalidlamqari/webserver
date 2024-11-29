@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/27 14:31:52 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/29 11:54:09 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,7 @@ Response::Response ( ServerContext & server_context, Request & request) :\
     this->_is_cgi           = false;
 
     process_target();
-    
+
     if ( !request.isBadRequest() && !this->_cgi_extention.empty() &&  (this->_path_.length() - this->_cgi_extention.length() > 0) && (this->_path_.find(this->_cgi_extention, this->_path_.length() - this->_cgi_extention.length()) != std::string::npos))
     {
         this->_is_cgi = true;
@@ -40,7 +40,7 @@ Response::Response ( ServerContext & server_context, Request & request) :\
 
 void    Response::format_message( void )
 {
-    if ( !this->request.isBadRequest() )
+    if (this->get_parse_stat() == 200)
     {
         try
         {
@@ -56,7 +56,7 @@ void    Response::format_message( void )
     }
     else
     {
-        this->error_response( 404 ) ;
+        this->error_response( this->get_parse_stat() ) ;
     }
 }
 
@@ -110,30 +110,25 @@ void Response::responde_with_default_page( short error )
     this->_end_of_response = true ;
 }
 
-bool    Response::is_cgi() 
-{
-    return (this->_is_cgi) ;
-}
+
 
 bool Response::is_allowd_method()
 {
-    if ( std::find( this->server_context.get_allowed_methods().begin(), this->server_context.get_allowed_methods().end(), \
-    this->request.get_request_method() ) !=  this->server_context.get_allowed_methods().end() )
+    /* search in location */
+    if ( _location &&  (std::find( this->_location->get_allowed_methods().begin(), this->_location->get_allowed_methods().end(), \
+    this->request.get_request_method() ) !=  this->_location->get_allowed_methods().end()) )
+    {
+        return ( true ) ;
+    }
+    /* search in server */
+    if (!_location && (std::find(this->server_context.get_allowed_methods().begin(), this->server_context.get_allowed_methods().end(), \
+    this->request.get_request_method()) != this->server_context.get_allowed_methods().end()) )
     {
         return ( true ) ;
     }
     return ( false ) ;
 }
 
-bool Response::is_allowd_method_in_location()
-{
-    if ( std::find( this->_location->get_allowed_methods().begin(), this->_location->get_allowed_methods().end(), \
-    this->request.get_request_method() ) !=  this->_location->get_allowed_methods().end() )
-    {
-        return ( true ) ;
-    }
-    return ( false ) ;
-}
 
 /* Getters */
 
@@ -173,6 +168,11 @@ std::string Response::find_error_page( unsigned short error )
         }
     }
     return ( "" ) ;
+}
+
+bool    Response::is_cgi() 
+{
+    return (this->_is_cgi) ;
 }
 
 bool Response::end_of_response()
@@ -222,4 +222,14 @@ int   Response::get_exit_stat()
 void    Response::set_exit_stat(int stat)
 {
     this->exit_stat = stat;
+}
+
+LocationContext * Response::get_location()
+{
+    return this->_location;
+}
+
+int Response::get_parse_stat()
+{
+    return this->status;
 }

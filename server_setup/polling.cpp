@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/30 15:08:50 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/27 19:06:47 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/29 18:36:07 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,18 +24,6 @@ void    print_result(Request & client_request)
         client_request.print_files();
     }
 }
-// void    respond_to_client_from_cgi(CgiInfo* cgiinfo, int kqueue_fd, int n_events, struct kevent * events)
-// {
-//     if ( !cgiinfo->response->is_cgi() )
-//         return ;
-        
-
-//     std::cout << "send from cgi" << std::endl;
-//     std::string rsp;
-//     rsp = client_info->response->getResponse();
-//     if (send(client_info->get_sock_fd(), (void *) rsp.c_str(), rsp.length(), 0) == -1)
-//         throw std::runtime_error("send failed");
-// }
 
 void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeListners)
 {
@@ -67,11 +55,8 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
             if(((events[i].flags & EV_EOF || events[i].flags & EV_ERROR)
              || (events[i].fflags & EV_EOF || events[i].fflags & EV_ERROR) )&& ! (((Socket *) events[i].udata)->get_type() == 'P'))
             {
-                
-                    std::cout << "error" << std::endl;
                     close(events[i].ident);
                     delete_client(activeClients, events[i].ident);
-                
             }
             else 
             if (((Socket *) events[i].udata)->get_type() == 'L')
@@ -144,23 +129,8 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
                     throw ;
                 }
             }
-            // else if (((Socket *) events[i].udata)->get_type() == 'G' && events[i].filter == EVFILT_READ) // cgi
-            // {
-            //     CgiInfo  * ch = (CgiInfo *) events[i].udata;
-            //     try
-            //     {
-            //         respond_to_client_from_cgi(ch, kqueue_fd, n_events, events );
-            //     }
-            //     catch(const std::exception& e)
-            //     {
-            //         close_sockets_on_error(activeListners);
-            //         close_client_sockets_on_error(activeClients);
-            //         throw ;
-            //     }
-            // }
-            else if ( events[i].filter == EVFILT_PROC && (events[i].fflags & NOTE_EXIT))
+            else if ( ((Socket *) events[i].udata)->get_type() == 'P' && events[i].filter == EVFILT_PROC && (events[i].fflags & NOTE_EXIT))
             {
-                std::cout << "here " << std::endl;
                 CgiProcess  * process_info = (CgiProcess *) events[i].udata;
                 std::cout << "process " << process_info->response->get_process_id() << " is done" << std::endl;
                 // kill(process_info->response->get_process_id() , SIGKILL);

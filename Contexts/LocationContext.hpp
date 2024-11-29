@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/09 11:31:25 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/22 22:38:12 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/29 08:57:03 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,14 +52,14 @@ class LocationContext {
 
     /* Getters */
 
-    std::vector<std::pair <unsigned short, std::string> > &              get_error_pages      ( void ) ;
+    std::vector<std::pair <unsigned short, std::string> > &    get_error_pages      ( void ) ;
     const std::pair<unsigned short, std::string>&              get_redirection     ( void ) const ;
     const std::string&                                         get_root_directory  ( void ) const ;
     const std::string&                                         get_cgi_extension   ( void ) const ;
     const std::string&                                         get_upload_dir      ( void ) const ;
     const std::string&                                         get_index           ( void ) const ;
     bool                                                       get_auto_index      ( void ) const ;
-     std::vector<std::string>&                            get_allowed_methods ( void )  ;
+     std::vector<std::string>&                                 get_allowed_methods ( void )  ;
     const std::string&                                         get_location        ( void ) const ;
     bool                                                       is_exact_location   ( void ) const ;
 

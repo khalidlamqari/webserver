@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/27 14:32:12 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/29 12:09:07 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,6 @@ class Response
         std::string                             _path_ ;
         std::string                             _path_info ;
         std::string                             _target ;
-        std::string                             _new_target;
         
         std::string                             _cgi_extention ;
         bool                                    _is_cgi ;
@@ -55,21 +54,20 @@ class Response
 
         
         void                                    format_message( void ) ;
-        bool                                    is_allowd_method() ;
-        bool                                    is_allowd_method_in_location();
+
         void                                    get_static_page() ;
         void                                    generate_message( char * content, size_t size ) ;
         LocationContext *                       find_location( const std::string & target ) ;
         LocationContext *                       find_exact_location( const std::string &target ) ;
         void                                    remove_last_slash( std::string & target ) ;
         bool                                    get_path_of_page() ;
-        bool                                    path_from_location( std::string & target, std::string & new_target);
-        bool                                    path_from_root( std::string & target );
+        bool                                    path_from_location();
+        bool                                    path_from_root();
         void                                    read_and_format_msg();
         void                                    get_pathinfo_form_target();
         // redirection          
         void                                    redirection_handler( unsigned short status, const std::string & msg_or_file ) ;
-        LocationContext *                       find_match_more_location( std::string & new_target ) ;
+        LocationContext *                       find_match_more_location( std::string target ) ;
             
         // error            
         std::string                             find_error_page( unsigned  short error ) ;
@@ -78,40 +76,41 @@ class Response
         void                                    responde_with_overrided_page( short error, std::string err_page_path ) ;
 
         // auto index           
-        void                                    respond_list_files( const std::string & target) ;
-        bool                                    is_folder( const std::string & path ) ;
+        void                                    respond_list_files() ;
         void                                    append_row( std::string  path , std::string target, struct dirent * f, std::string & ls_files ) ;
 
         // cgi
         void                                    read_cgi_output() ;
         void                                    setup_environment(char ***env);
 
-        // methods          
+        // methods
         void                                    delete_file( ) ;
 
-        bool                                    process_target();
-        
-        
+        void                                    process_target();
+
+
     public:
 
         Response ( ServerContext & server_context, Request & request ) ;
 
         /* Getters */
-        const std::string &         getResponse  ( void ) ;
-        const std::string &         getUploadDir  ( void ) ;
-        const std::ifstream &       getPageStream( void ) ;
-        bool                        end_of_response() ;
-        bool                        tranfer_encoding() ;
+        const std::string &         getResponse  (void);
+        const std::string &         getUploadDir  (void);
+        const std::ifstream &       getPageStream(void);
+        bool                        end_of_response();
+        bool                        tranfer_encoding();
         int *                       get_pair_fds();
         pid_t                       get_process_id();
         int                         get_exit_stat();
-        
+        LocationContext *           get_location();
         // cgi
-        void                        execute_cgi() ;
-        bool                        is_cgi( );
+        void                        execute_cgi();
+        bool                        is_cgi();
         bool                        p_is_running;
         void                        set_exit_stat(int stat);
         void                        set_end_of_response(bool stat);
+        int                         get_parse_stat();
+        bool                        is_allowd_method();
         ~Response() ;
 
 };

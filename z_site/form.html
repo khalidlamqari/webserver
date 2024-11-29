@@ -1,17 +1,13 @@
 <!DOCTYPE html>
-<html lang="en">
+<html>
 <head>
-    <meta charset="UTF-8">
-    <title>File Upload</title>
+    <title>Upload Image</title>
 </head>
 <body>
-    <form action="/index.php" method="POST" enctype="multipart/form-data">
-        <label for="file">Choose a file:</label>
-        <input type="text" id="file" name="file">
-
-        <input type="text" id="file" name="file2">
-        <input type="text" name="fname" >
-        <input type="submit" value="Upload">
+    <form action="upload_imffage.php" method="post" enctype="multipart/form-data">
+        <label for="image">Select an image:</label>
+        <input type="file" name="image" id="image" required>
+        <button type="submit">Upload</button>
     </form>
 </body>
 </html>
