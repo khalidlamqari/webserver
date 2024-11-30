@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/30 14:34:28 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/30 18:58:04 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -127,7 +127,7 @@ void Response::read_cgi_output()
     ssize_t n ;
     char    buffer[ RESP_BUFF ] ;// = {0}
 
-    if ( ! this->_tranfer_encoding )
+    if ( !this->_tranfer_encoding )
     {
         if ( close(this->s_fds[1]) == -1)
             throw std::runtime_error("close failed") ;
@@ -156,13 +156,14 @@ void Response::read_and_format_msg()
 
     if ( !this->_tranfer_encoding )
     {
-        this->page_content.open( this->_path_ ) ;
+        this->page_content.open( this->_path_ );
         if ( ! this->page_content.is_open() )
             throw 404 ;
     }
     this->page_content.read( buffer, (RESP_BUFF - 1)) ;
     if ( this->page_content.fail() && ! this->page_content.eof() )
         throw 500 ;
+
     buffer[this->page_content.gcount()] = '\0';
     if ( this->page_content.eof())
         this->_end_of_response = true;
@@ -217,12 +218,9 @@ std::string get_content_type( const std::string & file_name )
     return ("") ;
 }
 
-
-
 void    Response::generate_message( char * content, size_t size )
 {
     std::ostringstream ss ;
-
     if ( this->_tranfer_encoding )
     {
         ss << std::hex << size ;

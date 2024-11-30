@@ -14,7 +14,25 @@ bool is_existe_file(std::string path)
     return false;
 }
 
+void a()
+{
+    char *s;
+    // s[20] = 'w';
+    throw ;
+}
+
+void b()
+{
+    a();
+}
+
 int main()
 {
-    std::cout << is_existe_file("z_site/img.png") << std::endl;
+    try{
+        b();
+    }
+    catch(std::exception & e)
+    {
+        std::cout << "message : " << e.what() << std::endl;
+    }
 }

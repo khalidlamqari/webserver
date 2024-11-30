@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 19:31:45 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/27 15:06:01 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/30 20:10:30 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,9 +55,12 @@ void Response::execute_cgi( void )
         (char *)this->_path_.c_str(),
         NULL,
     };
-    std::cout << "this->_path_ " << this->_path_ << std::endl;
     this->pid = fork() ;
-    if ( this->pid == 0 )
+    if (this->pid == -1)
+    {
+        this->status = 500;
+    }
+    else if ( this->pid == 0 )
     {
         this->setup_environment(&env);
         if (close(this->s_fds[0])  == -1)

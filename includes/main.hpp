@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/10 09:50:31 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/29 18:23:12 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/30 16:48:35 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -35,7 +35,7 @@
 // #include "../Request/Request.hpp"
 
 #define BUFFER_SIZE 10000000
-#define RESP_BUFF 3000 //(2^16)
+#define RESP_BUFF 1024 //(2^16)
 
 #define MAX_CLIENTS 10
 

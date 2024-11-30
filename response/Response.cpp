@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/30 14:41:02 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/30 18:57:01 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,8 @@ Response::Response ( ServerContext & server_context, Request & request) :\
     this->status            = 200;
     this->p_is_running      = false;
     this->_is_cgi           = false;
+    this->s_fds[0]          = -1;
+    this->s_fds[1]          = -1;
 
     process_target(this->request.get_request_target());
 
@@ -192,6 +194,10 @@ bool Response::tranfer_encoding()
 
 Response::~Response() 
 {
+    if (s_fds[0] != -1)
+        close(s_fds[0]);
+    if (s_fds[1] != -1)
+        close(s_fds[1]);
 }
 
 const std::string & Response::getUploadDir  ( void )
