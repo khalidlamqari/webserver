@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/31 22:33:17 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/30 12:18:26 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/30 14:12:46 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,15 +43,16 @@ void    Response::redirection_handler( unsigned short status, std::string msg_or
         {
             msg_or_file = host + msg_or_file;
         }
-        std::cout << "msg_or_file " << msg_or_file << std::endl;
         this->message.append( "HTTP/1.1 "  + default_info.getCodeMsg( status ) + "\r\n" ) ;
-        this->message.append( "Location: " + msg_or_file + "\r\nContent-Length: 0\r\nConnection: Keep-alive\r\n\r\n" ) ;
+        this->message.append( "Location: " + msg_or_file + "\r\nContent-Length: 0\r\nConnection: "\
+        + this->connection + "\r\n\r\n" ) ;
     }
     else
     {
         ss << msg_or_file.length() ;
         this->message.append( "HTTP/1.1 "  + default_info.getCodeMsg( status ) + "\r\n" ) ;
-        this->message.append("Content-Length: " + ss.str() + "\r\nConnection: Keep-alive\r\n\r\n" + msg_or_file );
+        this->message.append("Content-Length: " + ss.str() + "\r\nConnection: "\
+        + this->connection + "\r\n\r\n" + msg_or_file );
     }
     this->_end_of_response = true ;
 }

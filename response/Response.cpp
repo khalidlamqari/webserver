@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/30 11:21:46 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/30 14:41:02 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@ Response::Response ( ServerContext & server_context, Request & request) :\
 
     if ( !request.isBadRequest() && !this->_cgi_extention.empty() &&  (this->_path_.length() - this->_cgi_extention.length() > 0) && (this->_path_.find(this->_cgi_extention, this->_path_.length() - this->_cgi_extention.length()) != std::string::npos))
     {
+        std::cout << "this is a cgi" << std::endl;
         this->_is_cgi = true;
     }
 
@@ -193,7 +194,7 @@ Response::~Response()
 {
 }
 
-const std::string & Response::getUploadDir  ( void ) 
+const std::string & Response::getUploadDir  ( void )
 {
     return this->_upload_dir ;
 }

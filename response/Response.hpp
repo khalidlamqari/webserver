@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/30 11:21:25 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/30 14:29:33 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,6 +49,7 @@ class Response
         int                                     s_fds[2] ;
         int                                     exit_stat ;
         pid_t                                   pid ;
+        std::string                             connection;
         
 
         
@@ -64,6 +65,8 @@ class Response
         bool                                    path_from_root();
         void                                    read_and_format_msg();
         void                                    get_pathinfo_form_target();
+        void                                    normall_headers(char * content, size_t size );
+        void                                    tranfer_encod_headers();
         // redirection          
         void                                    redirection_handler( unsigned short status, const std::string msg_or_file ) ;
         LocationContext *                       find_match_more_location( std::string target ) ;

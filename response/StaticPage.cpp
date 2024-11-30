@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/30 11:21:52 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/30 14:34:28 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -217,6 +217,8 @@ std::string get_content_type( const std::string & file_name )
     return ("") ;
 }
 
+
+
 void    Response::generate_message( char * content, size_t size )
 {
     std::ostringstream ss ;
@@ -226,11 +228,7 @@ void    Response::generate_message( char * content, size_t size )
         ss << std::hex << size ;
         if ( this->is_first_message )
         {
-            this->message.append("HTTP/1.1 " + default_info.getCodeMsg( this->status )
-                                             + "\r\nTransfer-Encoding: chunked"
-                                             + get_content_type(this->_path_)
-                                             + "\r\nServer: webserv/0.0\n\r\n") ;
-            this->is_first_message = false;
+            this->tranfer_encod_headers();
         }
         this->message.append(ss.str());
         this->message.append("\r\n");
@@ -239,21 +237,7 @@ void    Response::generate_message( char * content, size_t size )
     }
     else
     {
-        ss << size ;
-        this->message.append("HTTP/1.1 " + default_info.getCodeMsg( this->status ) 
-                                         + "\r\nServer: webserv/0.0\r\n");
-
-        this->message.append("Content-Length: " + ss.str()
-                                                + get_content_type(this->_path_)
-                                                + "\r\n");
-        if ( this->status != 200 ) // should check header (connection) too
-            this->message.append("Connection: close\r\n");
-        else
-            this->message.append("Connection: keep-alive\r\n");
-        this->message.append("\r\n");
-
-        if (  this->request.get_request_method() != "HEAD" )
-            this->message.append(content, size);
+        this->normall_headers( content, size );
     }
 }
 
@@ -345,7 +329,8 @@ void    Response::respond_list_files()
         throw 500 ;
     ls_files.append("</tbody></table><hr><center><h5>webserv</h5></center><hr></body></html>") ;
     ss << ls_files.length() ;
-    this->message.append("HTTP/1.1 200 OK\r\nContent-Length: " + ss.str() + "\r\nContent-Type: text/html\r\n\r\n" + ls_files) ;
+    this->message.append("HTTP/1.1 200 OK\r\nContent-Length: " + ss.str() \
+                        + "\r\nContent-Type: text/html\r\n\r\n" + ls_files) ;
 }
 
 void Response::append_row( std::string  path , std::string target, struct dirent * f, std::string & ls_files )
@@ -406,17 +391,32 @@ void    Response::get_pathinfo_form_target()
     this->_target    = this->_target.substr(0, 4 + pos);
 }
 
+void    set_connection(std::map<std::string , std::string> & headers, std::string & connection )
+{
+    std::map<std::string, std::string>::iterator it = headers.find("CONNECTION");
+    if ( it == headers.end() )
+    {
+        connection = "keep-alive";
+    }
+    else if ( it->second != "close")
+    {
+        connection = "keep-alive";
+    }
+    else
+    {
+        connection = it->second;
+    }
+}
+
 void    Response::process_target(const std::string & target)
 {
     // this->_target = this->request.get_request_target() ;
     this->_target = target;
-    
+    set_connection(this->request.get_headers(), this->connection);
     if (normalize_target( this->_target ))
         this->status = 403;
-
     this->get_pathinfo_form_target();
-    _location        = find_match_more_location( this->_target );
-
+    _location = find_match_more_location( this->_target );
     if ( _location && !(_location)->redirect_is_set)
     {
         _upload_dir = _location->get_upload_dir();
@@ -435,4 +435,38 @@ void    Response::process_target(const std::string & target)
     }
     if (!this->is_allowd_method() && this->status != 200)
         this->status = 405;
+}
+
+void    Response::normall_headers(char * content, size_t size )
+{
+    std::ostringstream ss ;
+    ss << size ;
+    this->message.append("HTTP/1.1 " + default_info.getCodeMsg( this->status ) 
+                                        + "\r\nServer: webserv/0.0\r\n");
+
+    this->message.append("Content-Length: " + ss.str()
+                                            + get_content_type(this->_path_)
+                                            + "\r\n");
+
+    if (this->connection == "close" || (this->status >= 400 && this->status <= 599))
+        this->message.append("Connection: close\r\n");
+    else
+        this->message.append("Connection: keep-alive\r\n");
+    this->message.append("\r\n");
+    if (  this->request.get_request_method() != "HEAD" )
+        this->message.append(content, size);
+}
+
+void    Response::tranfer_encod_headers()
+{
+    this->message.append("HTTP/1.1 " + default_info.getCodeMsg( this->status )
+                                        + "\r\nTransfer-Encoding: chunked"
+                                        + get_content_type(this->_path_) + "\r\n") ;
+    if (this->connection == "close" || (this->status >= 400 && this->status <= 599))
+        this->message.append("Connection: close\r\n");
+    else
+        this->message.append("Connection: keep-alive\r\n");
+    this->message.append("\r\n");
+
+    this->is_first_message = false;
 }

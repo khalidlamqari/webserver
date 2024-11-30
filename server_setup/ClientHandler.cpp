@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:37:00 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/30 10:36:24 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/30 14:39:36 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -138,7 +138,7 @@ void    handle_client_request(ClientSocket* client_info)
 {
     std::string rcvdMsg;
     char        buffer[READ_BUFFER_SIZE];
-    size_t      rcvdSize;
+    size_t      rcvdSize; 
 
     if ((rcvdSize = recv(client_info->get_sock_fd(), (void *) buffer, READ_BUFFER_SIZE - 1, 0)) < 0)
         throw std::runtime_error(std::string("Webserv : recv() failed, reason : ") + strerror(errno));

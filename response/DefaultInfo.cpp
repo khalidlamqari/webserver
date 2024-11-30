@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/27 15:21:34 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/30 11:33:06 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/30 13:59:30 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -110,13 +110,14 @@ std::string  DefaultInfo::getDefaultPage( const std::string & error_message )
 
 std::string  DefaultInfo::getCodeMsg( unsigned short error )
 {
-    if ( this->error_pages.find( error ) == this->error_pages.end() )
+    std::map<short , std::string>::iterator it = this->error_pages.find(error);
+    if ( it == this->error_pages.end() )
     {
         std::stringstream ss;
         ss << error;
         return ( ss.str() );
     }
-    return ( this->error_pages.find( error )->second ) ;
+    return ( it->second );
 }
 
 DefaultInfo::~DefaultInfo()

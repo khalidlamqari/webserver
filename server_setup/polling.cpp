@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/30 15:08:50 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/29 18:36:07 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/30 15:00:26 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,9 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
             close_client_sockets_on_error(activeClients);
             throw std::runtime_error(std::string("Webserv : kevent(1) failed, reason : ") + strerror(errno));
         }
-
+        try{
+            
+        
         for (int i = 0; i < n_events; i++)
         {
             if ( events[i].udata == NULL )
@@ -104,7 +106,7 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
                     if ( client_info->response->end_of_response() )
                     {
                         std::cout << "end of response " << std::endl;
-                        if ( client_info->request->get_headers().find("CONNECTION")->second == "close" ) // should check if the responde with error 
+                        if ( client_info->request->get_headers().find("CONNECTION")->second == "close" ) // should check if the responde with error
                         {
                             close(events[i].ident);
                             delete_client(activeClients, events[i].ident);
@@ -139,6 +141,12 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
                 // process_info->response->set_exit_stat(0);
                 // process_info->response->set_end_of_response(true);
             }
+        }
+    
+        }
+        catch(...)
+        {
+            
         }
     }
 }
