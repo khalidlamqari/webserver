@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/29 12:09:07 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/30 11:21:25 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,15 +16,14 @@
 # define RESPONSE_HPP
 
 # include "../includes/main.hpp"
-# include "ErrorPages.hpp"
+# include "DefaultInfo.hpp"
 # include <sys/stat.h>
 # include <dirent.h>
 #include <time.h>
 #include <fstream>
 #include "../Request/Request.hpp"
 class Request ;
-class ErrorPage;
-static ErrorPages default_error_pages ;
+static DefaultInfo default_info ;
 
 class Response
 {
@@ -66,7 +65,7 @@ class Response
         void                                    read_and_format_msg();
         void                                    get_pathinfo_form_target();
         // redirection          
-        void                                    redirection_handler( unsigned short status, const std::string & msg_or_file ) ;
+        void                                    redirection_handler( unsigned short status, const std::string msg_or_file ) ;
         LocationContext *                       find_match_more_location( std::string target ) ;
             
         // error            
@@ -86,7 +85,7 @@ class Response
         // methods
         void                                    delete_file( ) ;
 
-        void                                    process_target();
+        void                                    process_target(const std::string & target);
 
 
     public:
@@ -103,6 +102,7 @@ class Response
         pid_t                       get_process_id();
         int                         get_exit_stat();
         LocationContext *           get_location();
+        
         // cgi
         void                        execute_cgi();
         bool                        is_cgi();

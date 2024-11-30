@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/29 11:54:09 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/30 11:21:46 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,7 @@ Response::Response ( ServerContext & server_context, Request & request) :\
     this->p_is_running      = false;
     this->_is_cgi           = false;
 
-    process_target();
+    process_target(this->request.get_request_target());
 
     if ( !request.isBadRequest() && !this->_cgi_extention.empty() &&  (this->_path_.length() - this->_cgi_extention.length() > 0) && (this->_path_.find(this->_cgi_extention, this->_path_.length() - this->_cgi_extention.length()) != std::string::npos))
     {
@@ -99,10 +99,9 @@ void Response::responde_with_overrided_page( short error , std::string err_page_
 
 void Response::responde_with_default_page( short error )
 {
-    std::string         error_msg      = default_error_pages.getErrorMsg( error ) ;
-    std::string         err_body       = default_error_pages.getErrorPage( error_msg ) ;
+    std::string         error_msg      = default_info.getCodeMsg( error ) ;
+    std::string         err_body       = default_info.getDefaultPage( error_msg ) ;
     std::ostringstream  len;
-
     len << err_body.length() ;
     this->message.append( "HTTP/1.1 " + error_msg + "\r\nContent-Type: text/html\r\nContent-Length: " ) ;
     this->message.append(len.str() + "\r\nConnection: close\r\nServer: 1337WebServ\r\n\r\n") ;

@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:37:00 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/29 08:48:06 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/30 10:36:24 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,12 +54,12 @@ void    accept_client_connection(ListenerSocket *listener, int kqueue_fd, std::v
 static  const ServerContext * get_server_context(ClientSocket * clientsocket)
 {
     std::string host = clientsocket->request->get_headers().find("HOST")->second ;
-    
+    // std::cout << "host : " << host << std::endl;
     for (std::vector<const ServerContext*>::iterator i = clientsocket->get_servers().begin() ; i != clientsocket->get_servers().end() ; ++i)
     {
         std::vector<std::string>::const_iterator b = (*i)->get_server_names().begin();
         std::vector<std::string>::const_iterator e = (*i)->get_server_names().end();
-        
+
         for ( std::vector<std::string>::const_iterator j = b ; j != e ; ++j)
         {
             if ( host == *j )

@@ -1,32 +1,23 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ErrorPages.hpp                                     :+:      :+:    :+:   */
+/*   DefaultInfo.hpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/27 15:21:52 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/08 21:53:02 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/30 11:32:15 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
-#ifndef ERRORPAGES_HPP
-#define ERRORPAGES_HPP
+#ifndef DEFAULTINFO_HPP
+#define DEFAULTINFO_HPP
 
 # include "../includes/main.hpp"
 
-typedef struct s_error_page {
-    int         error_num ;
-    std::string error_name ;
-    std::string error_html ;
 
-} error_page ;
-
-
-
-
-class ErrorPages
+class DefaultInfo
 {
     private:
         // std::map< short, std::string >   error_pages ;
@@ -36,11 +27,11 @@ class ErrorPages
 
     public:
 
-        // const error_page & getErrorPage( short error ) ;
-        const std::string & getErrorMsg( unsigned short error ) ;
-        ErrorPages();
-        ~ErrorPages();
-        std::string  getErrorPage( const std::string & error_message );
+        // const error_page & getDefaultPage( short error ) ;
+        std::string getCodeMsg( unsigned short error ) ;
+        DefaultInfo();
+        ~DefaultInfo();
+        std::string  getDefaultPage( const std::string & error_message );
         
 };
 

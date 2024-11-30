@@ -1,23 +1,23 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   ErrorPages.cpp                                     :+:      :+:    :+:   */
+/*   DefaultInfo.cpp                                    :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/27 15:21:34 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/20 04:27:37 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/30 11:33:06 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-# include "ErrorPages.hpp"
+# include "DefaultInfo.hpp"
 
-ErrorPages::ErrorPages()
+DefaultInfo::DefaultInfo()
 {
     this->init_pages() ;
 }
 
-void ErrorPages::init_pages(void) {
+void DefaultInfo::init_pages(void) {
     this->error_pages[400] = BAD_REQUEST;
     this->error_pages[401] = UNAUTHORIZED;
     this->error_pages[402] = PAYMENT_REQUIRED;
@@ -95,7 +95,7 @@ void ErrorPages::init_pages(void) {
     "</html>\n";
 */
 
-std::string  ErrorPages::getErrorPage( const std::string & error_message )
+std::string  DefaultInfo::getDefaultPage( const std::string & error_message )
 {
     std::string html;
 
@@ -104,16 +104,21 @@ std::string  ErrorPages::getErrorPage( const std::string & error_message )
     html.append( "</title></head>\n<body>\n<center><h1>" ) ;
     html.append( error_message ) ;
     html.append( "</h1></center>\n<hr><center>MyServer</center>\n</body>\n</html>\n" );
-    
+
     return ( html ) ;
 }
 
-const std::string & ErrorPages::getErrorMsg( unsigned short error )
+std::string  DefaultInfo::getCodeMsg( unsigned short error )
 {
+    if ( this->error_pages.find( error ) == this->error_pages.end() )
+    {
+        std::stringstream ss;
+        ss << error;
+        return ( ss.str() );
+    }
     return ( this->error_pages.find( error )->second ) ;
 }
 
-ErrorPages::~ErrorPages()
+DefaultInfo::~DefaultInfo()
 {
-    
 }

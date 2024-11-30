@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/29 18:30:09 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/11/30 11:21:52 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -226,7 +226,7 @@ void    Response::generate_message( char * content, size_t size )
         ss << std::hex << size ;
         if ( this->is_first_message )
         {
-            this->message.append("HTTP/1.1 " + default_error_pages.getErrorMsg( this->status )
+            this->message.append("HTTP/1.1 " + default_info.getCodeMsg( this->status )
                                              + "\r\nTransfer-Encoding: chunked"
                                              + get_content_type(this->_path_)
                                              + "\r\nServer: webserv/0.0\n\r\n") ;
@@ -240,7 +240,7 @@ void    Response::generate_message( char * content, size_t size )
     else
     {
         ss << size ;
-        this->message.append("HTTP/1.1 " + default_error_pages.getErrorMsg( this->status ) 
+        this->message.append("HTTP/1.1 " + default_info.getCodeMsg( this->status ) 
                                          + "\r\nServer: webserv/0.0\r\n");
 
         this->message.append("Content-Length: " + ss.str()
@@ -406,9 +406,10 @@ void    Response::get_pathinfo_form_target()
     this->_target    = this->_target.substr(0, 4 + pos);
 }
 
-void    Response::process_target()
+void    Response::process_target(const std::string & target)
 {
-    this->_target = this->request.get_request_target() ;
+    // this->_target = this->request.get_request_target() ;
+    this->_target = target;
     
     if (normalize_target( this->_target ))
         this->status = 403;

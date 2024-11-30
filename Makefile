@@ -3,7 +3,7 @@ SERVER_SRCS			=	server_setup/server.cpp \
 						server_setup/ClientHandler.cpp \
 						server_setup/KqueueWrapper.cpp
 
-UTILS_SRCS			=	response/ErrorPages.cpp Utils/helper_functions.cpp Utils/split.cpp Utils/trim.cpp Utils/helpers.cpp
+UTILS_SRCS			=	response/DefaultInfo.cpp Utils/helper_functions.cpp Utils/split.cpp Utils/trim.cpp Utils/helpers.cpp
 
 CONFIG_PARSE_SRCS	=	config_file_parsing/config_exception_throw.cpp \
 						config_file_parsing/config_storing.cpp \
