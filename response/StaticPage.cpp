@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/30 18:58:04 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/01 19:46:59 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -130,11 +130,16 @@ void Response::read_cgi_output()
     if ( !this->_tranfer_encoding )
     {
         if ( close(this->s_fds[1]) == -1)
-            throw std::runtime_error("close failed") ;
+            std::cout << "close failed" << std::endl ;
+            // throw std::runtime_error("close failed") ;
     }
     n = read(this->s_fds[0], buffer, (RESP_BUFF - 1)) ;
     if ( n == -1 )
-        throw std::runtime_error("read failed") ;
+    {
+        std::cout << "read fail " << this->s_fds[0] << std::endl;   
+        // exit(1);
+        throw 500 ;
+    }
     buffer[n] = '\0';
     // std::cout << "buffer " << buffer << std::endl;
     if ( n == 0 )

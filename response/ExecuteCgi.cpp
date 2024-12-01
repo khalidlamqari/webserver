@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 19:31:45 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/30 20:10:30 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/01 19:47:52 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,20 +52,27 @@ void Response::execute_cgi( void )
     char **env;
     char *av[] = {
         (char *)"/Users/klamqari/php/bin/php-cgi",
+        (char *)"-q",
         (char *)this->_path_.c_str(),
         NULL,
     };
+    
+    
+    
     this->pid = fork() ;
     if (this->pid == -1)
     {
         this->status = 500;
+        std::cout << "fork fail" << std::endl;
     }
     else if ( this->pid == 0 )
     {
         this->setup_environment(&env);
         if (close(this->s_fds[0])  == -1)
             exit(1) ;
-        if (dup2(this->s_fds[1], 1) == -1)
+        if (dup2(this->s_fds[1], 1) == -1 || dup2(this->s_fds[1], 0) == -1 )
+            exit(1) ;
+        if (close(this->s_fds[1])  == -1)
             exit(1) ;
         execve(av[0], av, env) ;
         exit(1);

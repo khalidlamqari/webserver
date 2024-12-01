@@ -6,16 +6,16 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/09 15:05:35 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/29 20:46:43 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/01 11:30:00 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "webserv.hpp"
-
+#include <signal.h>
 int main(int argc, char *argv[])
 {
     std::string file_name;
-
+    signal(SIGPIPE, SIG_IGN);
     /*  Better create a function called usageERR to show this message! */
     if (argc != 2)
     {

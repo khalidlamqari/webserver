@@ -11,7 +11,7 @@
         {
             echo ("hello world!!!");
         }
-        sleep(10);
+        // sleep(4);
         for ($i = 0 ; $i < 1000 ; $i++)
         {
             echo ("hello world!!!");

@@ -1,14 +1,18 @@
 #include <fstream>
 #include <iostream>
-
+#include <signal.h>
 int main() {
-    std::string a = "hello";
-    std::string * b = new std::string ("hello");
+    for ( int i = 21375 ; i <= 21379; i++)
+    {
+        kill(i, SIGKILL);
+    }
+    // std::string a = "hello";
+    // std::string * b = new std::string ("hello");
     
-    if ( a == *b)
-        std::cout << "true " << std::endl;
-    else
-        std::cout << "false " << std::endl;
+    // if ( a == *b)
+    //     std::cout << "true " << std::endl;
+    // else
+    //     std::cout << "false " << std::endl;
     // std::ofstream file_content;
 
     // // Attempt to open a file
@@ -25,4 +29,5 @@ int main() {
     // file_content.close();
 
     // return 0;
+
 }

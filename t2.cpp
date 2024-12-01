@@ -28,11 +28,13 @@ void b()
 
 int main()
 {
-    try{
-        b();
-    }
-    catch(std::exception & e)
-    {
-        std::cout << "message : " << e.what() << std::endl;
-    }
+    // try{
+    //     b();
+    // }
+    // catch(std::exception & e)
+    // {
+    //     std::cout << "message : " << e.what() << std::endl;
+    // }
+    std::string * str = NULL;
+    delete str;
 }

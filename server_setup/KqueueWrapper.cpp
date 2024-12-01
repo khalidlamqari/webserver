@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:33:49 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/27 10:13:28 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/01 17:13:45 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ void    register_socket_in_kqueue(int kqueue_fd, Socket * sock_data, short filte
     EV_SET(&ev, sock_data->get_sock_fd(), filter, EV_ADD | EV_ENABLE, 0, 0, (void *) sock_data);
 
     if (kevent(kqueue_fd, &ev, 1, NULL, 0, NULL) == -1)
-        throw std::runtime_error(std::string("Webserv : kevent(4) failed, reason : ") + strerror(errno));
+        throw std::runtime_error(std::string("Webserv : kevent(4) failed,  reason : ") + strerror(errno));
 }
 
 void    register_listeners_in_kqueue(int kqueue_fd, std::vector<struct ListenerSocket> & activeListners)

@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/11 21:38:05 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/25 22:16:48 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/01 10:27:30 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -55,7 +55,7 @@ void    close_sockets_on_error(std::vector<struct ListenerSocket>& active_socks)
 
     for ( ; it != end; it++ )
     {
-        close(it->get_sock_fd());   
+        close(it->get_sock_fd());
     }
 }
 
@@ -69,6 +69,12 @@ void    close_client_sockets_on_error(std::vector<struct ClientSocket *>& client
         close((*it)->get_sock_fd());
         delete (*it)->request;
         delete (*it)->response;
+        delete (*it)->cgiinfo;
+        delete (*it)->cgiprocess;
+        (*it)->request = NULL;
+        (*it)->response = NULL;
+        (*it)->cgiinfo = NULL;
+        (*it)->cgiprocess = NULL;
         delete *it;   
     }
 }

@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 16:59:44 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/25 06:08:17 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/01 19:36:22 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -521,7 +521,7 @@ void    parse_body(Request & request, std::string & msg)
 		if ( request.get_ClientSocket()->response->is_cgi() )
 		{
 			write_to_cgi_input( request, chunk_content );
-			close(request.get_ClientSocket()->response->get_pair_fds()[0]);
+			// close(request.get_ClientSocket()->response->get_pair_fds()[0]);
 			request.markBodyParsed(true);
 		}
 		else

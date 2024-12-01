@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 16:08:35 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/27 19:16:48 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/01 16:30:02 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,15 +93,6 @@ struct ListenerSocket : public Socket
     }
 };
 
-struct ClientSocket : public Socket
-{
-    Request * request;
-    Response * response;
-    ClientSocket& get_instance( void )
-    {
-        return *this;
-    }
-};
 
 struct CgiProcess : public Socket
 {
@@ -113,6 +104,19 @@ struct CgiInfo : public Socket
 {
     Request * request;
     Response * response;
+};
+
+struct ClientSocket : public Socket
+{
+    Request * request;
+    Response * response;
+    CgiProcess * cgiprocess;
+    CgiInfo * cgiinfo;
+
+    ClientSocket& get_instance( void )
+    {
+        return *this;
+    }
 };
 
 /*                              Sockets                              */
