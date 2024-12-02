@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/02 09:19:35 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/02 15:10:59 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,6 +39,7 @@ Response::Response ( ServerContext & server_context, Request & request) :\
     {
         if ( socketpair(AF_UNIX, SOCK_STREAM, 0, this->s_fds) == -1) //&& close(this->s_fds[1]) == -1
             throw std::runtime_error("socketpair failed") ;
+        // std::cout << "pair fds : " << this->s_fds[0] << " " << this->s_fds[1] << std::endl;
     }
 }
 

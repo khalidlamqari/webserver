@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/30 15:08:50 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/02 09:21:38 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/02 17:52:11 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,14 +52,14 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
         {
             if ( events[i].udata == NULL )
                 continue;
-            if((((Socket *) events[i].udata) && ((events[i].flags & EV_EOF || events[i].flags & EV_ERROR) || (events[i].fflags & EV_EOF || events[i].fflags & EV_ERROR))) && !(((Socket *) events[i].udata)->get_type() == 'P'))
+            if((((Socket *) events[i].udata) && ((events[i].flags & EV_EOF || events[i].flags & EV_ERROR) || (events[i].fflags & EV_EOF || events[i].fflags & EV_ERROR))) && (((Socket *) events[i].udata)->get_type() != 'P'))
             {
                 if ((((Socket *) events[i].udata)->get_type() != 'G'))
                 {
                     close (events[i].ident);
                     std::cout << events[i].ident << " is closed" << std::endl;
                     delete_client(activeClients, events[i].ident);
-                    break;
+                    // break;
                 }
             }
             else if ( ((Socket *) events[i].udata) && ((Socket *) events[i].udata)->get_type() == 'L')
@@ -116,34 +116,29 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
                         }
                         else
                         {
-                            // if (close(client_info->response->get_pair_fds()[0])  == -1)
-                            // {
-                            //     std::cout << "close fail" << std::endl;
-                            // }
-                            
-                            if (client_info->cgiinfo) {
-                                // close(client_info->cgiinfo->response->get_pair_fds()[0]);
-                                client_info->cgiinfo->request = NULL;
-                                client_info->cgiinfo->response = NULL;
-                            }
-                            if ( client_info->cgiprocess )
+                            if ((client_info->cgiprocess && client_info->cgiprocess->response->get_exit_stat() != -1) || !client_info->cgiprocess)
                             {
-                                // std::cout << " pid " << client_info->response->get_process_id() << std::endl;
-                                // kill(client_info->response->get_process_id(), SIGKILL);
-                                client_info->cgiprocess->request = NULL;
-                                client_info->cgiprocess->response = NULL;
+                                if (client_info->cgiinfo ) {
+                                    client_info->cgiinfo->request = NULL;
+                                    client_info->cgiinfo->response = NULL;
+                                }
+                                if ( client_info->cgiprocess )
+                                {
+                                    client_info->cgiprocess->request = NULL;
+                                    client_info->cgiprocess->response = NULL; 
+                                }
+                                delete client_info->request;
+                                delete client_info->response;
+                                client_info->request = new Request();
+                                delete client_info->cgiinfo;
+                                delete client_info->cgiprocess;
+                                client_info->cgiinfo = NULL;
+                                client_info->cgiprocess = NULL;
+                                client_info->response = NULL;
+                                client_info->request->set_ClientSocket(client_info);
+                                switch_interest(client_info, kqueue_fd, EVFILT_WRITE, EVFILT_READ); // Interest is gonna be switched only if the response has been entirely sent.
+                                // break;
                             }
-                            delete client_info->request;
-                            delete client_info->response;
-                            client_info->request = new Request();
-                            delete client_info->cgiinfo;
-                            delete client_info->cgiprocess;
-                            client_info->cgiinfo = NULL;
-                            client_info->cgiprocess = NULL;
-                            client_info->response = NULL;
-                            client_info->request->set_ClientSocket(client_info);
-                            switch_interest(client_info, kqueue_fd, EVFILT_WRITE, EVFILT_READ); // Interest is gonna be switched only if the response has been entirely sent.
-                            break;
                         }
                     }
                 }
@@ -155,20 +150,21 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
                     throw ;
                 }
             }
-            // else if ( ((Socket *) events[i].udata)->get_type() == 'P' && events[i].filter == EVFILT_PROC && (events[i].fflags & NOTE_EXIT))
-            // {
-            //     CgiProcess  * process_info = (CgiProcess *) events[i].udata;
-            //     if (process_info->response && process_info->response->get_process_id() != 0 && process_info->response->get_process_id() != -1 )
-            //     {
-            //         std::cout << "process " << process_info->response->get_process_id() << " is done" << std::endl;
-            //         // kill(process_info->response->get_process_id() , SIGKILL);
-            //         process_info->response->set_exit_stat(0);
-            //     }
-            //     // delete process_info;
-            //     // events[i].udata = NULL;
-            //     // process_info->response->set_end_of_response(true);
+            else if ( ((Socket *) events[i].udata)->get_type() == 'P' && events[i].filter == EVFILT_PROC && (events[i].fflags & NOTE_EXIT))
+            {
+                CgiProcess  * process_info = (CgiProcess *) events[i].udata;
+                if (process_info && process_info->response )
+                {
+                    std::cout << "process_info->response->get_process_id() ; " << process_info->response->get_process_id() << std::endl;
+                    waitpid(process_info->response->get_process_id(), NULL, 0);
+                    process_info->response->set_exit_stat(0);
+                    // break;
+                }
+                // delete process_info;
+                // events[i].udata = NULL;
+                // process_info->response->set_end_of_response(true);
                 
-            // }
+            }
         }
     // }
     // catch(...)

@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/02 08:16:24 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/02 11:33:08 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -56,7 +56,7 @@ bool    Response::path_from_location()
     {
         this->respond_list_files();
         this->_end_of_response = true ;
-        return false ;    
+        return false ;
     }
     else if (is_dir(this->_path_))
     {
@@ -104,7 +104,7 @@ void    Response::get_static_page()
         return ;
     }
     if ( !this->_tranfer_encoding && !this->is_allowd_method())
-    {   
+    {
         throw 405 ;
     }
     if ( !this->_tranfer_encoding && this->request.get_request_method() == "DELETE" )
