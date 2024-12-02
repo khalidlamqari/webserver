@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 19:31:45 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/01 19:47:52 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/02 09:17:25 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,13 +57,13 @@ void Response::execute_cgi( void )
         NULL,
     };
     
-    
-    
     this->pid = fork() ;
     if (this->pid == -1)
     {
         this->status = 500;
         std::cout << "fork fail" << std::endl;
+        exit(4);
+        // execute_cgi();
     }
     else if ( this->pid == 0 )
     {

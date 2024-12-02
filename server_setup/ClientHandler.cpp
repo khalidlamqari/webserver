@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:37:00 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/01 19:50:41 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/02 09:19:57 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -219,7 +219,7 @@ void    respond_to_client(ClientSocket* client_info, int kqueue_fd, int n_events
         if (kevent(kqueue_fd, &ev, 1, NULL, 0, NULL) == -1)
             throw std::runtime_error(std::string("Webserv1 : kevent(4) failed, reason : ") + strerror(errno));
         client_info->response->p_is_running = true ;
-        std::cout << "process running " << std::endl;
+        // std::cout << "process running " << std::endl;
         
         /* add socketpair to kqueue */
         CgiInfo * fd_pair_soc = new CgiInfo();
@@ -227,11 +227,15 @@ void    respond_to_client(ClientSocket* client_info, int kqueue_fd, int n_events
         fd_pair_soc->response = client_info->response;
         client_info->cgiinfo = fd_pair_soc;
         fcntl(fd_pair_soc->response->get_pair_fds()[0], F_SETFL, O_NONBLOCK);
-        ft_memset(&ev, 0, sizeof(struct kevent));
-        EV_SET(&ev, fd_pair_soc->response->get_pair_fds()[0], EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, (void *)fd_pair_soc);
-        if (kevent(kqueue_fd, &ev, 1, NULL, 0, NULL) == -1)
-            throw std::runtime_error(std::string("Webserv2 : kevent(4) failed, reason : ") + strerror(errno));
-       
+        struct kevent ev2;
+        ft_memset(&ev2, 0, sizeof(struct kevent));
+        EV_SET(&ev2, fd_pair_soc->response->get_pair_fds()[0], EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, (void *)fd_pair_soc);
+        if (kevent(kqueue_fd, &ev2, 1, NULL, 0, NULL) == -1)
+        {
+            std::cout << "Webserv2 : kevent(4) failed, reason : " << fd_pair_soc->response->get_pair_fds()[0] << fd_pair_soc->get_type() << std::endl;
+            // throw std::runtime_error(std::string(("Webserv2 : kevent(4) failed, reason : ")) + strerror(errno));
+        }
+    //    return;
     }
 
     if ( client_info->response && client_info->response->is_cgi() && client_info->response->p_is_running && client_info->response->get_exit_stat() == -1)

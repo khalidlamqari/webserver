@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/30 15:08:50 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/01 19:51:01 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/02 09:21:38 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,11 +33,11 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
 
     while (true)
     {
-        // for ( int i = 0 ; i < n_events; ++i)
-        // {
-        //     ft_memset(&events[i], 0, sizeof(events[i]));
-        // }
-        ft_memset(&events, 0, sizeof(events));
+        for ( int i = 0 ; i < n_events; ++i)
+        {
+            ft_memset(&events[i], 0, sizeof(events[i]));
+        }
+        // ft_memset(&events, 0, sizeof(events));
         
         if ((n_events = kevent(kqueue_fd, NULL, 0, events, 1000, NULL)) == -1)
         {
@@ -54,10 +54,12 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
                 continue;
             if((((Socket *) events[i].udata) && ((events[i].flags & EV_EOF || events[i].flags & EV_ERROR) || (events[i].fflags & EV_EOF || events[i].fflags & EV_ERROR))) && !(((Socket *) events[i].udata)->get_type() == 'P'))
             {
-                if (!(((Socket *) events[i].udata)->get_type() == 'G'))
+                if ((((Socket *) events[i].udata)->get_type() != 'G'))
                 {
                     close (events[i].ident);
+                    std::cout << events[i].ident << " is closed" << std::endl;
                     delete_client(activeClients, events[i].ident);
+                    break;
                 }
             }
             else if ( ((Socket *) events[i].udata) && ((Socket *) events[i].udata)->get_type() == 'L')
@@ -118,12 +120,16 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
                             // {
                             //     std::cout << "close fail" << std::endl;
                             // }
+                            
                             if (client_info->cgiinfo) {
+                                // close(client_info->cgiinfo->response->get_pair_fds()[0]);
                                 client_info->cgiinfo->request = NULL;
                                 client_info->cgiinfo->response = NULL;
                             }
                             if ( client_info->cgiprocess )
                             {
+                                // std::cout << " pid " << client_info->response->get_process_id() << std::endl;
+                                // kill(client_info->response->get_process_id(), SIGKILL);
                                 client_info->cgiprocess->request = NULL;
                                 client_info->cgiprocess->response = NULL;
                             }
@@ -137,6 +143,7 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
                             client_info->response = NULL;
                             client_info->request->set_ClientSocket(client_info);
                             switch_interest(client_info, kqueue_fd, EVFILT_WRITE, EVFILT_READ); // Interest is gonna be switched only if the response has been entirely sent.
+                            break;
                         }
                     }
                 }
