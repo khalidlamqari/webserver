@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 16:59:44 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/01 19:36:22 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/03 16:31:38 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,8 @@
 static char hex_to_char(const std::string & hex_code, Request & request)
 {
     static const std::string    hex_chars = "0123456789ABCDEF";
+    // static const std::string    hex_chars = "0123456789ABCDEF";
+    // static const std::string    hex_chars = "0123456789ABCDEF";
 	int							value;
     char first = std::toupper(hex_code[0]);
     char second = std::toupper(hex_code[1]);
