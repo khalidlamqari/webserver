@@ -1,11 +1,12 @@
 #include <fstream>
 #include <iostream>
 #include <signal.h>
+
 int main() {
-    for ( int i = 21375 ; i <= 21379; i++)
-    {
-        kill(i, SIGKILL);
-    }
+    // for ( int i = 21375 ; i <= 21379; i++)
+    // {
+    //     kill(i, SIGKILL);
+    // }
     // std::string a = "hello";
     // std::string * b = new std::string ("hello");
     
@@ -30,4 +31,6 @@ int main() {
 
     // return 0;
 
+
+    
 }

@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 19:31:45 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/02 13:05:24 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/03 14:33:02 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,7 @@ void Response::execute_cgi( void )
         this->setup_environment(&env);
         if (close(this->s_fds[0])  == -1)
             exit(1) ;
-        if (dup2(this->s_fds[1], 1) == -1 || dup2(this->s_fds[1], 0) == -1 )
+        if (dup2(this->s_fds[1], 1) == -1)
             exit(1) ;
         if (close(this->s_fds[1])  == -1)
             exit(1) ;

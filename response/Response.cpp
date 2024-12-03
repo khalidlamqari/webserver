@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/02 15:10:59 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/03 16:23:44 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -26,20 +26,39 @@ Response::Response ( ServerContext & server_context, Request & request) :\
     this->s_fds[0]          = -1;
     this->s_fds[1]          = -1;
     this->pid               = -1;
-
+    // this->fd_input          = -1;
     process_target(this->request.get_request_target());
 
-    if ( !request.isBadRequest() && !this->_cgi_extention.empty() &&  (this->_path_.length() - this->_cgi_extention.length() > 0) && (this->_path_.find(this->_cgi_extention, this->_path_.length() - this->_cgi_extention.length()) != std::string::npos))
+    if ( !request.isBadRequest() && !this->_cgi_extention.empty() && (this->_path_.length() - this->_cgi_extention.length() > 0) && (this->_path_.find(this->_cgi_extention, this->_path_.length() - this->_cgi_extention.length()) != std::string::npos))
     {
-        // std::cout << "this is a cgi" << std::endl;
         this->_is_cgi = true;
     }
 
     if ( this->_is_cgi )
     {
-        if ( socketpair(AF_UNIX, SOCK_STREAM, 0, this->s_fds) == -1) //&& close(this->s_fds[1]) == -1
+        if ( socketpair(AF_UNIX, SOCK_STREAM, 0, this->s_fds) == -1) // && close(this->s_fds[1]) == -1
             throw std::runtime_error("socketpair failed") ;
-        // std::cout << "pair fds : " << this->s_fds[0] << " " << this->s_fds[1] << std::endl;
+        // int new_buffer_size = 1024 * 1024;
+        // std::cout << new_buffer_size << new_buffer_size << std::endl;
+        // if (setsockopt(this->s_fds[0], SOL_SOCKET, SO_RCVBUF, &new_buffer_size, sizeof(new_buffer_size)) == -1) {
+        //     perror("setsockopt (SO_RCVBUF)");
+        // }
+        // if (setsockopt(this->s_fds[0], SOL_SOCKET, SO_RCVBUF, &new_buffer_size, sizeof(new_buffer_size)) == -1) {
+        //     perror("setsockopt (SO_RCVBUF)");
+        // }
+        
+        // if (setsockopt(this->s_fds[1], SOL_SOCKET, SO_RCVBUF , &new_buffer_size, sizeof(new_buffer_size)) == -1) {
+        //     perror("setsockopt (SO_RCVBUF)");
+        // }
+        // if (setsockopt(this->s_fds[1], SOL_SOCKET, SO_SNDBUF , &new_buffer_size, sizeof(new_buffer_size)) == -1) {
+        //     perror("setsockopt (SO_RCVBUF)");
+        // }
+    
+        if ( this->request.get_method() == "POST" )
+        {
+            // path_input = "/tmp/input_cgi_for_test";
+            // fd_input = open(path_input.c_str() , O_CREAT | O_WRONLY , 0777);
+        }
     }
 }
 
@@ -104,8 +123,8 @@ void Response::responde_with_overrided_page( short error , std::string err_page_
 
 void Response::responde_with_default_page( short error )
 {
-    std::string         error_msg      = default_info.getCodeMsg( error ) ;
-    std::string         err_body       = default_info.getDefaultPage( error_msg ) ;
+    std::string         error_msg = default_info.getCodeMsg( error ) ;
+    std::string         err_body = default_info.getDefaultPage( error_msg ) ;
     std::ostringstream  len;
     len << err_body.length() ;
     this->message.append( "HTTP/1.1 " + error_msg + "\r\nContent-Type: text/html\r\nContent-Length: " ) ;
@@ -240,4 +259,10 @@ LocationContext * Response::get_location()
 int Response::get_parse_stat()
 {
     return this->status;
+}
+
+
+const std::string & Response::get_connection() const
+{
+    return this->connection;
 }

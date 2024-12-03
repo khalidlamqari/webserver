@@ -1,6 +1,15 @@
-TODO : check Connection 
 
-TODO to day continue redirct codes >> done 
 
 TODO : cgi :
-        
+    pass body to child process and environment
+
+
+
+
+TO CHECK 
+    page.html in connection keep-alive   YES
+    page.html in connection close       
+
+    page.php in connection keep-alive   YES
+    page.php in connection close        
+    

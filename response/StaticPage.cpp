@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/02 11:33:08 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/03 14:52:56 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -452,7 +452,10 @@ void    Response::normall_headers(char * content, size_t size )
                                             + "\r\n");
 
     if (this->connection == "close" || (this->status >= 400 && this->status <= 599))
+    {
         this->message.append("Connection: close\r\n");
+        // std::cout << "--------------> close" << std::endl;   
+    }
     else
         this->message.append("Connection: keep-alive\r\n");
     this->message.append("\r\n");

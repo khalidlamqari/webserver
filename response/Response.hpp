@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/30 14:29:33 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/03 10:00:12 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -47,6 +47,8 @@ class Response
         std::string                             _cgi_extention ;
         bool                                    _is_cgi ;
         int                                     s_fds[2] ;
+        int                                     fd_input;
+        std::string                             path_input;
         int                                     exit_stat ;
         pid_t                                   pid ;
         std::string                             connection;
@@ -90,12 +92,12 @@ class Response
 
         void                                    process_target(const std::string & target);
 
-
     public:
 
         Response ( ServerContext & server_context, Request & request ) ;
 
         /* Getters */
+        const std::string &         get_connection() const;
         const std::string &         getResponse  (void);
         const std::string &         getUploadDir  (void);
         const std::ifstream &       getPageStream(void);
