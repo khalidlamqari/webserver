@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/30 15:08:50 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/03 16:29:08 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/06 16:25:07 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,11 +105,16 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
                 {
                     // std::cout << "responding ... "  << std::endl;
                     respond_to_client(client_info, kqueue_fd, n_events, events );
-                    // if ( (client_info->response->end_of_response() && client_info->response->get_exit_stat() != -1) || (client_info->response->end_of_response() && !(client_info->response->is_cgi()) ))
-                    if ( (client_info->response->end_of_response() || client_info->response->get_exit_stat() != -1 ))
+                    if ( (!client_info->response->is_cgi() && client_info->response->end_of_response())  || (client_info->response->is_cgi() && client_info->response->get_exit_stat() != -1) )
                     {
+                        // if (client_info->response->get_exit_stat() != 0)
+                        // {
+                        //     std::cout << "exit status : " << client_info->response->get_exit_stat() << std::endl;
+                        //     client_info->response->set_parse_stat(500);
+                        //     respond_to_client(client_info, kqueue_fd, n_events, events );
+                        // }
+
                         std::cout << "end of response " << std::endl;
-                        // std::cout << "client_info->response->get_connection() : " << client_info->response->get_connection() << std::endl;
                         if ( client_info->response->get_connection() == "close") // should check if the responde with error
                         {
                             close(events[i].ident);

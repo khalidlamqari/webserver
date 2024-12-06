@@ -2,7 +2,45 @@
 #include <iostream>
 #include <signal.h>
 
+#include <sstream>
+#include<string>
+#include <unistd.h>
+
+static int file_num = 0;
+
+std::string get_rand_file_name(size_t & file_num)
+{
+    std::ostringstream file_name;
+    std::string path = "/tmp/.web_server_response_in_file_";
+
+    file_name << path;
+    file_name << file_num;
+
+    if (access(file_name.str().c_str(), F_OK) == 0)
+    {
+        file_num += 1;
+        return get_rand_file_name(file_num);
+    }
+    else
+    {
+        return file_name.str();
+    }
+}
+
+
 int main() {
+    std::ofstream myfile;
+    std::cout <<  get_rand_file_name(file_num) << std::endl;
+
+    myfile.open(get_rand_file_name(file_num));
+    
+    if ( myfile.is_open())
+        std::cout << "opened" << std::endl;
+    else
+        std::cout << "not opened" << std::endl;
+    std::cout << "file_num : " << file_num << std::endl;
+
+    // myfile << "hello world" << std::endl;
     // for ( int i = 21375 ; i <= 21379; i++)
     // {
     //     kill(i, SIGKILL);

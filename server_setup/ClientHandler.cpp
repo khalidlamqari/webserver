@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:37:00 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/03 16:25:23 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/06 16:22:46 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -188,6 +188,7 @@ void    respond_to_client(ClientSocket* client_info, int kqueue_fd, int n_events
         std::cout << "NULL" << std::endl;
         return ;
     }
+
     int status = client_info->response->get_parse_stat();
     if (!client_info->response->is_cgi() || (status >= 400 && status <= 599))
     {
@@ -200,7 +201,7 @@ void    respond_to_client(ClientSocket* client_info, int kqueue_fd, int n_events
         }
         return ;
     }
-    
+
     if ( client_info->response->is_cgi() && !client_info->response->p_is_running && client_info->response->get_exit_stat() == -1 )
     {
         CgiProcess * proc = new CgiProcess();
@@ -209,7 +210,8 @@ void    respond_to_client(ClientSocket* client_info, int kqueue_fd, int n_events
         proc->set_type('P');
         client_info->cgiprocess = proc;
         client_info->response->execute_cgi();
-        if ( client_info->response->get_parse_stat() == 500 )
+        int stat = client_info->response->get_parse_stat();
+        if ( stat >= 400 && stat <= 599)
         {
             respond_to_client(client_info, kqueue_fd, n_events, events);
             return ;
@@ -251,7 +253,7 @@ void    respond_to_client(ClientSocket* client_info, int kqueue_fd, int n_events
             {
                 CgiInfo  * child = (CgiInfo *) events[i].udata;
                 std::string rsp = child->response->getResponse();
-                if (send(client_info->get_sock_fd(), (void *) rsp.c_str(), rsp.length(), 0) == -1)
+                if (client_info->response->is_parsed && send(client_info->get_sock_fd(), (void *) rsp.c_str(), rsp.length(), 0) == -1)
                     std::cout << "send failed2" << std::endl;
                     // throw std::runtime_error("send failed");
                 break ;

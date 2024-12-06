@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/03 10:00:12 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/06 18:15:34 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,6 +52,9 @@ class Response
         int                                     exit_stat ;
         pid_t                                   pid ;
         std::string                             connection;
+        std::string                             unparsed_content;
+        // std::string                             data_out;
+        
         
 
         
@@ -91,7 +94,9 @@ class Response
         void                                    delete_file( ) ;
 
         void                                    process_target(const std::string & target);
-
+        void                                    parse_headers(char * buffer, size_t size);
+        void                                    generate_body_cgi(char * buffer, size_t size);
+        
     public:
 
         Response ( ServerContext & server_context, Request & request ) ;
@@ -107,15 +112,18 @@ class Response
         pid_t                       get_process_id();
         int                         get_exit_stat();
         LocationContext *           get_location();
-        
+
         // cgi
         void                        execute_cgi();
         bool                        is_cgi();
         bool                        p_is_running;
+        bool                        is_parsed;
         void                        set_exit_stat(int stat);
         void                        set_end_of_response(bool stat);
         int                         get_parse_stat();
+        void                        set_parse_stat(int stat);
         bool                        is_allowd_method();
+        std::string                 data_path;
         ~Response() ;
 
 };

@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:06:28 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/25 01:04:20 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/06 14:27:22 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -245,7 +245,6 @@ void    Request::markAsBad( int i )
     // Testing
     std::cout << i << std::endl;
     this->is_bad = true;
-    throw "Bad request!";
 }
 
 void    Request::markAsChunked()

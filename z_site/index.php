@@ -7,11 +7,12 @@
 </head>
 <body>
     <?php
+    
         for ($i = 0; $i < 100000; $i++)
         {
-            echo "hello world !! ";
+                echo "hello world !! ";
         }
-        // echo "hello world !! ";
+        echo "hello world !! ";
         // for ($i = 0; $i < 10000; $i++)
         // {
         //     echo "hhhh";

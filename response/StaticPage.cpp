@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/03 14:52:56 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/06 18:26:44 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -117,9 +117,67 @@ void    Response::get_static_page()
         this->read_cgi_output();
     }
     else
-    {   
+    {
         this->read_and_format_msg();
     }
+}
+
+std::string extract_headers(const std::string & unparsed_content, size_t pos)
+{
+    return ( unparsed_content.substr(0, pos + 4) );
+}
+
+std::string extract_body(const std::string & unparsed_content, size_t pos)
+{
+    return ( unparsed_content.substr(pos + 4, unparsed_content.length()) );
+}
+
+void Response::parse_headers(char * buffer, size_t size)
+{
+    std::string body;
+    std::ostringstream ss ;
+    size_t pos;
+
+    unparsed_content.append(buffer, size);
+    pos = unparsed_content.find("\r\n\r\n");
+    if (pos == std::string::npos)
+    {
+        this->is_parsed = false;
+     
+    }
+    else
+    {
+     
+        this->message.append("HTTP/1.1 " + default_info.getCodeMsg( this->status )
+                                   + "\r\nTransfer-Encoding: chunked\r\n") ;
+        if (this->connection == "close" || (this->status >= 400 && this->status <= 599))
+            this->message.append("Connection: close\r\n");
+        else
+            this->message.append("Connection: keep-alive\r\n");
+        this->message.append(extract_headers(unparsed_content, pos)); // gets crlf too
+
+        body = extract_body(unparsed_content, pos);
+
+        ss << std::hex << (body.length());
+        this->message.append(ss.str());
+        this->message.append("\r\n");
+        this->message.append(body);
+        this->message.append("\r\n");
+        
+        this->is_first_message = false;
+        this->is_parsed = true;
+    }
+}
+
+void Response::generate_body_cgi(char * buffer, size_t size)
+{
+    std::ostringstream ss ;
+     
+    ss << std::hex << size ;
+    this->message.append(ss.str());
+    this->message.append("\r\n");
+    this->message.append(buffer, size);
+    this->message.append("\r\n");
 }
 
 void Response::read_cgi_output()
@@ -129,6 +187,7 @@ void Response::read_cgi_output()
 
     if ( !this->_tranfer_encoding )
     {
+        this->_tranfer_encoding = true;
         if ( close(this->s_fds[1]) == -1)
             std::cout << "close failed" << std::endl ;
             // throw std::runtime_error("close failed") ;
@@ -136,23 +195,21 @@ void Response::read_cgi_output()
     n = read(this->s_fds[0], buffer, (RESP_BUFF - 1)) ;
     if ( n == -1 )
     {
-        std::cout << "read fail " << this->s_fds[0] << std::endl;   
-        // exit(1);
+        std::cout << "read fail " << this->s_fds[0] << std::endl;
         throw 500 ;
     }
     buffer[n] = '\0';
-    // std::cout << "buffer " << buffer << std::endl;
     if ( n == 0 )
         this->_end_of_response = true;
-    // if ( this->exit_stat != -1)
-    //     this->_end_of_response = true;
-    //     // this->_tranfer_encoding = true;
-    // else
-    this->_tranfer_encoding = true;
+    if ( !this->is_parsed)
+    {
+        this->parse_headers(buffer, n);
+    }
+    else
+        this->generate_body_cgi(buffer, n);
 
-    // if ( this->_tranfer_encoding && n != 0 )
-    //     this->_end_of_response = false;
-    this->generate_message(buffer, n );
+    // this->generate_message(buffer, n);
+
 }
 
 void Response::read_and_format_msg()
@@ -161,7 +218,11 @@ void Response::read_and_format_msg()
 
     if ( !this->_tranfer_encoding )
     {
-        this->page_content.open( this->_path_ );
+        if ( this->_is_cgi )
+            this->page_content.open( this->data_path);
+        else
+            this->page_content.open( this->_path_ );
+            
         if ( ! this->page_content.is_open() )
             throw 404 ;
     }
@@ -410,7 +471,12 @@ void    set_connection(std::map<std::string , std::string> & headers, std::strin
         connection = it->second;
     }
 }
-
+static bool is_existe(const std::string & path)
+{
+    if ( access(path.c_str(), F_OK) == 0)
+        return true;
+    return false;
+}
 void    Response::process_target(const std::string & target)
 {
     // this->_target = this->request.get_request_target() ;
@@ -438,6 +504,8 @@ void    Response::process_target(const std::string & target)
     }
     if (!this->is_allowd_method() && this->status != 200)
         this->status = 405;
+    if (!is_existe(this->_path_))
+        this->status = 404;
 }
 
 void    Response::normall_headers(char * content, size_t size )
