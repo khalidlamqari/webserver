@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/07 08:58:19 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/07 13:19:46 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -29,47 +29,19 @@ Response::Response ( ServerContext & server_context, Request & request) :\
     this->s_fds[1]          = -1;
     this->pid               = -1;
     this->is_parsed         = false;
-    this->is_finished       = false;
     this->offset            = 0;
-    
+
     // this->fd_input          = -1;
     process_target(this->request.get_request_target());
-    if (  !request.isBadRequest() && !this->_cgi_extention.empty() && (this->_path_.length() - this->_cgi_extention.length() > 0) && (this->_path_.find(this->_cgi_extention, this->_path_.length() - this->_cgi_extention.length()) != std::string::npos))
+    if (!request.isBadRequest() && !this->_cgi_extention.empty() && (this->_path_.length() - this->_cgi_extention.length() > 0) && (this->_path_.find(this->_cgi_extention, this->_path_.length() - this->_cgi_extention.length()) != std::string::npos))
     {
         this->_is_cgi = true;
     }
 
     if ( this->_is_cgi )
     {
-        // this->data_path = get_rand_file_name(num_file); // data_path for in data and out data
-        /* should create file in data */
         if ( socketpair(AF_UNIX, SOCK_STREAM, 0, this->s_fds) == -1) // && close(this->s_fds[1]) == -1
             throw std::runtime_error("socketpair failed") ;
-
-
-        // int new_buffer_size = 2147483647;
-        
-        // std::cout << new_buffer_size << new_buffer_size << std::endl;
-        // if (setsockopt(this->s_fds[0], SOL_SOCKET, SO_RCVBUF, &new_buffer_size, sizeof(new_buffer_size)) == -1) {
-        //     perror("setsockopt (SO_RCVBUF)");
-        // }
-        // if (setsockopt(this->s_fds[0], SOL_SOCKET, SO_RCVBUF, &new_buffer_size, sizeof(new_buffer_size)) == -1) {
-        //     perror("setsockopt (SO_RCVBUF)");
-        // }
-        
-        // if (setsockopt(this->s_fds[1], SOL_SOCKET, SO_RCVBUF , &new_buffer_size, sizeof(new_buffer_size)) == -1) {
-        //     perror("setsockopt (SO_RCVBUF)");
-        // }
-        // if (setsockopt(this->s_fds[1], SOL_SOCKET, SO_SNDBUF , &new_buffer_size, sizeof(new_buffer_size)) == -1) {
-        //     perror("setsockopt (SO_RCVBUF)");
-        // }
-    
-        // if ( this->request.get_method() == "POST" )
-        // {
-        //     // path_input = "/tmp/input_cgi_for_test";
-        //     // fd_input = open(path_input.c_str() , O_CREAT | O_WRONLY , 0777);
-        // }
-        
     }
 }
 
@@ -149,8 +121,6 @@ void Response::responde_with_default_page( short error )
     this->_end_of_response = true ;
 }
 
-
-
 bool Response::is_allowd_method()
 {
     /* search in location */
@@ -167,7 +137,6 @@ bool Response::is_allowd_method()
     }
     return ( false ) ;
 }
-
 
 /* Getters */
 

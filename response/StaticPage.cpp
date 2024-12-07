@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/07 11:43:07 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/07 13:15:09 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -99,7 +99,6 @@ bool Response::get_path_of_page()
 
 void    Response::get_static_page()
 {
-    // std::cout << "here" << std::endl;
     if ( !this->_tranfer_encoding && !this->get_path_of_page())
     {   
         return ;
@@ -116,7 +115,6 @@ void    Response::get_static_page()
     if (this->_is_cgi ) //&& this->exit_stat == 0
     {
         this->format_cgi_msg();
-        // std::cout << "this->message : " << this->message << std::endl;
     }
     else
     {
@@ -126,21 +124,12 @@ void    Response::get_static_page()
 
 void    Response::format_cgi_msg()
 {
-    // if (this->is_finished && !this->_tranfer_encoding && this->data_out.length() > RESP_BUFF)
-    // {
-    //     this->_tranfer_encoding = true;
-    // }
-    // if ( !this->is_finished)
-    // {
-    //     read_cgi_output();
-    // }
-    // else 
-    if (this->is_finished && !this->is_parsed)
+    if (!this->is_parsed)
     {
         this->parse_headers();
         this->get_response_body();
     }
-    else if (this->is_finished && this->is_parsed)
+    else
     {
         this->get_response_body();
     }
@@ -188,7 +177,7 @@ void Response::parse_headers()
         {
             this->message.append("Transfer-Encoding: chunked\r\n");
         }
-        this->message.append(extract_headers(data_out, pos)); // gets crlf too
+        this->message.append(extract_headers(data_out, pos));
         this->offset += pos + 4;
 
         this->is_first_message = false;
@@ -201,7 +190,7 @@ void Response::get_response_body()
     std::ostringstream ss ;
     std::string body = extract_body(this->data_out, this->offset);
     this->offset += body.length();
-    
+
     if (this->_tranfer_encoding)
     {
         ss << std::hex << body.length() ;
@@ -221,69 +210,21 @@ void Response::get_response_body()
 
 void Response::read_cgi_output()
 {
-    // std::cout << "reading ..." << std::endl;
     ssize_t n ;
-    char    buffer[ RESP_BUFF ] ; // = {0}
-    
+    char    buffer[ RESP_BUFF ] ;
+
     n = read(this->s_fds[0], buffer, (RESP_BUFF - 1)) ;
     if ( n == -1 )
     {
-        std::cout << "read fail " << this->s_fds[0] << std::endl;
         throw 500 ;
     }
     buffer[n] = '\0';
-    // std::cout << "RESP_BUFF : " << RESP_BUFF << " " << " n : " << n << std::endl;
-    // if ( n == 0 )
-    // {
-        this->is_finished = true;
-        std::cout << "finished" << std::endl;
-    // }
-    
     this->data_out.append(buffer, n);
-    // std::cout << "read : " << this->data_out << std::endl;
 }
-
-// void Response::read_cgi_output()
-// {
-//     ssize_t n ;
-//     char    buffer[ RESP_BUFF ] ;// = {0}
-
-//     if ( !this->_tranfer_encoding )
-//     {
-//         this->_tranfer_encoding = true;
-//         if ( close(this->s_fds[1]) == -1)
-//             std::cout << "close failed" << std::endl ;
-//             // throw std::runtime_error("close failed") ;
-//     }
-//     n = read(this->s_fds[0], buffer, (RESP_BUFF - 1)) ;
-//     if ( n == -1 )
-//     {
-//         std::cout << "read fail " << this->s_fds[0] << std::endl;
-//         throw 500 ;
-//     }
-//     buffer[n] = '\0';
-//     if ( n == 0 )
-//         this->_end_of_response = true;
-    
-//     this->data_out.append(buffer, n);
-    
-//     // if ( !this->is_parsed)
-//     // {
-//     //     this->parse_headers(buffer, n);
-//     // }
-//     // else
-//     // {
-//     //     this->generate_body_cgi(buffer, n);   
-//     // }
-
-//     // this->generate_message(buffer, n);
-
-// }
-
 
 void Response::read_and_format_msg()
 {
-    char    buffer[ RESP_BUFF ]  ; // = {0}
+    char    buffer[ RESP_BUFF ]  ;
 
     if ( !this->_tranfer_encoding )
     {
@@ -433,7 +374,9 @@ void Response::remove_last_slash( std::string & target )
             target = target.substr(0, end + 1) ;
     }
     else
+    {   
         target = "" ;
+    }
 }
 
 void    Response::respond_list_files()

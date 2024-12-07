@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 19:31:45 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/07 08:22:19 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/07 15:01:15 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -22,71 +22,59 @@
 (char *)"QUERY_STRING=param1=value1&param2=value2",
 */
 
-void    Response::setup_environment(char ***env)
+void    Response::setup_environment(std::vector<std::string> & string_env)
 {
     int size = this->request.get_headers().size() + 10;
-    
-    *env = (char **)malloc(sizeof(char *) * size );
+
     size = 0;
     std::string var;
     std::map<std::string, std::string> headers = this->request.get_headers() ;
     std::map< std::string , std::string>::iterator it ;
     
-    var = "REQUEST_METHOD=" + this->request.get_request_method() ;
-    (*env)[size++] = strdup( var.c_str() ) ;
-    var = "QUERY_STRING=" ;
-    (*env)[size++] = strdup( var.c_str() ) ;
-    var = "PATH_INFO=" + this->_path_info ;
-    (*env)[size++] = strdup( var.c_str() ) ;
-    (*env)[size++] = strdup( "SERVER_PROTOCOL=HTTP/1.1" ) ;
-    (*env)[size++] = strdup( "REDIRECT_STATUS=1" ) ;
-    var = "SCRIPT_FILENAME=" + this->_path_ ;
-    (*env)[size++] = strdup( var.c_str() ) ;
-    (*env)[size++] = strdup("PHP_FCGI_MAX_REQUESTS=1");
-    (*env)[size++] = strdup("PHP_INI_SCAN_DIR=/Users/klamqari/php/lib/php.ini");
+    string_env.push_back("REQUEST_METHOD=" + this->request.get_request_method());
+    string_env.push_back("QUERY_STRING=") ;
+    string_env.push_back("PATH_INFO=" + this->_path_info) ;
+    string_env.push_back("SERVER_PROTOCOL=HTTP/1.1" ) ;
+    string_env.push_back("REDIRECT_STATUS=1" ) ;
+    string_env.push_back("SCRIPT_FILENAME=" + this->_path_) ;
+    string_env.push_back("PHP_FCGI_MAX_REQUESTS=1");
+    string_env.push_back("PHP_INI_SCAN_DIR=/Users/klamqari/php/lib/php.ini");
 
     // var = "CONTENT_LENGTH=" + this->request->con;
-
     // (*env)[size++] = strdup(var.c_str());
+
     for (it = headers.begin(); it != headers.end(); ++it)
     {
-        var = it->first + "=" + it->second;
-        (*env)[size++] = strdup( var.c_str() ) ;
+        string_env.push_back(it->first + "=" + it->second);
     }
-    (*env)[size++] = NULL ;
-}
 
-std::string get_path(int fd)
+}
+void string_to_char(char **env, std::vector<std::string> & string_env)
 {
-    char buff[40];
-    std::string path;
-    ssize_t size = 1;
-    
-    while (size > 0)
-    {   
-        size = read(fd, buff, 39);
-        if ( size > 0 )
-        {
-            buff[size] = '\0';
-            path.append(buff, size);
-        }
+    std::vector<std::string>::iterator it = string_env.begin();
+
+    int i = 0;
+
+    for (; it != string_env.end(); ++it)
+    {
+        (env)[i++] = (char *)(*it).c_str();
     }
-    return path;
+    (env)[i] = NULL;
 }
 
 void Response::execute_cgi( void )
 {
+    std::vector<std::string> string_env;
     char **env;
-    std::string path;
-    
     char *av[] = {
         (char *)"/Users/klamqari/php/bin/php-cgi",
         (char *)this->_path_.c_str(),
         NULL,
     };
-    this->setup_environment(&env);
-    std::cout << this->data_path << std::endl;
-
+    this->setup_environment(string_env);
+    env = new char*[string_env.size() + 1];
+    string_to_char(env, string_env);
+    
     this->pid = fork() ;
     if (this->pid == -1)
     {
@@ -97,29 +85,15 @@ void Response::execute_cgi( void )
     {
         if (close(this->s_fds[0])  == -1)
             exit(1) ;
-
-        // path = get_path(this->s_fds[1]);
-
-        // int fd = open(this->data_path.c_str(), O_RDONLY | O_RDWR | O_TRUNC | O_CREAT, 0777);
-        // if (fd == -1)
-        //     exit(1);
-
         if (dup2(this->s_fds[1], 1) == -1 || dup2(this->s_fds[1], 0) == -1)
             exit(1);
 
         if ( close(this->s_fds[1])  == -1)
             exit(1);
-
         execve(av[0], av, env) ;
     }
-    // else
-    // {
-    //     int i = 0;
-    //     while (env[i])
-    //     {
-    //         free(env[i]);
-    //         i++;
-    //     }
-    //     free(env);
-    // }
+    else
+    {
+        delete env;
+    }
 }

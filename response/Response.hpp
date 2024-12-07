@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/07 10:05:25 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/07 15:00:47 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -54,7 +54,6 @@ class Response
         std::string                             connection;
         std::string                             unparsed_content;
         std::string                             data_out;
-        // bool                                    is_finished;
         size_t                                  offset;
         
         
@@ -89,7 +88,7 @@ class Response
         void                                    append_row( std::string  path , std::string target, struct dirent * f, std::string & ls_files ) ;
 
         // cgi
-        void                                    setup_environment(char ***env);
+        void                                    setup_environment(std::vector<std::string> & string_env);
         void                                    format_cgi_msg();
 
         // methods
@@ -127,11 +126,9 @@ class Response
         void                        set_parse_stat(int stat);
         bool                        is_allowd_method();
         std::string                 data_path;
-        bool                        is_finished;
 
         ~Response() ;
 
 };
 
 #endif
-// /about/index.html

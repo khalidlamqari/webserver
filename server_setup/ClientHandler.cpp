@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:37:00 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/07 11:29:06 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/07 15:05:43 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -223,9 +223,9 @@ void    respond_to_client(ClientSocket* client_info, int kqueue_fd, int n_events
         EV_SET(&ev, client_info->response->get_process_id(), EVFILT_PROC, EV_ADD | EV_ENABLE , NOTE_EXIT , 0, (void *)proc );
         kevent(kqueue_fd, &ev, 1, NULL, 0, NULL);
         if (kevent(kqueue_fd, &ev, 1, NULL, 0, NULL) == -1)
-            throw std::runtime_error(std::string("Webserv1 : kevent(4) failed, reason : ") + strerror(errno));
+            throw std::runtime_error(std::string("Webserv12 : kevent(4) failed, reason : ") + strerror(errno));
         client_info->response->p_is_running = true ;
-        // std::cout << "process running " << std::endl;
+        std::cout << "process running : " << client_info->response->get_process_id() << std::endl;
 
         /* add socketpair to kqueue */
         CgiInfo * fd_pair_soc = new CgiInfo();
@@ -244,10 +244,19 @@ void    respond_to_client(ClientSocket* client_info, int kqueue_fd, int n_events
        return;
     }
 
-    if ( client_info->response && client_info->response->is_cgi() && client_info->response->p_is_running && client_info->response->is_finished && client_info->response->get_exit_stat() != -1)
+    if ( client_info->response && client_info->response->is_cgi() && client_info->response->p_is_running && client_info->response->get_exit_stat() != -1)
     {
+        if (client_info->response->get_exit_stat() != 0)
+            client_info->response->set_parse_stat(500);
+
         std::string rsp = client_info->response->getResponse();
+        // std::cout << "send ..." << std::endl;
         if (send(client_info->get_sock_fd(), (void *) rsp.c_str(), rsp.length(), 0) == -1)
             std::cout << "send failed2" << std::endl;
+    }
+    else if ( client_info->response && client_info->response->is_cgi() && client_info->response->p_is_running && client_info->response->get_exit_stat() == -1)
+    {
+        /* check timeout */
+        
     }
 }
