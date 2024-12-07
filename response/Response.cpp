@@ -6,13 +6,13 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/06 18:21:08 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/07 08:58:19 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "Response.hpp"
 
-static size_t num_file = 0;
+// static size_t num_file = 0;
 
 Response::Response ( ServerContext & server_context, Request & request) :\
                     server_context(server_context), request(request)
@@ -29,6 +29,9 @@ Response::Response ( ServerContext & server_context, Request & request) :\
     this->s_fds[1]          = -1;
     this->pid               = -1;
     this->is_parsed         = false;
+    this->is_finished       = false;
+    this->offset            = 0;
+    
     // this->fd_input          = -1;
     process_target(this->request.get_request_target());
     if (  !request.isBadRequest() && !this->_cgi_extention.empty() && (this->_path_.length() - this->_cgi_extention.length() > 0) && (this->_path_.find(this->_cgi_extention, this->_path_.length() - this->_cgi_extention.length()) != std::string::npos))
@@ -38,7 +41,7 @@ Response::Response ( ServerContext & server_context, Request & request) :\
 
     if ( this->_is_cgi )
     {
-        this->data_path = get_rand_file_name(num_file); // data_path for in data and out data
+        // this->data_path = get_rand_file_name(num_file); // data_path for in data and out data
         /* should create file in data */
         if ( socketpair(AF_UNIX, SOCK_STREAM, 0, this->s_fds) == -1) // && close(this->s_fds[1]) == -1
             throw std::runtime_error("socketpair failed") ;

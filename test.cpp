@@ -29,16 +29,19 @@ std::string get_rand_file_name(size_t & file_num)
 
 
 int main() {
-    std::ofstream myfile;
-    std::cout <<  get_rand_file_name(file_num) << std::endl;
+    std::string str = "1234567890";
+    std::string sub = str.substr(0, 2);
+    std::cout << sub << std::endl;
+    // std::ofstream myfile;
+    // std::cout <<  get_rand_file_name(file_num) << std::endl;
 
-    myfile.open(get_rand_file_name(file_num));
+    // myfile.open(get_rand_file_name(file_num));
     
-    if ( myfile.is_open())
-        std::cout << "opened" << std::endl;
-    else
-        std::cout << "not opened" << std::endl;
-    std::cout << "file_num : " << file_num << std::endl;
+    // if ( myfile.is_open())
+    //     std::cout << "opened" << std::endl;
+    // else
+    //     std::cout << "not opened" << std::endl;
+    // std::cout << "file_num : " << file_num << std::endl;
 
     // myfile << "hello world" << std::endl;
     // for ( int i = 21375 ; i <= 21379; i++)

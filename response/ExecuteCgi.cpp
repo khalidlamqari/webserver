@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 19:31:45 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/06 18:20:35 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/07 08:22:19 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -97,17 +97,17 @@ void Response::execute_cgi( void )
     {
         if (close(this->s_fds[0])  == -1)
             exit(1) ;
-        
+
         // path = get_path(this->s_fds[1]);
-        
-        int fd = open(this->data_path.c_str(), O_RDONLY | O_RDWR | O_TRUNC | O_CREAT, 0777);
-        if (fd == -1)
+
+        // int fd = open(this->data_path.c_str(), O_RDONLY | O_RDWR | O_TRUNC | O_CREAT, 0777);
+        // if (fd == -1)
+        //     exit(1);
+
+        if (dup2(this->s_fds[1], 1) == -1 || dup2(this->s_fds[1], 0) == -1)
             exit(1);
 
-        if (dup2(fd, 1) == -1 || dup2(this->s_fds[1], 0) == -1)
-            exit(1);
-
-        if (close(fd)  == -1 || close(this->s_fds[1])  == -1)
+        if ( close(this->s_fds[1])  == -1)
             exit(1);
 
         execve(av[0], av, env) ;

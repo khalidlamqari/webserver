@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/06 18:15:34 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/07 10:05:25 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -53,7 +53,9 @@ class Response
         pid_t                                   pid ;
         std::string                             connection;
         std::string                             unparsed_content;
-        // std::string                             data_out;
+        std::string                             data_out;
+        // bool                                    is_finished;
+        size_t                                  offset;
         
         
 
@@ -87,15 +89,15 @@ class Response
         void                                    append_row( std::string  path , std::string target, struct dirent * f, std::string & ls_files ) ;
 
         // cgi
-        void                                    read_cgi_output() ;
         void                                    setup_environment(char ***env);
+        void                                    format_cgi_msg();
 
         // methods
         void                                    delete_file( ) ;
 
         void                                    process_target(const std::string & target);
-        void                                    parse_headers(char * buffer, size_t size);
-        void                                    generate_body_cgi(char * buffer, size_t size);
+        void                                    parse_headers();
+        void                                    get_response_body();
         
     public:
 
@@ -114,6 +116,7 @@ class Response
         LocationContext *           get_location();
 
         // cgi
+        void                                    read_cgi_output() ;
         void                        execute_cgi();
         bool                        is_cgi();
         bool                        p_is_running;
@@ -124,6 +127,8 @@ class Response
         void                        set_parse_stat(int stat);
         bool                        is_allowd_method();
         std::string                 data_path;
+        bool                        is_finished;
+
         ~Response() ;
 
 };

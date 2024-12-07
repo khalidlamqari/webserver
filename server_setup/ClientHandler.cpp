@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:37:00 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/06 16:22:46 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/07 11:29:06 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -226,7 +226,7 @@ void    respond_to_client(ClientSocket* client_info, int kqueue_fd, int n_events
             throw std::runtime_error(std::string("Webserv1 : kevent(4) failed, reason : ") + strerror(errno));
         client_info->response->p_is_running = true ;
         // std::cout << "process running " << std::endl;
-        
+
         /* add socketpair to kqueue */
         CgiInfo * fd_pair_soc = new CgiInfo();
         fd_pair_soc->set_type('G');
@@ -244,20 +244,10 @@ void    respond_to_client(ClientSocket* client_info, int kqueue_fd, int n_events
        return;
     }
 
-    if ( client_info->response && client_info->response->is_cgi() && client_info->response->p_is_running )//&& client_info->response->get_exit_stat() != -1
+    if ( client_info->response && client_info->response->is_cgi() && client_info->response->p_is_running && client_info->response->is_finished && client_info->response->get_exit_stat() != -1)
     {
-        for (int i = 0; i < n_events; i++)
-        {
-            // if (((Socket *) events[i].udata) && ((Socket *) events[i].udata)->get_type() == 'G' && !(events[i].flags & EV_EOF) && !(events[i].flags & EV_ERROR) && !(events[i].fflags & EV_EOF) && !(events[i].fflags & EV_ERROR) && events[i].filter == EVFILT_READ && ((CgiInfo *) events[i].udata)->response == client_info->response )
-            if (((Socket *) events[i].udata) && ((Socket *) events[i].udata)->get_type() == 'G' && events[i].filter == EVFILT_READ && ((CgiInfo *) events[i].udata)->response == client_info->response )
-            {
-                CgiInfo  * child = (CgiInfo *) events[i].udata;
-                std::string rsp = child->response->getResponse();
-                if (client_info->response->is_parsed && send(client_info->get_sock_fd(), (void *) rsp.c_str(), rsp.length(), 0) == -1)
-                    std::cout << "send failed2" << std::endl;
-                    // throw std::runtime_error("send failed");
-                break ;
-            }
-        }
+        std::string rsp = client_info->response->getResponse();
+        if (send(client_info->get_sock_fd(), (void *) rsp.c_str(), rsp.length(), 0) == -1)
+            std::cout << "send failed2" << std::endl;
     }
 }

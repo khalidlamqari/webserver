@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/30 15:08:50 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/06 16:25:07 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/07 11:41:43 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -105,7 +105,7 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
                 {
                     // std::cout << "responding ... "  << std::endl;
                     respond_to_client(client_info, kqueue_fd, n_events, events );
-                    if ( (!client_info->response->is_cgi() && client_info->response->end_of_response())  || (client_info->response->is_cgi() && client_info->response->get_exit_stat() != -1) )
+                    if ( (!client_info->response->is_cgi() && client_info->response->end_of_response())  || (client_info->response->is_cgi() && client_info->response->get_exit_stat() != -1 && client_info->response->end_of_response()) )
                     {
                         // if (client_info->response->get_exit_stat() != 0)
                         // {
@@ -165,7 +165,6 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
                 if (process_info && process_info->response )
                 {
                     int status = 0;
-
                     waitpid(process_info->response->get_process_id(), &status, 0);
                     process_info->response->set_exit_stat(WEXITSTATUS(status));
                     std::cout << "status : " << WEXITSTATUS(status) << std::endl;
@@ -173,6 +172,24 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
                 }
                 
             }
+            else if ( ((Socket *) events[i].udata)->get_type() == 'G' && events[i].filter == EVFILT_READ)
+            {
+                CgiInfo  * child = (CgiInfo *) events[i].udata;
+                if (child->response) // && !child->response->is_finished
+                {
+                    // std::cout << "readdddd .... " << std::endl;
+                    child->response->read_cgi_output();
+                }
+            }
+            // else if (((Socket *) events[i].udata)->get_type() == 'G' && (events[i].flags & EV_EOF || events[i].fflags & EV_EOF))
+            // {
+            //         std::cout << "from kqueue : is finished" << std::endl;
+            //     CgiInfo  * child = (CgiInfo *) events[i].udata;
+            //     if (child->response)
+            //     {
+            //         child->response->is_finished = true;
+            //     }
+            // }
         }
 
     }
