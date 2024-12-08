@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/08 19:01:36 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/08 19:22:37 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ Response::Response ( ServerContext & server_context, Request & request) :\
         if ( socketpair(AF_UNIX, SOCK_STREAM, 0, this->s_fds) == -1) // && close(this->s_fds[1]) == -1
             throw std::runtime_error("socketpair failed") ;
         set_input_path(get_rand_file_name(num_file));
-        
+        std::cout << get_input_path() << std::endl;
         this->input_data.open(get_input_path());
         if (!this->input_data.is_open())
             throw 500;
@@ -205,10 +205,13 @@ bool Response::tranfer_encoding()
 
 Response::~Response() 
 {
+    std::cout << "destratur" << std::endl;
     if (s_fds[0] != -1)
         close(s_fds[0]);
     if (s_fds[1] != -1)
         close(s_fds[1]);
+    if (this->input_path != "")
+        remove(this->input_path.c_str()) ;
 }
 
 const std::string & Response::getUploadDir  ( void )

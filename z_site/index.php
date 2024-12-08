@@ -10,6 +10,7 @@
         $requestBody = file_get_contents('php://stdin');
         echo "Request Body:\n";
         echo $requestBody;
+        sleep(10);
     ?>
 </body>
 </html>
