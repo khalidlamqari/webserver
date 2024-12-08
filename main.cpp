@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/09 15:05:35 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/02 09:24:57 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/08 09:59:49 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,14 +24,13 @@ int main(int argc, char *argv[])
     }
 
     file_name = argv[1];
-    
+
     if((file_name.length() <= 7) || (file_name.find(".config" ,file_name.length() - 7) == std::string::npos))
     {
         std::cerr << "Wrong file extension!" << std::endl;
         std::cerr << "Usage : ./webserv file.config" << std::endl;
         return (1);
     }
-
     try
     {
         std::vector<struct ListenerSocket>  activeListners;

@@ -7,16 +7,9 @@
 </head>
 <body>
     <?php
-    
-        for ($i = 0; $i < 100000; $i++)
-        {
-                echo "hello world !! ";
-        }
-        echo "1222222000211212 ";
-        // for ($i = 0; $i < 10000; $i++)
-        // {
-        //     echo "hhhh";
-        // }
+        $requestBody = file_get_contents('php://stdin');
+        echo "Request Body:\n";
+        echo $requestBody;
     ?>
 </body>
 </html>

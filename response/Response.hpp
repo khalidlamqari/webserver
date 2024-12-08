@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/07 15:00:47 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/08 18:57:52 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -20,6 +20,7 @@
 # include <sys/stat.h>
 # include <dirent.h>
 #include <time.h>
+#include <ctime>
 #include <fstream>
 #include "../Request/Request.hpp"
 class Request ;
@@ -55,12 +56,12 @@ class Response
         std::string                             unparsed_content;
         std::string                             data_out;
         size_t                                  offset;
-        
-        
 
-        
+        std::time_t                             start_time;
+        std::string                             input_path;
+        std::ofstream                           input_data;
+
         void                                    format_message( void ) ;
-
         void                                    get_static_page() ;
         void                                    generate_message( char * content, size_t size ) ;
         LocationContext *                       find_location( const std::string & target ) ;
@@ -125,7 +126,12 @@ class Response
         int                         get_parse_stat();
         void                        set_parse_stat(int stat);
         bool                        is_allowd_method();
-        std::string                 data_path;
+        void                        set_start_time(std::time_t tm);
+        std::time_t                 get_start_time();
+        const std::string &         get_input_path();
+        void                        set_input_path(const std::string & path);
+        void                        set_data_to_input(const std::string & data);
+        
 
         ~Response() ;
 

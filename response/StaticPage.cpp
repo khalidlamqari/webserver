@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/07 13:15:09 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/08 18:48:03 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -228,11 +228,7 @@ void Response::read_and_format_msg()
 
     if ( !this->_tranfer_encoding )
     {
-        if ( this->_is_cgi )
-            this->page_content.open( this->data_path);
-        else
-            this->page_content.open( this->_path_ );
-            
+        this->page_content.open( this->_path_ );
         if ( ! this->page_content.is_open() )
             throw 404 ;
     }

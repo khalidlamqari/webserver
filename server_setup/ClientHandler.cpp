@@ -6,12 +6,14 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:37:00 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/07 15:05:43 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/08 09:41:57 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 #include <signal.h>
+
+static std::time_t max_time = 10; // sec
 
 void delete_client(std::vector<ClientSocket *>& activeClients, int fd)
 {
@@ -241,22 +243,28 @@ void    respond_to_client(ClientSocket* client_info, int kqueue_fd, int n_events
             std::cout << "Webserv2 : kevent(4) failed, reason : " << fd_pair_soc->response->get_pair_fds()[0] << fd_pair_soc->get_type() << std::endl;
             // throw std::runtime_error(std::string(("Webserv2 : kevent(4) failed, reason : ")) + strerror(errno));
         }
-       return;
+
+        /* set start time  */
+        client_info->response->set_start_time(std::time(0)); // current time in seconds
+        return;
     }
 
     if ( client_info->response && client_info->response->is_cgi() && client_info->response->p_is_running && client_info->response->get_exit_stat() != -1)
     {
         if (client_info->response->get_exit_stat() != 0)
             client_info->response->set_parse_stat(500);
-
         std::string rsp = client_info->response->getResponse();
-        // std::cout << "send ..." << std::endl;
         if (send(client_info->get_sock_fd(), (void *) rsp.c_str(), rsp.length(), 0) == -1)
             std::cout << "send failed2" << std::endl;
     }
     else if ( client_info->response && client_info->response->is_cgi() && client_info->response->p_is_running && client_info->response->get_exit_stat() == -1)
     {
         /* check timeout */
-        
+        if ( std::time(0) - client_info->response->get_start_time() > max_time )
+        {
+            kill(client_info->response->get_process_id(), SIGKILL);
+            client_info->response->set_parse_stat(504);
+            std::cout << "timeout" << std::endl;
+        }
     }
 }

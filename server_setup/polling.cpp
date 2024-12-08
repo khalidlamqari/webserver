@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/30 15:08:50 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/07 11:41:43 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/08 14:05:58 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -92,7 +92,6 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
                 }
                 catch(const std::exception& e)
                 {
-                    // std::cout << "handle_client_request" << std::endl;
                     close_sockets_on_error(activeListners);
                     close_client_sockets_on_error(activeClients);
                     throw ;
@@ -103,28 +102,18 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
                 ClientSocket  * client_info = (ClientSocket *) events[i].udata;
                 try
                 {
-                    // std::cout << "responding ... "  << std::endl;
                     respond_to_client(client_info, kqueue_fd, n_events, events );
-                    if ( (!client_info->response->is_cgi() && client_info->response->end_of_response())  || (client_info->response->is_cgi() && client_info->response->get_exit_stat() != -1 && client_info->response->end_of_response()) )
+                    if ( (!client_info->response->is_cgi() && client_info->response->end_of_response()) || (client_info->response->is_cgi() && client_info->response->get_exit_stat() != -1 && client_info->response->end_of_response()) )
                     {
-                        // if (client_info->response->get_exit_stat() != 0)
-                        // {
-                        //     std::cout << "exit status : " << client_info->response->get_exit_stat() << std::endl;
-                        //     client_info->response->set_parse_stat(500);
-                        //     respond_to_client(client_info, kqueue_fd, n_events, events );
-                        // }
-
                         std::cout << "end of response " << std::endl;
                         if ( client_info->response->get_connection() == "close") // should check if the responde with error
                         {
                             close(events[i].ident);
                             delete_client(activeClients, events[i].ident);
-                            break;
-                            // std::cout << "connection closed" << std::endl;
+                            // break;
                         }
                         else
                         {
-                            // std::cout << "not closed " << std::endl;
                             if ((client_info->cgiprocess && client_info->cgiprocess->response->get_exit_stat() != -1) || !client_info->cgiprocess)
                             {
                                 if (client_info->cgiinfo ) {
@@ -170,14 +159,12 @@ void    poll_events(int kqueue_fd, std::vector<struct ListenerSocket> & activeLi
                     std::cout << "status : " << WEXITSTATUS(status) << std::endl;
                     // break;
                 }
-                
             }
             else if ( ((Socket *) events[i].udata)->get_type() == 'G' && events[i].filter == EVFILT_READ)
             {
                 CgiInfo  * child = (CgiInfo *) events[i].udata;
                 if (child->response) // && !child->response->is_finished
                 {
-                    // std::cout << "readdddd .... " << std::endl;
                     child->response->read_cgi_output();
                 }
             }
