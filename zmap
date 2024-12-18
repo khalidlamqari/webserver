@@ -1,15 +1,10 @@
 
 
-TODO : cgi :
-    pass body to child process and environment
+TODO :  understand listener socket
+        understand client socket
+        understand php-cgi
 
 
+        tests ...
 
 
-TO CHECK 
-    page.html in connection keep-alive   YES
-    page.html in connection close       
-
-    page.php in connection keep-alive   YES
-    page.php in connection close        
-    

@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 19:31:45 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/08 18:36:36 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/09 11:09:49 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ void    Response::setup_environment(std::vector<std::string> & string_env)
     std::map<std::string, std::string> headers = this->request.get_headers() ;
     std::map< std::string , std::string>::iterator it ;
 
-    // string_env.push_back("REQUEST_METHOD=" + this->request.get_request_method());
+    string_env.push_back("REQUEST_METHOD=" + this->request.get_request_method());
     // string_env.push_back("CONTENT_LENGTH=11");
     string_env.push_back("CONTENT_TYPE=text/plain");
     string_env.push_back("REQUEST_METHOD=POST");
@@ -39,9 +39,6 @@ void    Response::setup_environment(std::vector<std::string> & string_env)
     string_env.push_back("SCRIPT_FILENAME=" + this->_path_);
     string_env.push_back("PHP_FCGI_MAX_REQUESTS=1");
     string_env.push_back("PHP_INI_SCAN_DIR=/Users/klamqari/php/lib/php.ini");
-
-    // var = "CONTENT_LENGTH=" + this->request->con;
-    // (*env)[size++] = strdup(var.c_str());
 
     for (it = headers.begin(); it != headers.end(); ++it)
     {
@@ -85,17 +82,18 @@ void Response::execute_cgi( void )
         if (close(this->s_fds[0])  == -1)
             exit(1);
 
-        int fd = open("_data_", O_RDONLY , 0777);
+        int fd = open(this->input_path.c_str(), O_RDONLY , 0777);
         if (dup2(this->s_fds[1], 1) == -1)
             exit(1);
 
-        if ( close(this->s_fds[1])  == -1)
+        if (close(this->s_fds[1])  == -1)
             exit(1);
 
         if (dup2(fd, 0) == -1)
             exit(1);
 
-        close(fd);
+        if (close(fd) == -1)
+            exit(1);
 
         execve(av[0], av, env);
         exit(1);

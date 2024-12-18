@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:37:00 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/08 09:41:57 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/12 16:20:31 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -65,7 +65,6 @@ void    accept_client_connection(ListenerSocket *listener, int kqueue_fd, std::v
         throw std::runtime_error("accept() failed!");
 
     fcntl(client_sock_fd, F_SETFL, O_NONBLOCK);
-    // std::cout << "client_sock_fd " << client_sock_fd << std::endl;
     new_client->set_type('C');
     new_client->set_sock_fd(client_sock_fd);
     new_client->set_servers(listener->get_servers());
@@ -82,7 +81,7 @@ void    accept_client_connection(ListenerSocket *listener, int kqueue_fd, std::v
 static  const ServerContext * get_server_context(ClientSocket * clientsocket)
 {
     std::string host = clientsocket->request->get_headers().find("HOST")->second ;
-    // std::cout << "host : " << host << std::endl;
+
     for (std::vector<const ServerContext*>::iterator i = clientsocket->get_servers().begin() ; i != clientsocket->get_servers().end() ; ++i)
     {
         std::vector<std::string>::const_iterator b = (*i)->get_server_names().begin();
@@ -181,7 +180,7 @@ void    respond_to_client(ClientSocket* client_info, int kqueue_fd, int n_events
 {
     // if (!client_info->request->isReady())
     // {
-    //     std::cout << "the request is not ready" << std::endl;   
+    //     std::cout << "the request is not ready" << std::endl;
     //     return ;
     // }
 
@@ -222,7 +221,7 @@ void    respond_to_client(ClientSocket* client_info, int kqueue_fd, int n_events
         /* add process to kqueue */
         struct kevent ev;
         ft_memset(&ev, 0, sizeof(struct kevent));
-        EV_SET(&ev, client_info->response->get_process_id(), EVFILT_PROC, EV_ADD | EV_ENABLE , NOTE_EXIT , 0, (void *)proc );
+        EV_SET(&ev, client_info->response->get_process_id(), EVFILT_PROC, EV_ADD | EV_ENABLE , NOTE_EXITSTATUS , 0, (void *)proc );
         kevent(kqueue_fd, &ev, 1, NULL, 0, NULL);
         if (kevent(kqueue_fd, &ev, 1, NULL, 0, NULL) == -1)
             throw std::runtime_error(std::string("Webserv12 : kevent(4) failed, reason : ") + strerror(errno));

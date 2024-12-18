@@ -6,13 +6,14 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/08 19:22:37 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/12 10:41:04 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "Response.hpp"
 
 static size_t num_file = 0;
+
 
 Response::Response ( ServerContext & server_context, Request & request) :\
                     server_context(server_context), request(request)
@@ -30,23 +31,29 @@ Response::Response ( ServerContext & server_context, Request & request) :\
     this->pid               = -1;
     this->is_parsed         = false;
     this->offset            = 0;
-    
-    // this->fd_input          = -1;
+
     process_target(this->request.get_request_target());
-    if (!request.isBadRequest() && !this->_cgi_extention.empty() && (this->_path_.length() - this->_cgi_extention.length() > 0) && (this->_path_.find(this->_cgi_extention, this->_path_.length() - this->_cgi_extention.length()) != std::string::npos))
+    if (!request.isBadRequest() && !this->_cgi_extention.empty()
+    && (this->_path_.length() - this->_cgi_extention.length() > 0)
+    && (this->_path_.find(this->_cgi_extention, this->_path_.length()
+    - this->_cgi_extention.length()) != std::string::npos))
     {
         this->_is_cgi = true;
     }
 
-    if ( this->_is_cgi )
+    if (this->_is_cgi)
     {
-        if ( socketpair(AF_UNIX, SOCK_STREAM, 0, this->s_fds) == -1) // && close(this->s_fds[1]) == -1
-            throw std::runtime_error("socketpair failed") ;
+        if (socketpair(AF_UNIX, SOCK_STREAM, 0, this->s_fds) == -1)
+        {
+            this->status = 500;
+            this->_is_cgi = false;
+        }
         set_input_path(get_rand_file_name(num_file));
-        std::cout << get_input_path() << std::endl;
         this->input_data.open(get_input_path());
         if (!this->input_data.is_open())
-            throw 500;
+        {
+            this->status = 500;
+        }
     }
 }
 
@@ -83,7 +90,7 @@ void    Response::error_response( short error )
 
     if (this->_tranfer_encoding)
     {
-        this->responde_with_overrided_page( error , this->_path_ );
+        this->responde_with_overrided_page( this->_path_ );
         return ;
     }
     err_page_path = this->find_error_page( error );
@@ -93,13 +100,12 @@ void    Response::error_response( short error )
     }
     else
     {
-        this->responde_with_overrided_page( error , err_page_path ) ;
+        this->responde_with_overrided_page( err_page_path ) ;
     }
 }
 
-void Response::responde_with_overrided_page( short error , std::string err_page_path )
+void Response::responde_with_overrided_page( std::string err_page_path )
 {
-    (void)error;
     if ( ! this->_tranfer_encoding )
     {
         this->_path_ = err_page_path ;
@@ -122,8 +128,8 @@ void Response::responde_with_default_page( short error )
     len << err_body.length() ;
     this->message.append( "HTTP/1.1 " + error_msg + "\r\nContent-Type: text/html\r\nContent-Length: " ) ;
     this->message.append(len.str() + "\r\nConnection: close\r\nServer: 1337WebServ\r\n\r\n") ;
-    this->message.append(err_body) ;
-    this->_end_of_response = true ;
+    this->message.append(err_body);
+    this->_end_of_response = true;
 }
 
 bool Response::is_allowd_method()
@@ -193,10 +199,7 @@ bool Response::end_of_response()
     return ( this->_end_of_response ) ;
 }
 
-void Response::set_end_of_response(bool stat)
-{
-    this->_end_of_response = stat;
-}
+
 
 bool Response::tranfer_encoding()
 {
@@ -205,7 +208,6 @@ bool Response::tranfer_encoding()
 
 Response::~Response() 
 {
-    std::cout << "destratur" << std::endl;
     if (s_fds[0] != -1)
         close(s_fds[0]);
     if (s_fds[1] != -1)
@@ -224,7 +226,7 @@ int * Response::get_pair_fds()
     return ( this->s_fds );
 }
 
-const std::ifstream &         Response::getPageStream( void )
+const std::ifstream & Response::getPageStream( void )
 {
     return ( this->page_content ) ;
 }
@@ -239,11 +241,6 @@ int   Response::get_exit_stat()
     return ( this->exit_stat ) ;
 }
 
-void    Response::set_exit_stat(int stat)
-{
-    this->exit_stat = stat;
-}
-
 LocationContext * Response::get_location()
 {
     return this->_location;
@@ -254,20 +251,9 @@ int Response::get_parse_stat()
     return this->status;
 }
 
-
 const std::string & Response::get_connection() const
 {
     return this->connection;
-}
-
-void Response::set_parse_stat(int stat)
-{
-    this->status = stat;
-}
-
-void Response::set_start_time(std::time_t tm)
-{
-    this->start_time = tm;
 }
 
 std::time_t Response::get_start_time()
@@ -275,7 +261,7 @@ std::time_t Response::get_start_time()
     return this->start_time;
 }
 
-
+/* setters */
 const std::string & Response::get_input_path()
 {
     return this->input_path;
@@ -289,4 +275,24 @@ void    Response::set_input_path(const std::string & path)
 void    Response::set_data_to_input(const std::string & data)
 {
     this->input_data << data;
+}
+
+void Response::set_parse_stat(int stat)
+{
+    this->status = stat;
+}
+
+void Response::set_start_time(std::time_t tm)
+{
+    this->start_time = tm;
+}
+
+void    Response::set_exit_stat(int stat)
+{
+    this->exit_stat = stat;
+}
+
+void Response::set_end_of_response(bool stat)
+{
+    this->_end_of_response = stat;
 }

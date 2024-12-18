@@ -7,10 +7,8 @@
 </head>
 <body>
     <?php
-        $requestBody = file_get_contents('php://stdin');
-        echo "Request Body:\n";
-        echo $requestBody;
-        sleep(10);
+        for ($i = 0 ; $i < 10 ; $i++)
+            echo "hello world:\n";
     ?>
 </body>
 </html>

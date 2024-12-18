@@ -6,40 +6,13 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/08 18:48:03 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/10 11:46:05 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "Response.hpp"
 
-static bool normalize_target(std::string &target)
-{
-    if ( target.find("..") == std::string::npos )
-        return false ;
-    std::vector<std::string> directories = _split_(target, '/');
-    std::vector<std::string>::iterator it = directories.begin();
-    while (it != directories.end())
-    {
-        if (it == directories.begin() && *it == "..")
-        {   
-            return true;
-        }
-        if (*it != ".." && it + 1 != directories.end() && *(it + 1) == "..")
-        {
-            it = directories.erase(it, it + 2);
-            if (it != directories.begin())
-                --it;
-        }
-        else
-        {   
-            ++it;
-        }
-    }
-    target = "/";
-    for (std::vector<std::string>::iterator it = directories.begin() ; it != directories.end() ; ++it) 
-        target += "/" + *it;
-    return false ;
-}
+
 
 bool    Response::path_from_location()
 {
@@ -112,7 +85,7 @@ void    Response::get_static_page()
         this->delete_file() ;
         return ;
     }
-    if (this->_is_cgi ) //&& this->exit_stat == 0
+    if (this->_is_cgi )
     {
         this->format_cgi_msg();
     }
@@ -248,47 +221,6 @@ void Response::read_and_format_msg()
     this->generate_message( buffer, this->page_content.gcount() );
 }
 
-std::string get_content_type( const std::string & file_name )
-{
-    std::string imgs[] = {".png",".avif", ".gif", ".webp", ".dmp", ".apng"} ;
-    std::string jpeg[] = {".jpg", ".jpeg", ".jfif", ".pjpeg", ".pjp"} ;
-    std::string ico[] = {".ico", ".cur"} ;
-    std::string texts[] = {".txt", ".html", ".htm", ".css", ".js"} ;
-    size_t size = sizeof(texts) / sizeof(texts[0]) ;
-    for (size_t i = 0; i < size ; ++i)
-    {
-        if ( file_name.find(texts[i], file_name.length() - texts[i].length()) != std::string::npos )
-        {
-            if ( texts[i] == ".js" || texts[i] == ".javascript")
-                return ( "\r\nContent-Type: text/javascript; charset=utf-8") ;
-            return ( "\r\nContent-Type: text/" +  texts[i].erase(0, 1) + "; charset=utf-8") ;
-        }
-    }
-    size = sizeof(imgs) / sizeof(imgs[0]) ;
-    for (size_t i = 0; i < 6; ++i)
-    {
-        if ( file_name.find(imgs[i], file_name.length() - imgs[i].length()) != std::string::npos )
-            return ( "\r\nContent-Type: image/" +  imgs[i].erase(0, 1) ) ;
-    }
-    size = sizeof(jpeg) / sizeof( jpeg[0]) ;
-    for ( size_t i = 0; i < size ; ++i)
-    {
-        if ( file_name.find(jpeg[i], file_name.length() - jpeg[i].length()) != std::string::npos)
-            return ( "\r\nContent-Type: image/jpeg" ) ;
-    }
-    size = sizeof(ico) / sizeof(ico[0]) ;
-    for (size_t i = 0; i < ico->length(); ++i)
-    {
-        if ( file_name.find(ico[i] ,file_name.length() - ico[i].length()) != std::string::npos )
-            return ( "\r\nContent-Type: image/x-icon" ) ;
-    }
-    if ( file_name.find(".mp4", file_name.length() - 4) != std::string::npos )
-        return ( "\r\nContent-Type: video/mp4" ) ;
-        
-    if ( file_name.find(".php", file_name.length() - 4) != std::string::npos )
-        return ( "\r\nContent-Type: text/html" ) ;
-    return ("") ;
-}
 
 void    Response::generate_message( char * content, size_t size )
 {
@@ -407,50 +339,24 @@ void    Response::respond_list_files()
 
 void Response::append_row( std::string  path , std::string target, struct dirent * f, std::string & ls_files )
 {
-    struct tm * time ;
-    char time_str[100] ;
     std::stringstream size ;
-    struct stat s ;
+    struct stat s;
 
     if (path.back() != '/')
         path.append("/");
     if (target.back() != '/')
         target.append("/");
     path.append(f->d_name);
-    if ( stat( path.c_str(), &s ) == -1 )
+    if ( stat(path.c_str(), &s ) == -1)
         throw 404;
-    time = localtime(&s.st_mtime) ;
-    if ( ! time || strftime(time_str, sizeof(time_str), "%Y-%m-%d %H:%M:%S", time) == 0 )
-        throw 500 ;
-    size << f->d_reclen ;
-    target.append(f->d_name) ;
-    ls_files.append("<tr><td><a href='" + target + "'>") ;
-    ls_files.append(f->d_name) ;
-    ls_files.append("</a></td><td>" + size.str() + " bytes</td><td>") ;
-    ls_files.append(time_str) ;
-    ls_files.append("</td></tr>") ;
-}
 
-bool    is_dir( const std::string & path )
-{
-    struct stat s ;
-
-    if ( stat( path.c_str(), &s ) == -1)
-        return ( false ) ;
-    if ( S_IFDIR & s.st_mode )
-        return ( true ) ;
-    return ( false ) ;
-}
-
-bool is_file(std::string path)
-{
-    struct  stat f;
-
-    if ( stat(path.c_str(), &f ) == -1 )
-        return false;
-    if ( f.st_mode & S_IFREG )
-        return true;
-    return false;
+    size << f->d_reclen;
+    target.append(f->d_name);
+    ls_files.append("<tr><td><a href='" + target + "'>");
+    ls_files.append(f->d_name);
+    ls_files.append("</a></td><td>" + size.str() + " bytes</td><td>");
+    ls_files.append(get_time(s.st_mtime));
+    ls_files.append("</td></tr>");
 }
 
 void    Response::get_pathinfo_form_target()
@@ -463,31 +369,8 @@ void    Response::get_pathinfo_form_target()
     this->_target    = this->_target.substr(0, 4 + pos);
 }
 
-void    set_connection(std::map<std::string , std::string> & headers, std::string & connection )
-{
-    std::map<std::string, std::string>::iterator it = headers.find("CONNECTION");
-    if ( it == headers.end() )
-    {
-        connection = "keep-alive";
-    }
-    else if ( it->second != "close")
-    {
-        connection = "keep-alive";
-    }
-    else
-    {
-        connection = it->second;
-    }
-}
-static bool is_existe(const std::string & path)
-{
-    if ( access(path.c_str(), F_OK) == 0)
-        return true;
-    return false;
-}
 void    Response::process_target(const std::string & target)
 {
-    // this->_target = this->request.get_request_target() ;
     this->_target = target;
     set_connection(this->request.get_headers(), this->connection);
     if (normalize_target( this->_target ))
@@ -500,7 +383,9 @@ void    Response::process_target(const std::string & target)
         this->_path_ = (_location)->get_root_directory() + this->_target;
         this->_cgi_extention = _location->get_cgi_extension();
         if (is_dir(this->_path_) && is_file(this->_path_ + (_location)->get_index()))
+        {   
             this->_path_.append("/" + (_location)->get_index());
+        }
     }
     else
     {
@@ -508,7 +393,9 @@ void    Response::process_target(const std::string & target)
         this->_path_ = this->server_context.get_root_directory() + this->_target ;
         this->_cgi_extention = this->server_context.get_cgi_extension();
         if ( is_dir(this->_path_) && is_file(this->_path_ + this->server_context.get_index()) )
-            this->_path_ +=  this->server_context.get_index() ;
+        {
+            this->_path_ +=  this->server_context.get_index();
+        }
     }
     if (!this->is_allowd_method() && this->status != 200)
         this->status = 405;
@@ -530,7 +417,6 @@ void    Response::normall_headers(char * content, size_t size )
     if (this->connection == "close" || (this->status >= 400 && this->status <= 599))
     {
         this->message.append("Connection: close\r\n");
-        // std::cout << "--------------> close" << std::endl;   
     }
     else
         this->message.append("Connection: keep-alive\r\n");
@@ -543,7 +429,7 @@ void    Response::tranfer_encod_headers()
 {
     this->message.append("HTTP/1.1 " + default_info.getCodeMsg( this->status )
                                         + "\r\nTransfer-Encoding: chunked"
-                                        + get_content_type(this->_path_) + "\r\n") ;
+                                        + get_content_type(this->_path_) + "\r\n");
     if (this->connection == "close" || (this->status >= 400 && this->status <= 599))
         this->message.append("Connection: close\r\n");
     else

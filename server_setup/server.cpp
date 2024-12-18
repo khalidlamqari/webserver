@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/28 15:07:44 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/25 08:58:02 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/12 16:23:00 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,7 @@ void    initialize_sockets_on_port(struct addrinfo *list, std::vector<struct Lis
         if (already_binded(active_sockets, server, ((struct sockaddr_in *) entry)->sin_addr, port))
         {
             n_sock++;
-            continue ;
+            continue;
         }
 
         fd = socket(entry->ai_family, entry->ai_socktype, entry->ai_protocol);

@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/08 18:57:52 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/10 11:35:08 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -60,7 +60,7 @@ class Response
         std::time_t                             start_time;
         std::string                             input_path;
         std::ofstream                           input_data;
-
+        
         void                                    format_message( void ) ;
         void                                    get_static_page() ;
         void                                    generate_message( char * content, size_t size ) ;
@@ -82,7 +82,7 @@ class Response
         std::string                             find_error_page( unsigned  short error ) ;
         void                                    error_response( short error ) ;
         void                                    responde_with_default_page( short error ) ;
-        void                                    responde_with_overrided_page( short error, std::string err_page_path ) ;
+        void                                    responde_with_overrided_page( std::string err_page_path ) ;
 
         // auto index           
         void                                    respond_list_files() ;
