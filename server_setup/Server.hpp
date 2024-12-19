@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 16:08:35 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/01 16:30:02 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/19 19:17:25 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -93,7 +93,6 @@ struct ListenerSocket : public Socket
     }
 };
 
-
 struct CgiProcess : public Socket
 {
     Request * request;
@@ -133,7 +132,7 @@ int     create_kqueue( void );
 void    accept_client_connection(ListenerSocket *listener, int kqueue_fd, std::vector<ClientSocket*>& activeClients);
 void    delete_client(std::vector<ClientSocket *>& activeClients, int fd);
 void    handle_client_request(ClientSocket* client_info);
-void    respond_to_client(ClientSocket* client_info, int kqueue_fd, int n_events, struct kevent * events);
+void    respond_to_client(ClientSocket* client_info, int kqueue_fd);
 
 
 

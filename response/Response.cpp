@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/12 10:41:04 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/19 19:23:01 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -59,16 +59,16 @@ Response::Response ( ServerContext & server_context, Request & request) :\
 
 void    Response::format_message( void )
 {
-    if ( this->request.isBadRequest() )
+    if (this->request.isBadRequest())
     {
         this->status = 500;
     }
-    
-    if (this->get_parse_stat() == 200)
+
+    if (this->get_stat() == 200)
     {
         try
         {
-            this->get_static_page() ;
+            this->get_static_page();
         }
         catch ( int error )
         {
@@ -80,7 +80,7 @@ void    Response::format_message( void )
     }
     else
     {
-        this->error_response( this->get_parse_stat() ) ;
+        this->error_response( this->get_stat() ) ;
     }
 }
 
@@ -246,7 +246,7 @@ LocationContext * Response::get_location()
     return this->_location;
 }
 
-int Response::get_parse_stat()
+int Response::get_stat()
 {
     return this->status;
 }
@@ -277,7 +277,7 @@ void    Response::set_data_to_input(const std::string & data)
     this->input_data << data;
 }
 
-void Response::set_parse_stat(int stat)
+void Response::set_stat(int stat)
 {
     this->status = stat;
 }

@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/10 11:35:08 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/19 18:52:35 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,6 +23,7 @@
 #include <ctime>
 #include <fstream>
 #include "../Request/Request.hpp"
+
 class Request ;
 static DefaultInfo default_info ;
 
@@ -98,7 +99,7 @@ class Response
         void                                    process_target(const std::string & target);
         void                                    parse_headers();
         void                                    get_response_body();
-        
+
     public:
 
         Response ( ServerContext & server_context, Request & request ) ;
@@ -116,22 +117,21 @@ class Response
         LocationContext *           get_location();
 
         // cgi
-        void                                    read_cgi_output() ;
+        void                        read_cgi_output();
         void                        execute_cgi();
         bool                        is_cgi();
         bool                        p_is_running;
         bool                        is_parsed;
         void                        set_exit_stat(int stat);
         void                        set_end_of_response(bool stat);
-        int                         get_parse_stat();
-        void                        set_parse_stat(int stat);
+        int                         get_stat();
+        void                        set_stat(int stat);
         bool                        is_allowd_method();
         void                        set_start_time(std::time_t tm);
         std::time_t                 get_start_time();
         const std::string &         get_input_path();
         void                        set_input_path(const std::string & path);
         void                        set_data_to_input(const std::string & data);
-        
 
         ~Response() ;
 

@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/10 11:46:05 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/19 19:26:40 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -121,8 +121,8 @@ std::string extract_body(const std::string & unparsed_content, size_t pos)
 void Response::parse_headers()
 {
     std::string body;
-    std::ostringstream ss ;
-    std::ostringstream len ;
+    std::ostringstream ss;
+    std::ostringstream len;
     size_t pos;
 
     pos = data_out.find("\r\n\r\n");

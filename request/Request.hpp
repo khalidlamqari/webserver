@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/04 17:07:06 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/22 23:47:34 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/18 11:24:27 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -109,7 +109,9 @@ class Request {
         void    drop_last_part();
 
         struct ClientSocket * get_ClientSocket() { return this->clientsocket ; }
+
         void set_ClientSocket(struct ClientSocket * clientsocket) { this->clientsocket = clientsocket ; }
+        
         std::map<std::string, std::string> & get_headers() {return this->headers ;}
         const std::string & get_request_method() {return this->method ; }
         

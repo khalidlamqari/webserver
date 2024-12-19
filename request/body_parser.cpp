@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 16:59:44 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/08 09:54:12 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/19 19:01:21 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -508,10 +508,10 @@ std::string	find_chunk_content(Request & request, std::string & msg)
 	return chunk_content;
 }
 
-static void write_to_cgi_input(Request & request, std::string & content )
-{
-	write(request.get_ClientSocket()->response->get_pair_fds()[0],  content.c_str(), content.length());
-}
+// static void write_to_cgi_input(Request & request, std::string & content )
+// {
+// 	write(request.get_ClientSocket()->response->get_pair_fds()[0],  content.c_str(), content.length());
+// }
 
 void    parse_body(Request & request, std::string & msg)
 {
@@ -520,13 +520,13 @@ void    parse_body(Request & request, std::string & msg)
 	chunk_content = find_chunk_content(request, msg);
 	while (!chunk_content.empty() && !request.hasParsedBody())
 	{
-		if ( request.get_ClientSocket()->response->is_cgi() )
-		{
-			write_to_cgi_input( request, chunk_content );
-			// close(request.get_ClientSocket()->response->get_pair_fds()[0]);
-			request.markBodyParsed(true);
-		}
-		else
+		// if ( request.get_ClientSocket()->response->is_cgi() )
+		// {
+		// 	write_to_cgi_input( request, chunk_content );
+		// 	// close(request.get_ClientSocket()->response->get_pair_fds()[0]);
+		// 	request.markBodyParsed(true);
+		// }
+		// else
 			process_chunck(request, chunk_content);
 		chunk_content.clear();
 		chunk_content = find_chunk_content(request, msg);

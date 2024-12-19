@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 19:31:45 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/09 11:09:49 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/19 18:34:46 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -75,7 +75,7 @@ void Response::execute_cgi( void )
     this->pid = fork() ;
     if (this->pid == -1)
     {
-        this->status = 500;
+       throw std::runtime_error("fork failed");
     }
     else if (this->pid == 0)
     {
