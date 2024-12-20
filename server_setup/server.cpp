@@ -6,144 +6,129 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/28 15:07:44 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/12 16:23:00 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/20 21:37:44 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
+// #include "../response/Response.hpp"
 
-static bool already_binded(std::vector<struct ListenerSocket>& active_sockets, const ServerContext& server, struct in_addr host, unsigned short port)
+Server::Server()
 {
-    std::vector<struct ListenerSocket>::iterator  it = active_sockets.begin();
-    std::vector<struct ListenerSocket>::iterator  end = active_sockets.end();
-
-    for ( ; it != end; it++)
-    {
-        if ((it->host.s_addr == host.s_addr) && (it->port == port))
-        {
-            it->add_server(&server); // link the server to the socket already created for this host:port
-            return true;
-        }
-    }
-    return false;
+    
 }
 
-struct addrinfo *my_get_addrinfo(const char * host)
+Server::~Server()
 {
-    int             ec;             // error code;
-    struct addrinfo *res;
-    struct addrinfo hints;
-
-    ft_memset(&hints, 0,sizeof(hints));
-    hints.ai_family = AF_INET; // TODO : Try specifying AF_INET6 as address family hint and see if ipv4 addresses are gonna be returned as well.
-    hints.ai_socktype = SOCK_STREAM;
-
-    if ((ec = getaddrinfo(host, NULL, &hints, &res)) != 0)
-    {
-        if (ec == 8)
-            err_throw((std::string("Unknown host : ") + host).c_str());
-        err_throw(gai_strerror(ec));
-    }
-    return res;
+    
 }
 
-void    initialize_sockets_on_port(struct addrinfo *list, std::vector<struct ListenerSocket>& active_sockets, const ServerContext& server, unsigned short port)
+void    Server::setup(const HttpContext & http_config)
 {
-    int                 fd;
-    const char          *cause = NULL;
-    unsigned int        n_sock = 0;
-    struct sockaddr_in * ip_access;
-    int                 opt = 1; // TODO
-
-    for (struct addrinfo *entry = list; entry ; entry = entry->ai_next)
-    {
-        if (already_binded(active_sockets, server, ((struct sockaddr_in *) entry)->sin_addr, port))
-        {
-            n_sock++;
-            continue;
-        }
-
-        fd = socket(entry->ai_family, entry->ai_socktype, entry->ai_protocol);
-        if (fd == -1)
-        {
-            cause = "socket";
-            continue ;
-        }
-		setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(opt));
-
-        ft_memset(ip_access, 0, sizeof(struct sockaddr_in));
-
-        ip_access = (struct sockaddr_in *) entry->ai_addr;
-        ip_access->sin_family = entry->ai_family;;
-        ip_access->sin_port = htons(port);
-
-        if (bind(fd, (struct sockaddr *) ip_access, sizeof(*ip_access)) == -1)
-        {
-            close(fd);
-            cause = "bind";
-            continue ;
-        }
-
-        // link the current server to the newlly created socket and add the socket to the active sockets list:
-        {
-            struct ListenerSocket   new_s;
-            new_s.set_type('L');
-            new_s.set_sock_fd(fd);
-            new_s.host = ((struct sockaddr_in *)entry->ai_addr)->sin_addr;
-            new_s.port = port;
-            new_s.add_server(&server);
-
-            active_sockets.push_back(new_s);
-
-            std::cerr <<  inet_ntoa(((struct sockaddr_in *)(entry->ai_addr))->sin_addr) << ":" << ntohs(((struct sockaddr_in*)entry->ai_addr)->sin_port) << std::endl;
-        }
-        n_sock++;
-
-        if (listen(fd, 10000) == -1) // This tells the TCP/IP stack to start accept incoming TCP connections on the port the socket is binded to. 128 because in The mac im working on 128 is the maximum number of pending connections
-            throw std::runtime_error("Webserv : listen() failed");
-    }   
-
-    if (n_sock == 0)
-        throw cause;
+    socketManager.create_listeners(http_config);
+    kqueueManager.create_kqueue();
+    kqueueManager.register_listeners_in_kqueue(socketManager.get_listeners());
 }
 
-
-void    setup_servers(const HttpContext& http_config, std::vector<struct ListenerSocket>&  activeListners)
+void    Server::accept_client_connection(ListenerSocket * listener)
 {
-    struct addrinfo *res;
+    ClientSocket    *new_client = new ClientSocket();
+    int             client_sock_fd;
 
-    std::vector<ServerContext>::const_iterator serv_it = http_config.get_servers().begin();
-    std::vector<ServerContext>::const_iterator end = http_config.get_servers().end();    
+    if (!new_client) // TODO : spread this protections on all possible cases where allocation might fail
+        return ;
 
-    for ( ; serv_it < end; serv_it++)
-    {
-        try
-        {
-            res = my_get_addrinfo(serv_it->get_host().c_str());
-        }
-        catch(const std::string& err)
-        {
-            close_sockets_on_error(activeListners);
-            throw err;
-        }
+    if ((client_sock_fd = accept(listener->get_ident(), NULL, 0)) == -1)
+        throw std::runtime_error("accept() failed!");
 
-        {
-            std::vector<unsigned short>::const_iterator ports_it = serv_it->get_ports().begin();
-            std::vector<unsigned short>::const_iterator p_end = serv_it->get_ports().end();
-            
-            for ( ; ports_it < p_end; ports_it++ )
+    fcntl(client_sock_fd, F_SETFL, O_NONBLOCK); // TODO
+
+    new_client->set_ident(client_sock_fd);
+    new_client->set_servers(listener->get_servers());
+    new_client->set_request(new Request());
+
+    socketManager.add_client(new_client);
+    kqueueManager.register_socket_in_kqueue(new_client, EVFILT_READ);
+}
+
+void    Server::start()
+{
+    struct kevent	events[EVENT_QUEUE_CAPACITY];
+    int				n_events;
+
+	while (true)
+	{
+	    memset(&events, 0, sizeof(events));
+		n_events = kqueueManager.poll_events(events, EVENT_QUEUE_CAPACITY);
+
+		for (int i = 0; i < n_events; i++)
+		{     
+			if (((events[i].flags & EV_EOF || events[i].flags & EV_ERROR)
+				|| (events[i].fflags & EV_EOF || events[i].fflags & EV_ERROR))
+                && ((KqueueIdent *) events[i].udata)->get_type() == CLIENT_SOCK) // TODO : this shouldn t be done on a non socket ident type.
+			{
+				std::cerr << "Client disconected!" << std::endl;
+                socketManager.delete_client(events[i].ident);
+			}
+			else if (((KqueueIdent *) events[i].udata)->get_type() == LISTENER_SOCK)
+			{
+                ListenerSocket * listener = (ListenerSocket *) events[i].udata;
+                accept_client_connection(listener);
+			}
+            else if (((KqueueIdent *) events[i].udata)->get_type() == CLIENT_SOCK && events[i].filter == EVFILT_READ)
             {
-                try
+                ClientSocket  * client_info = (ClientSocket *) events[i].udata;
+                handle_client_request(client_info);
+                if (client_info->get_request()->isBadRequest() || client_info->get_request()->isReady())
                 {
-                    initialize_sockets_on_port(res, activeListners, *serv_it, *ports_it);
-                }
-                catch(const char* err)
-                {
-                    close_sockets_on_error(activeListners);
-                    throw err;
+                    kqueueManager.switch_interest(client_info, EVFILT_READ, EVFILT_WRITE);
                 }
             }
-        }
-        freeaddrinfo(res);
-    }
+            else if (((KqueueIdent *) events[i].udata)->get_type() == CLIENT_SOCK && events[i].filter == EVFILT_WRITE)
+            {
+                ClientSocket  * client_info = (ClientSocket *) events[i].udata;
+                respond_to_client(client_info, kqueueManager.get_kqueue_fd());
+                Response * response = client_info->get_response();
+                /* checking if responding is done */
+                if ( (!response->is_cgi() && response->end_of_response()) || (response->is_cgi() && response->get_exit_stat() != -1 && response->end_of_response()) )
+                {
+                    std::cout << "end of response " << std::endl;
+                    if ( response->get_connection() == "close")
+                    {
+                        socketManager.delete_client(events[i].ident);
+                    }
+                    else
+                    {
+                        client_info->delete_request();
+                        client_info->delete_response();
+                        client_info->set_request(new Request());
+                        kqueueManager.switch_interest(client_info, EVFILT_WRITE, EVFILT_READ);
+                    }
+                }
+            }
+            else if ( ((KqueueIdent *) events[i].udata)->get_type() == CHILD_ID && events[i].filter == EVFILT_PROC && (events[i].fflags & NOTE_EXITSTATUS) )
+            {
+                std::cout << "exited" << std::endl;
+                CgiProcess  * process_info = (CgiProcess *) events[i].udata;
+                if (process_info && process_info->get_response())
+                {
+                    Response * response = process_info->get_response();
+                    int status = 0;
+                    waitpid(response->get_process_id(), &status, 0);
+                    response->set_exit_stat(WEXITSTATUS(status));
+                    if (WEXITSTATUS(status) != 0)
+                        response->set_status(500);
+                    std::cout << "status : " << WEXITSTATUS(status) << std::endl;
+                }
+            }
+            else if ( ((KqueueIdent *) events[i].udata)->get_type() == CGI_PAIR_SOCK && events[i].filter == EVFILT_READ)
+            {
+                CgiPairSocket  * sock_info = (CgiPairSocket *) events[i].udata;
+                if (sock_info->get_response())
+                {
+                    sock_info->get_response()->read_cgi_output();
+                }
+            }
+		}
+	}
 }

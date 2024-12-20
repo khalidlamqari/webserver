@@ -1,12 +1,12 @@
 /* ************************************************************************** */
 /*                                                                            */
 /*                                                        :::      ::::::::   */
-/*   Request.hpp                                        :+:      :+:    :+:   */
+/*   back                                               :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/04 17:07:06 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/18 11:33:23 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/18 11:28:21 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -71,10 +71,13 @@ class Request {
         size_t      getContentLength();
         std::string get_boundary();
 
-        // struct ClientSocket * get_ClientSocket() { return this->clientsocket ;}
-        // void set_ClientSocket(struct ClientSocket * clientsocket) { this->clientsocket = clientsocket ;}
-        const std::map<std::string, std::string> & get_headers() const ;
+        struct ClientSocket * get_ClientSocket() { return this->clientsocket ;}
+        void set_ClientSocket(struct ClientSocket * clientsocket) { this->clientsocket = clientsocket ;}
+        std::map<std::string, std::string> & get_headers() {return this->headers ;}
+        const std::string & get_request_method() {return this->method ; }
+        const std::string & get_request_target() { return this->target ; }
 
+        
         bool    hasParsedStartLine();
         bool    hasParsedHeaders();
         bool    hasParsedBody();
@@ -89,9 +92,9 @@ class Request {
         std::string getUnparsedMsg();
         std::string get_version();
 
-        bool    hasReachedFirstPart( void );
-        bool    hasReachedLastPart( void );
-        size_t   hasAnUndoneChunk( void );
+        bool    hasReachedFirstPart( void );       
+        bool    hasReachedLastPart( void ); 
+        size_t   hasAnUndoneChunk( void ); 
 
         /* Setters */
         void      set_total_chunks_length(size_t total_length);

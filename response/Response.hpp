@@ -6,12 +6,11 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/19 18:52:35 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/20 18:02:24 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #pragma once
-
 #ifndef RESPONSE_HPP
 # define RESPONSE_HPP
 
@@ -23,14 +22,18 @@
 #include <ctime>
 #include <fstream>
 #include "../Request/Request.hpp"
+#include "../Utils/utils.hpp"
+#include "../server_setup/Socket.hpp"
 
+class CgiPairSocket;
+class CgiProcess;
 class Request ;
+
 static DefaultInfo default_info ;
 
 class Response
 {
     private :
-
         ServerContext                           & server_context ;
         Request                                 & request ;
         std::string                             message ;
@@ -62,11 +65,14 @@ class Response
         std::string                             input_path;
         std::ofstream                           input_data;
         
+        CgiProcess*		_cgi_process;
+		CgiPairSocket* 	_cgi_pair_socket;
+        
         void                                    format_message( void ) ;
         void                                    get_static_page() ;
         void                                    generate_message( char * content, size_t size ) ;
         LocationContext *                       find_location( const std::string & target ) ;
-        LocationContext *                       find_exact_location( const std::string &target ) ;
+        // LocationContext *                       find_exact_location( const std::string &target ) ;
         void                                    remove_last_slash( std::string & target ) ;
         bool                                    get_path_of_page() ;
         bool                                    path_from_location();
@@ -99,7 +105,7 @@ class Response
         void                                    process_target(const std::string & target);
         void                                    parse_headers();
         void                                    get_response_body();
-
+        
     public:
 
         Response ( ServerContext & server_context, Request & request ) ;
@@ -115,24 +121,31 @@ class Response
         pid_t                       get_process_id();
         int                         get_exit_stat();
         LocationContext *           get_location();
+        
+        
 
         // cgi
-        void                        read_cgi_output();
+        void                                    read_cgi_output() ;
         void                        execute_cgi();
         bool                        is_cgi();
         bool                        p_is_running;
         bool                        is_parsed;
         void                        set_exit_stat(int stat);
         void                        set_end_of_response(bool stat);
-        int                         get_stat();
-        void                        set_stat(int stat);
+        int                         get_status();
+        void                        set_status(int stat);
         bool                        is_allowd_method();
         void                        set_start_time(std::time_t tm);
         std::time_t                 get_start_time();
         const std::string &         get_input_path();
         void                        set_input_path(const std::string & path);
         void                        set_data_to_input(const std::string & data);
-
+        
+        CgiProcess*		get_cgi_process(void);
+		CgiPairSocket* 	get_cgi_pair_socket(void);
+        void            set_cgi_process(CgiProcess* proc);
+        void            set_cgi_pair_socket(CgiPairSocket* cgi_sock);
+        
         ~Response() ;
 
 };

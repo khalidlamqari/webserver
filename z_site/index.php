@@ -7,8 +7,9 @@
 </head>
 <body>
     <?php
-        for ($i = 0 ; $i < 100000 ; $i++)
+        for ($i = 0 ; $i < 100 ; $i++)
             echo "hello world:\n";
+        echo "123";
     ?>
 </body>
 </html>

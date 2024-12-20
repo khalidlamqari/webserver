@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:06:28 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/06 14:27:22 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/18 11:34:58 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,6 @@
 
 Request::Request( void )
 {
-    // std::cout << "Request created" << std::endl;
     start_line_is_parsed = false;
     headers_parsed = false;
     body_is_parsed = false;
@@ -29,22 +28,24 @@ Request::Request( void )
     first_part_reached = false;
     last_part_reached = false;
     has_incomplete_part = false;
-    undone_chunk = false;
+    undone_chunk = false;     // useless ?
     size_left = 0;
     total_chunks_length = 0;
     is_ready = false;
+    first_chunk_fixed = false;
 }
 
 Request::~Request()
 {
-    // std::vector<t_part>::iterator it = this->parts.begin();
-    // for ( size_t i = 0 ; i < this->parts.size() ; ++i )
-    // {
-    //     delete (*it).file_content;
-    // }
+    
 }
 
 /* Getters */
+
+const std::map<std::string, std::string> & Request::get_headers() const
+{
+    return (this->headers);
+}
 
 size_t      Request::get_total_chunks_length()
 {
@@ -157,18 +158,17 @@ bool    Request::hasIncompletePart()
 }
 
 
-t_part &	Request::get_latest_part( )
+t_part &	Request::get_latest_part()
 {
     if (!parts.size() || parts.back().is_complete)
     {
-        // this->get_ClientSocket()->response->getUploadDir();
-        t_part  new_part; 
+        t_part  new_part;
         new_part.is_complete = false;
         new_part.is_new = true;
         new_part.header_parsed = false;
         new_part.content_type = "text/plain";
-        new_part.file_content = NULL ;
         parts.push_back(new_part);
+        std::cout << "created !" << std::endl;
     }
     return this->parts.back();
 }
@@ -243,8 +243,9 @@ void    Request::markBodyParsed( const bool & parsed )
 void    Request::markAsBad( int i )
 {
     // Testing
-    std::cout << i << std::endl;
+    std::cerr << i << std::endl;
     this->is_bad = true;
+    throw "Bad request!";
 }
 
 void    Request::markAsChunked()
@@ -331,6 +332,23 @@ void    Request::set_body( const std::string & body )
     this->body += body;
 }
 
+std::string    Request::build_boundary(int type)
+{
+    std::string _boundary = this->boundary;
+
+    _boundary.insert(0, "--");
+
+    if (type == 2)
+        _boundary.append("--");
+    if (type == 3)
+        _boundary.insert(0, "\r\n");
+
+    _boundary.append("\r\n");
+
+    return _boundary;
+}
+
+
 // Testing
 
 void    Request::print_headrs()
@@ -343,13 +361,19 @@ void    Request::print_headrs()
 }
 
 
-
+#include <fstream>
 void    Request::print_files()
 {
+
+    std::ofstream image("image.png");
+        
+        // image.open();
     for (std::vector<t_part>::iterator i = parts.begin(); i != parts.end(); i++)
     {
         // std::cout << "{"  ;
-        // std::cout << i->file_content ;
+        image << i->file_content;
+        image.flush();
+        image.close();
         // std::cout << "}" << std::endl;      
     }
 }

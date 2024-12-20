@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 19:31:45 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/19 18:34:46 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/20 16:20:18 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,7 +28,7 @@ void    Response::setup_environment(std::vector<std::string> & string_env)
     std::map<std::string, std::string> headers = this->request.get_headers() ;
     std::map< std::string , std::string>::iterator it ;
 
-    string_env.push_back("REQUEST_METHOD=" + this->request.get_request_method());
+    string_env.push_back("REQUEST_METHOD=" + this->request.get_method());
     // string_env.push_back("CONTENT_LENGTH=11");
     string_env.push_back("CONTENT_TYPE=text/plain");
     string_env.push_back("REQUEST_METHOD=POST");
@@ -75,7 +75,7 @@ void Response::execute_cgi( void )
     this->pid = fork() ;
     if (this->pid == -1)
     {
-       throw std::runtime_error("fork failed");
+        this->status = 500;
     }
     else if (this->pid == 0)
     {

@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/19 19:23:01 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/20 21:35:09 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -18,6 +18,7 @@ static size_t num_file = 0;
 Response::Response ( ServerContext & server_context, Request & request) :\
                     server_context(server_context), request(request)
 {
+    std::cout << "response created" << std::endl;
     this->_end_of_response  = false;
     this->_tranfer_encoding = false;
     this->is_first_message  = true;
@@ -32,7 +33,10 @@ Response::Response ( ServerContext & server_context, Request & request) :\
     this->is_parsed         = false;
     this->offset            = 0;
 
-    process_target(this->request.get_request_target());
+    this->_cgi_process      = NULL;
+    this->_cgi_pair_socket  = NULL;
+    
+    process_target(this->request.get_target());
     if (!request.isBadRequest() && !this->_cgi_extention.empty()
     && (this->_path_.length() - this->_cgi_extention.length() > 0)
     && (this->_path_.find(this->_cgi_extention, this->_path_.length()
@@ -59,16 +63,16 @@ Response::Response ( ServerContext & server_context, Request & request) :\
 
 void    Response::format_message( void )
 {
-    if (this->request.isBadRequest())
+    if ( this->request.isBadRequest() )
     {
         this->status = 500;
     }
 
-    if (this->get_stat() == 200)
+    if (this->get_status() == 200)
     {
         try
         {
-            this->get_static_page();
+            this->get_static_page() ;
         }
         catch ( int error )
         {
@@ -80,7 +84,7 @@ void    Response::format_message( void )
     }
     else
     {
-        this->error_response( this->get_stat() ) ;
+        this->error_response( this->get_status() ) ;
     }
 }
 
@@ -136,13 +140,13 @@ bool Response::is_allowd_method()
 {
     /* search in location */
     if ( _location &&  (std::find( this->_location->get_allowed_methods().begin(), this->_location->get_allowed_methods().end(), \
-    this->request.get_request_method() ) !=  this->_location->get_allowed_methods().end()) )
+    this->request.get_method() ) !=  this->_location->get_allowed_methods().end()) )
     {
         return ( true ) ;
     }
     /* search in server */
     if (!_location && (std::find(this->server_context.get_allowed_methods().begin(), this->server_context.get_allowed_methods().end(), \
-    this->request.get_request_method()) != this->server_context.get_allowed_methods().end()) )
+    this->request.get_method()) != this->server_context.get_allowed_methods().end()) )
     {
         return ( true ) ;
     }
@@ -163,43 +167,41 @@ const std::string & Response::getResponse( void )
 
 std::string Response::find_error_page( unsigned short error )
 {
-    std::vector<std::pair <unsigned short, std::string> >::const_iterator i ;
+    std::vector<t_error_page>::const_iterator i ;
     if ( this->_location )
     {
-        const std::vector<std::pair <unsigned short, std::string> > & pages = this->_location->get_error_pages() ;
+        const std::vector<t_error_page> & pages = this->_location->get_error_pages();
         for ( i = pages.begin() ; i != pages.end() ; ++i )
         {
-            if ( i->first == error )
+            if ( i->err_code == error )
             {
-                return ( this->_location->get_root_directory() + "/" + i->second ) ;
+                return ( this->_location->get_root_directory() + "/" + i->path ) ;
             }
         }
     }
     else
     {
-        const std::vector<std::pair <unsigned short, std::string> > & pages = this->server_context.get_error_pages() ;
+        const std::vector<t_error_page> & pages = this->server_context.get_error_pages();
         for ( i = pages.begin() ; i != pages.end() ; ++i )
         {
-            if ( i->first == error )
+            if ( i->err_code == error )
             {
-                return ( this->server_context.get_root_directory() + "/" + i->second ) ; 
+                return ( this->server_context.get_root_directory() + "/" + i->path );
             }
         }
     }
     return ( "" ) ;
 }
 
-bool    Response::is_cgi() 
+bool    Response::is_cgi()
 {
-    return (this->_is_cgi) ;
+    return (this->_is_cgi);
 }
 
 bool Response::end_of_response()
 {
-    return ( this->_end_of_response ) ;
+    return ( this->_end_of_response );
 }
-
-
 
 bool Response::tranfer_encoding()
 {
@@ -210,10 +212,25 @@ Response::~Response()
 {
     if (s_fds[0] != -1)
         close(s_fds[0]);
+        
     if (s_fds[1] != -1)
         close(s_fds[1]);
+        
     if (this->input_path != "")
         remove(this->input_path.c_str()) ;
+    
+    if (_cgi_pair_socket)
+    {
+        delete _cgi_pair_socket;
+        _cgi_pair_socket = NULL;
+    }
+
+    if (_cgi_process)
+    {
+        delete _cgi_process;
+        _cgi_process = NULL;
+    }
+
 }
 
 const std::string & Response::getUploadDir  ( void )
@@ -246,7 +263,7 @@ LocationContext * Response::get_location()
     return this->_location;
 }
 
-int Response::get_stat()
+int Response::get_status()
 {
     return this->status;
 }
@@ -277,7 +294,7 @@ void    Response::set_data_to_input(const std::string & data)
     this->input_data << data;
 }
 
-void Response::set_stat(int stat)
+void Response::set_status(int stat)
 {
     this->status = stat;
 }
@@ -295,4 +312,25 @@ void    Response::set_exit_stat(int stat)
 void Response::set_end_of_response(bool stat)
 {
     this->_end_of_response = stat;
+}
+
+
+CgiProcess*		Response::get_cgi_process(void)
+{
+    return (this->_cgi_process);
+}
+
+CgiPairSocket* 	Response::get_cgi_pair_socket(void)
+{
+    return (this->_cgi_pair_socket);    
+}
+
+void            Response::set_cgi_process(CgiProcess* proc)
+{
+    this->_cgi_process = proc;
+}
+
+void            Response::set_cgi_pair_socket(CgiPairSocket* cgi_sock)
+{
+    this->_cgi_pair_socket = cgi_sock;    
 }

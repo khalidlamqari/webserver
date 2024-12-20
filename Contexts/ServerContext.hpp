@@ -3,10 +3,10 @@
 /*                                                        :::      ::::::::   */
 /*   ServerContext.hpp                                  :+:      :+:    :+:   */
 /*                                                    +:+ +:+         +:+     */
-/*   By: ymafaman <ymafaman@student.42.fr>          +#+  +:+       +#+        */
+/*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/09 11:31:30 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/10/30 22:40:05 by ymafaman         ###   ########.fr       */
+/*   Updated: 2024/12/18 11:08:27 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -42,15 +42,15 @@ class ServerContext {
         ~ServerContext();
 
         /* Setters */
-        void    set_error_page      ( const std::pair <unsigned short, std::string>& error_info );
-        void    set_new_location    ( void );
+        void    set_error_page      ( const t_error_page& error_info );
+        void    set_new_location    ( const std::string & location );
         void    set_ports           ( std::vector<unsigned short> ports );
         void    set_root_directory  ( std::string root );
         void    set_cgi_extension   ( const std::string& extension );
         void    set_upload_dir      ( std::string directory );
         void    set_index           ( std::string index );
         void    set_server_names    ( std::vector<std::string> names );
-        void    set_auto_index      ( bool on_off );
+        void    set_auto_index      ( const std::string & on_off );
         void    set_allowed_methods ( std::vector<std::string> methods );
         void    set_host            ( std::string host );
 
@@ -59,41 +59,41 @@ class ServerContext {
 
         /* Getters */
 
-        const std::vector<std::pair <unsigned short, std::string> >&    get_error_pages( void ) const;
-        const std::vector<LocationContext>&                             get_locations( void ) const;
-        const std::vector<std::string>&                                 get_server_names( void ) const;
-        const std::vector<std::string>&                                 get_allowed_methods( void ) const;
-        const std::vector<unsigned short>&                              get_ports( void ) const;
-        const std::string&                                              get_root_directory( void ) const;
-        const std::string&                                              get_cgi_extension( void ) const;
-        const std::string&                                              get_upload_dir( void ) const;
-        const std::string&                                              get_index( void ) const;
-        const std::string&                                              get_host( void ) const;
-        const bool&                                                     get_auto_index( void ) const;  
+        const std::vector<t_error_page>&    	get_error_pages( void ) const;
+        const std::vector<LocationContext>&		get_locations( void ) const;
+        const std::vector<std::string>&    		get_server_names( void ) const;
+        const std::vector<std::string>&    		get_allowed_methods( void ) const;
+        const std::vector<unsigned short>& 		get_ports( void ) const;
+        const std::string&                 		get_root_directory( void ) const;
+        const std::string&                 		get_cgi_extension( void ) const;
+        const std::string&                 		get_upload_dir( void ) const;
+        const std::string&                 		get_index( void ) const;
+        const std::string&                 		get_host( void ) const;
+        const bool&                        		get_auto_index( void ) const;  
 
     private :
 
-        std::vector<std::pair <unsigned short, std::string> >   error_pages; // better make a struct that encaplsulates the error page info.
+        std::vector<t_error_page>       error_pages;
 
-        std::vector<LocationContext>                            locations; // TODO : Is making a separated vector for exact locations better that mixing all locations in one single vector. 
+        std::vector<LocationContext>    locations;
 
-        std::vector<std::string>                                server_names;
+        std::vector<std::string>        server_names;
 
-        std::vector<std::string>                                allowed_methods;
+        std::vector<std::string>        allowed_methods;
 
-        std::vector<unsigned short>                             ports;
+        std::vector<unsigned short>     ports;
 
-        std::string                                             root_directory;
+        std::string                     root_directory;
 
-        std::string                                             cgi_extension;
+        std::string                     cgi_extension;
 
-        std::string                                             upload_dir;
+        std::string                     upload_dir;
 
-        std::string                                             index;
+        std::string                     index;
 
-        std::string                                             host;
+        std::string                     host;
 
-        bool                                                    auto_index;
+        bool                            auto_index;
 
 };
 

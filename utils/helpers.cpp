@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/15 14:16:59 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/10 11:45:44 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/18 11:47:28 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -176,9 +176,9 @@ bool is_file(std::string path)
 }
 
 
-void    set_connection(std::map<std::string , std::string> & headers, std::string & connection )
+void    set_connection(const std::map<std::string , std::string> & headers, std::string & connection )
 {
-    std::map<std::string, std::string>::iterator it = headers.find("CONNECTION");
+    std::map<std::string, std::string>::const_iterator it = headers.find("CONNECTION");
     if ( it == headers.end() )
     {
         connection = "keep-alive";

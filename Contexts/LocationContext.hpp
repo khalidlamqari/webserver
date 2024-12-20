@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/09 11:31:25 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/29 08:57:03 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/18 11:04:13 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -16,6 +16,8 @@
 #include <vector>
 #include <string>
 #include <iostream>
+
+#include "../config_file_parsing/config_structs.hpp"
 
 class LocationContext {
 
@@ -32,42 +34,42 @@ class LocationContext {
     bool     root_is_set;
 
     /* LocationContext Constructor */
-    LocationContext( void ); 
+    LocationContext( void );
+    LocationContext( const std::string & location );
 
     /* LocationContext Destructor */
     ~LocationContext();
 
     /* Setters */
 
-    void    set_error_page      ( const std::pair<unsigned short, std::string>& error_info );
-    void    set_redirection     ( std::pair<unsigned short, std::string> redirection_info );
+    void    set_error_page      ( const t_error_page & error_info );
+    void    set_redirection     ( t_redirection_info redirection_info );
     void    set_root_directory  ( std::string root );
     void    set_cgi_extension   ( const std::string& extension );
     void    set_upload_dir      ( std::string directory );
     void    set_index           ( std::string index );
-    void    set_auto_index      ( bool on_off );
+    void    set_auto_index      ( const std::string & on_off );
     void    set_allowed_methods ( std::vector<std::string> methods );
-    void    make_exact          ( void );
     void    set_location        ( std::string location );
 
-    /* Getters */
+        /* Getters */
 
-    std::vector<std::pair <unsigned short, std::string> > &    get_error_pages      ( void ) ;
-    const std::pair<unsigned short, std::string>&              get_redirection     ( void ) const ;
+    const std::vector<t_error_page> &                          get_error_pages      ( void ) const;
+    const t_redirection_info &                                 get_redirection     ( void ) const;
     const std::string&                                         get_root_directory  ( void ) const ;
     const std::string&                                         get_cgi_extension   ( void ) const ;
     const std::string&                                         get_upload_dir      ( void ) const ;
     const std::string&                                         get_index           ( void ) const ;
-    bool                                                       get_auto_index      ( void ) const ;
-     std::vector<std::string>&                                 get_allowed_methods ( void )  ;
+    const bool &                                               get_auto_index      ( void ) const ;
+    const std::vector<std::string>&                            get_allowed_methods ( void ) const ;
     const std::string&                                         get_location        ( void ) const ;
-    bool                                                       is_exact_location   ( void ) const ;
+    // bool                                                       is_exact_location   ( void ) const ;
 
     private :
 
-        std::vector<std::pair <unsigned short, std::string> >   error_pages;
+        std::vector<t_error_page>                               error_pages;
 
-        std::pair <unsigned short, std::string>                 redirection;
+        t_redirection_info                                      redirection;
 
         std::vector<std::string>                                allowed_methods;
 
@@ -77,13 +79,12 @@ class LocationContext {
 
         std::string                                             cgi_extension;
 
-        std::string                                             upload_dir; 
+        std::string                                             upload_dir;
 
         std::string                                             index;
 
         bool                                                    auto_index;
 
-        bool                                                    is_exact;
 };
 
 

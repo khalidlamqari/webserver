@@ -6,19 +6,17 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/19 19:26:40 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/20 20:41:10 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "Response.hpp"
 
-
-
 bool    Response::path_from_location()
 {
     if ((_location)->redirect_is_set && (is_file(this->_path_) || is_dir(this->_path_)))
     {
-        redirection_handler(_location->get_redirection().first, _location->get_redirection().second);
+        redirection_handler(_location->get_redirection().status_code, _location->get_redirection().target);
         return false ;
     }
     if (is_file(this->_path_))
@@ -80,7 +78,7 @@ void    Response::get_static_page()
     {
         throw 405 ;
     }
-    if ( !this->_tranfer_encoding && this->request.get_request_method() == "DELETE" )
+    if ( !this->_tranfer_encoding && this->request.get_method() == "DELETE" )
     {
         this->delete_file() ;
         return ;
@@ -121,8 +119,8 @@ std::string extract_body(const std::string & unparsed_content, size_t pos)
 void Response::parse_headers()
 {
     std::string body;
-    std::ostringstream ss;
-    std::ostringstream len;
+    std::ostringstream ss ;
+    std::ostringstream len ;
     size_t pos;
 
     pos = data_out.find("\r\n\r\n");
@@ -263,19 +261,19 @@ LocationContext * Response::find_match_more_location(std::string target)
     return ( NULL );
 }
 
-LocationContext * Response::find_exact_location(const std::string &target)
-{
-    const std::vector<LocationContext> & locations = this->server_context.get_locations() ;
+// LocationContext * Response::find_exact_location(const std::string &target)
+// {
+//     const std::vector<LocationContext> & locations = this->server_context.get_locations() ;
 
-    for (std::vector<LocationContext>::const_iterator i = locations.begin(); i != locations.end(); ++i)
-    {
-        if (i->get_location() == target && i->is_exact_location() )
-        {
-            return (LocationContext *)&(*i) ;
-        }
-    }
-    return ( NULL );
-}
+//     for (std::vector<LocationContext>::const_iterator i = locations.begin(); i != locations.end(); ++i)
+//     {
+//         if (i->get_location() == target && i->is_exact_location() )
+//         {
+//             return (LocationContext *)&(*i) ;
+//         }
+//     }
+//     return ( NULL );
+// }
 
 LocationContext * Response::find_location(const std::string &target)
 {
@@ -421,7 +419,7 @@ void    Response::normall_headers(char * content, size_t size )
     else
         this->message.append("Connection: keep-alive\r\n");
     this->message.append("\r\n");
-    if (  this->request.get_request_method() != "HEAD" )
+    if (  this->request.get_method() != "HEAD" )
         this->message.append(content, size);
 }
 

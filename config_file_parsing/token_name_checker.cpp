@@ -6,30 +6,50 @@
 /*   By: ymafaman <ymafaman@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/11 17:12:39 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/18 01:11:35 by ymafaman         ###   ########.fr       */
+/*   Updated: 2024/12/01 03:48:59 by ymafaman         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
-#include "../webserv.hpp"
+#include "HttpConfigParser.hpp"
 
-bool    is_http_ctx_dir(std::string directive)
+bool    is_http_ctx_dir(const std::string & directive)
 {
-    return  (directive == "error_page" || directive == "server" || directive == "cgi_extention"
-            || directive == "autoindex" || directive == "client_max_body_size");
+    return  (directive == ERR_PAGE_DIR
+            || directive == SERVER_DIR
+            || directive == CGI_EXCT_DIR
+            || directive == AUTO_INDX_DIR
+            || directive == MAX_BODY_DIR);
 }
 
-bool    is_server_ctx_dir(std::string directive)
+bool    is_server_ctx_dir(const std::string & directive)
 {
-    return  (directive == "error_page" || directive == "location" || directive == "listen"
-            || directive == "root" || directive == "upload_dir" || directive == "index"
-            || directive == "server_names" || directive == "cgi_extention"
-            || directive == "autoindex" || directive == "allowed_methods"
-            || directive == "host");
+    return  (directive == ERR_PAGE_DIR
+            || directive == LOCATION_DIR
+            || directive == LISTEN_DIR
+            || directive == ROOT_DIR
+            || directive == UPLOAD_DIR 
+            || directive == INDEX_DIR
+            || directive == SERVER_NAMES_DIR
+            || directive == CGI_EXCT_DIR
+            || directive == AUTO_INDX_DIR
+            || directive == ALLOWED_METHODS_DIR
+            || directive == HOST_DIR);
 }
 
-bool    is_location_ctx_dir(std::string directive)
+bool    is_location_ctx_dir(const std::string & directive)
 {
-    return  (directive == "error_page" || directive == "root" || directive == "upload_dir" // remove upload dir
-            || directive == "index" || directive == "cgi_extention" || directive == "autoindex"
-            || directive == "return" || directive == "allowed_methods");
+    return  (directive == ERR_PAGE_DIR
+            || directive == ROOT_DIR
+            || directive == INDEX_DIR
+            || directive == CGI_EXCT_DIR
+            || directive == AUTO_INDX_DIR
+            || directive == REDIRECTION_DIR
+            || directive == ALLOWED_METHODS_DIR);
+}
+
+bool    is_a_valid_dir(const std::string & directive)
+{
+    return (is_http_ctx_dir(directive)
+            || is_server_ctx_dir(directive)
+            || is_location_ctx_dir(directive));
 }
