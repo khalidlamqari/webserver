@@ -6,12 +6,15 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/15 14:16:59 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/18 11:47:28 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/21 11:07:04 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "../includes/main.hpp"
 # include <sys/stat.h>
+#include "../response/Response.hpp"
+
+static size_t num_file = 0;
 
 bool is_all_WS( const std::string & str )
 {
@@ -198,4 +201,21 @@ bool is_existe(const std::string & path)
     if ( access(path.c_str(), F_OK) == 0)
         return true;
     return false;
+}
+
+bool check_is_cgi(std::string & path, std::string & cgi_extention, bool is_bad_request)
+{
+    return (!is_bad_request && !cgi_extention.empty()
+        && (path.length() - cgi_extention.length() > 0)
+        && (path.find(cgi_extention, path.length()
+        - cgi_extention.length()) != std::string::npos));
+}
+
+void create_socket_pair(Response & response)
+{
+    if (socketpair(AF_UNIX, SOCK_STREAM, 0, response.get_pair_fds() ) == -1)
+    {
+        throw std::runtime_error("socketpair failed");
+    }
+    response.set_input_path(get_rand_file_name(num_file));
 }

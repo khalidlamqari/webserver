@@ -34,7 +34,7 @@ class Socket : public KqueueIdent {
         struct in_addr                      _host;       // In the host representation
         unsigned short                      _port;       // In the host representation
 
-        std::vector<const ServerContext*>   _related_servers;    // List of server contexts that can serve requests received on this socket.
+        std::vector<const ServerContext*>   _related_servers;    // List of server contexts that can serve requests received on this socket. // TODO : remove pointer
 
 		bool								_ident_is_set;
 

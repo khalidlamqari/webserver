@@ -159,7 +159,7 @@ void    SocketManager::delete_client(int fd)
     std::vector<ClientSocket *>::iterator end = activeClients.end();
 
     for ( ; it != end; it++)
-    {
+    {                                 // should kill child process if cgi request
         if ((*it)->get_ident() == fd) // TODO : store clients in a map instead of a vector like that the key will be the client fd so i dont have to loop over all clients to delete on of them
         {
             delete (*it);

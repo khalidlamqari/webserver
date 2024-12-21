@@ -1,0 +1,67 @@
+
+
+http://127.0.0.1:9999/folder
+http://127.0.0.1:9999/folder/notexiste
+
+location /folder {
+            return 302 /index.html;
+        }
+
+------------------------------------
+
+http://127.0.0.1:9999/notexiste
+http://127.0.0.1:9999/notexiste/notexiste
+
+location /notexiste {
+            return 302 /index.html;
+        }
+
+
+------------------------------------
+
+http://127.0.0.1:9999/index.html
+
+location /file {
+            return 302 /index.html;
+        }
+
+
+---------- autoindex -----------
+
+location /file {
+            autoindex on;
+            return 302 /index.html;
+        }
+
+------------------------------------
+
+http://127.0.0.1:9999/folder
+
+location /folder {
+            autoindex on;
+        }
+
+if  index existe in folder final --> root/folder/index.html
+if index not existe list content of folder 
+
+------------------------------------
+
+http://127.0.0.1:9999/notexiste
+
+location /notexiste {
+            autoindex on;
+        }
+
+404
+
+------------------------------------
+
+location /file {
+            autoindex on;
+        }
+
+responde content of file (ignor autoindex)
+
+------------------------------------
+
+

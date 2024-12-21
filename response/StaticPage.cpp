@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/20 20:41:10 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/21 14:47:11 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,8 +14,9 @@
 
 bool    Response::path_from_location()
 {
-    if ((_location)->redirect_is_set && (is_file(this->_path_) || is_dir(this->_path_)))
+    if ((_location)->redirect_is_set) //  && (is_existe(this->_location)
     {
+        std::cout << "path : " << _path_ << std::endl;
         redirection_handler(_location->get_redirection().status_code, _location->get_redirection().target);
         return false ;
     }
@@ -70,7 +71,7 @@ bool Response::get_path_of_page()
 
 void    Response::get_static_page()
 {
-    if ( !this->_tranfer_encoding && !this->get_path_of_page())
+    if ( !this->_tranfer_encoding && !this->get_path_of_page()) /* return false in case "List directory or redirect to another location" */
     {   
         return ;
     }
@@ -95,7 +96,7 @@ void    Response::get_static_page()
 
 void    Response::format_cgi_msg()
 {
-    if (!this->is_parsed)
+    if (!this->is_parsed)   /* in case tranfer encoding send headers only in first chunck */
     {
         this->parse_headers();
         this->get_response_body();
@@ -218,7 +219,6 @@ void Response::read_and_format_msg()
 
     this->generate_message( buffer, this->page_content.gcount() );
 }
-
 
 void    Response::generate_message( char * content, size_t size )
 {
@@ -367,15 +367,19 @@ void    Response::get_pathinfo_form_target()
     this->_target    = this->_target.substr(0, 4 + pos);
 }
 
+ /* search for location and set upload directory and path and checking path is existe  & check is file or folder */
 void    Response::process_target(const std::string & target)
 {
     this->_target = target;
-    set_connection(this->request.get_headers(), this->connection);
+    set_connection(this->request.get_headers(), this->connection); // TODO khalid : request.is_persistent()
     if (normalize_target( this->_target ))
         this->status = 403;
     this->get_pathinfo_form_target();
     _location = find_match_more_location( this->_target );
-    if ( _location && !(_location)->redirect_is_set)
+    
+    if (_location && (_location)->redirect_is_set)
+        return;
+    if ( _location ) // && !(_location)->redirect_is_set
     {
         _upload_dir = _location->get_upload_dir();
         this->_path_ = (_location)->get_root_directory() + this->_target;

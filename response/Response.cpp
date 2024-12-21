@@ -6,19 +6,15 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/20 21:35:09 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/21 15:28:29 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "Response.hpp"
-
-static size_t num_file = 0;
-
-
-Response::Response ( ServerContext & server_context, Request & request) :\
+// static size_t num_file = 0;
+Response::Response ( const ServerContext & server_context, Request & request) :\
                     server_context(server_context), request(request)
 {
-    std::cout << "response created" << std::endl;
     this->_end_of_response  = false;
     this->_tranfer_encoding = false;
     this->is_first_message  = true;
@@ -32,31 +28,22 @@ Response::Response ( ServerContext & server_context, Request & request) :\
     this->pid               = -1;
     this->is_parsed         = false;
     this->offset            = 0;
-
     this->_cgi_process      = NULL;
     this->_cgi_pair_socket  = NULL;
-    
+
     process_target(this->request.get_target());
-    if (!request.isBadRequest() && !this->_cgi_extention.empty()
-    && (this->_path_.length() - this->_cgi_extention.length() > 0)
-    && (this->_path_.find(this->_cgi_extention, this->_path_.length()
-    - this->_cgi_extention.length()) != std::string::npos))
+    if (check_is_cgi(this->_path_, this->_cgi_extention, request.isBadRequest()))
     {
         this->_is_cgi = true;
     }
 
     if (this->_is_cgi)
     {
-        if (socketpair(AF_UNIX, SOCK_STREAM, 0, this->s_fds) == -1)
-        {
-            this->status = 500;
-            this->_is_cgi = false;
-        }
-        set_input_path(get_rand_file_name(num_file));
+        create_socket_pair(*this);
         this->input_data.open(get_input_path());
         if (!this->input_data.is_open())
         {
-            this->status = 500;
+            throw std::runtime_error("open failed");
         }
     }
 }
@@ -160,6 +147,7 @@ const std::string & Response::getResponse( void )
     this->message = "";
     if ( this->_end_of_response )
         return ( this->message ) ;
+
     this->format_message() ;
 
     return ( this->message ) ;
@@ -230,7 +218,6 @@ Response::~Response()
         delete _cgi_process;
         _cgi_process = NULL;
     }
-
 }
 
 const std::string & Response::getUploadDir  ( void )

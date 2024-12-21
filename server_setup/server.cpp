@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/28 15:07:44 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/20 21:37:44 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/21 11:45:12 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -39,16 +39,29 @@ void    Server::accept_client_connection(ListenerSocket * listener)
         return ;
 
     if ((client_sock_fd = accept(listener->get_ident(), NULL, 0)) == -1)
-        throw std::runtime_error("accept() failed!");
+        throw std::runtime_error("accept() failed!"); // TODO
 
     fcntl(client_sock_fd, F_SETFL, O_NONBLOCK); // TODO
 
     new_client->set_ident(client_sock_fd);
     new_client->set_servers(listener->get_servers());
-    new_client->set_request(new Request());
+    new_client->set_request(new Request()); // TODO
 
     socketManager.add_client(new_client);
     kqueueManager.register_socket_in_kqueue(new_client, EVFILT_READ);
+}
+
+// ADD NEW
+
+void    get_exit_status(CgiProcess  & process_info)
+{
+    Response * response = process_info.get_response();
+    int status = 0;
+
+    waitpid(response->get_process_id(), &status, 0);
+    response->set_exit_stat(WEXITSTATUS(status));
+    if (WEXITSTATUS(status) != 0)
+        response->set_status(500);
 }
 
 void    Server::start()
@@ -79,55 +92,21 @@ void    Server::start()
             {
                 ClientSocket  * client_info = (ClientSocket *) events[i].udata;
                 handle_client_request(client_info);
+
                 if (client_info->get_request()->isBadRequest() || client_info->get_request()->isReady())
-                {
                     kqueueManager.switch_interest(client_info, EVFILT_READ, EVFILT_WRITE);
-                }
             }
             else if (((KqueueIdent *) events[i].udata)->get_type() == CLIENT_SOCK && events[i].filter == EVFILT_WRITE)
             {
-                ClientSocket  * client_info = (ClientSocket *) events[i].udata;
-                respond_to_client(client_info, kqueueManager.get_kqueue_fd());
-                Response * response = client_info->get_response();
-                /* checking if responding is done */
-                if ( (!response->is_cgi() && response->end_of_response()) || (response->is_cgi() && response->get_exit_stat() != -1 && response->end_of_response()) )
-                {
-                    std::cout << "end of response " << std::endl;
-                    if ( response->get_connection() == "close")
-                    {
-                        socketManager.delete_client(events[i].ident);
-                    }
-                    else
-                    {
-                        client_info->delete_request();
-                        client_info->delete_response();
-                        client_info->set_request(new Request());
-                        kqueueManager.switch_interest(client_info, EVFILT_WRITE, EVFILT_READ);
-                    }
-                }
+                respond_to_client((ClientSocket *) events[i].udata, socketManager ,kqueueManager);
             }
             else if ( ((KqueueIdent *) events[i].udata)->get_type() == CHILD_ID && events[i].filter == EVFILT_PROC && (events[i].fflags & NOTE_EXITSTATUS) )
             {
-                std::cout << "exited" << std::endl;
-                CgiProcess  * process_info = (CgiProcess *) events[i].udata;
-                if (process_info && process_info->get_response())
-                {
-                    Response * response = process_info->get_response();
-                    int status = 0;
-                    waitpid(response->get_process_id(), &status, 0);
-                    response->set_exit_stat(WEXITSTATUS(status));
-                    if (WEXITSTATUS(status) != 0)
-                        response->set_status(500);
-                    std::cout << "status : " << WEXITSTATUS(status) << std::endl;
-                }
+                get_exit_status(*((CgiProcess *) events[i].udata));
             }
             else if ( ((KqueueIdent *) events[i].udata)->get_type() == CGI_PAIR_SOCK && events[i].filter == EVFILT_READ)
             {
-                CgiPairSocket  * sock_info = (CgiPairSocket *) events[i].udata;
-                if (sock_info->get_response())
-                {
-                    sock_info->get_response()->read_cgi_output();
-                }
+                ((CgiPairSocket *) events[i].udata)->get_response()->read_cgi_output();
             }
 		}
 	}

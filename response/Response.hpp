@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/20 18:02:24 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/21 11:56:44 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -34,7 +34,7 @@ static DefaultInfo default_info ;
 class Response
 {
     private :
-        ServerContext                           & server_context ;
+        const ServerContext                     & server_context ;
         Request                                 & request ;
         std::string                             message ;
         bool                                    _end_of_response ;
@@ -108,7 +108,7 @@ class Response
         
     public:
 
-        Response ( ServerContext & server_context, Request & request ) ;
+        Response ( const ServerContext & server_context, Request & request ) ;
 
         /* Getters */
         const std::string &         get_connection() const;

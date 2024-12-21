@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:37:00 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/20 21:28:16 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/21 12:12:33 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@
 // ADD NEW
 static  const ServerContext * get_server_context(ClientSocket * clientsocket)
 {
-    std::string host = clientsocket->get_request()->get_headers().find("HOST")->second ;
+    std::string host = clientsocket->get_request()->get_headers().find("HOST")->second ; // TODO : store host separatly in the request
 
     for (std::vector<const ServerContext*>::const_iterator i = clientsocket->get_servers().begin() ; i != clientsocket->get_servers().end() ; ++i)
     {
@@ -40,7 +40,7 @@ static  const ServerContext * get_server_context(ClientSocket * clientsocket)
 void    determine_parsing_stage(ClientSocket* client_info, std::string & rcvdMsg)
 {
     size_t      crlf_pos = rcvdMsg.find(CRLF);
-    Request * request = client_info->get_request();
+    Request *   request = client_info->get_request();
     
     if ((!request->hasParsedStartLine() || !request->hasParsedHeaders()) && crlf_pos == std::string::npos)
         return request->storeUnparsedMsg(rcvdMsg); 
@@ -63,10 +63,10 @@ void    determine_parsing_stage(ClientSocket* client_info, std::string & rcvdMsg
     }
 
     // ADD NEW
-    if (request->hasParsedHeaders())
+    if (!client_info->get_response())
     {
         const ServerContext *  servercontext = get_server_context( client_info );
-        client_info->set_response( new Response( *((ServerContext*)servercontext), *request ) );
+        client_info->set_response( new Response( *servercontext, *request ) ); // TODO khalid : pass client info and remove request inside response
     }
 
     if (request->get_method() != "POST")
@@ -103,8 +103,8 @@ void    parse_client_request(ClientSocket* client_info, std::string & rcvdMsg)
     }
     catch(const std::exception & e)
     {
-            std::cerr << e.what() << std::endl;
-            client_info->get_request()->markAsBad(3334);
+        std::cerr << e.what() << std::endl;
+        client_info->get_request()->markAsBad(3334);
         return ;
     }
 }
@@ -124,9 +124,9 @@ void    handle_client_request(ClientSocket* client_info)
 }
 
 // ADD NEW
-void    register_process_to_kqueue(ClientSocket* client_info, int kqueue_fd)
+
+CgiProcess * create_cgi_process_ident(ClientSocket* client_info)
 {
-    struct kevent ev;
     CgiProcess * process = new CgiProcess();
 
     process->set_response(client_info->get_response());
@@ -136,6 +136,14 @@ void    register_process_to_kqueue(ClientSocket* client_info, int kqueue_fd)
     process->set_ident(client_info->get_response()->get_process_id());
 
     client_info->get_response()->set_cgi_process(process);
+    
+    return (process);
+}
+
+void    register_process_in_kqueue(ClientSocket* client_info, int kqueue_fd)
+{
+    struct kevent ev;
+    CgiProcess * process = create_cgi_process_ident(client_info);
 
     ft_memset(&ev, 0, sizeof(struct kevent));
 
@@ -148,10 +156,11 @@ void    register_process_to_kqueue(ClientSocket* client_info, int kqueue_fd)
     client_info->get_response()->p_is_running = true ;
 }
 
+
 // ADD NEW
-void    register_sock_pair_to_kqueue(ClientSocket* client_info, int kqueue_fd)
+
+CgiPairSocket * create_pair_sock_ident(ClientSocket* client_info)
 {
-    struct kevent ev;
     CgiPairSocket * pair_soc = new CgiPairSocket();
 
     pair_soc->set_response(client_info->get_response());
@@ -159,6 +168,14 @@ void    register_sock_pair_to_kqueue(ClientSocket* client_info, int kqueue_fd)
     pair_soc->set_ident(client_info->get_response()->get_pair_fds()[0]);
 
     client_info->get_response()->set_cgi_pair_socket(pair_soc);
+
+    return (pair_soc);
+}
+
+void    register_sock_pair_in_kqueue(ClientSocket* client_info, int kqueue_fd)
+{
+    struct kevent ev;
+    CgiPairSocket * pair_soc = create_pair_sock_ident(client_info);
     
     fcntl(pair_soc->get_ident(), F_SETFL, O_NONBLOCK);
     
@@ -172,37 +189,82 @@ void    register_sock_pair_to_kqueue(ClientSocket* client_info, int kqueue_fd)
 
 // ADD NEW
 
-static std::time_t max_time = 10; // sec
 
-void    respond_to_client(ClientSocket* client_info, int kqueue_fd)
+bool is_response_ready_to_sent(Response & response)
+{
+    int status = response.get_status();
+
+    return (!response.is_cgi() || (status >= 400 && status <= 599) 
+            || (response.is_cgi() && response.p_is_running
+            && response.get_exit_stat() != -1));
+
+}
+
+bool is_response_finish(Response & response)
+{
+    return ( (!response.is_cgi() && response.end_of_response())
+             || (response.is_cgi() && response.get_exit_stat()
+                != -1 && response.end_of_response()) );
+}
+
+/* create new request and delete old request and response or delete client  */
+void create_new_request(ClientSocket* client_info, SocketManager& socketManager, KqueueEventQueue & kqueueManager)
 {
     Response *response = client_info->get_response();
-    int status = response->get_status();
 
-    if ( response->is_cgi() && !response->p_is_running && response->get_exit_stat() == -1 )
+    std::cout << "end of response " << std::endl;
+    if ( response->get_connection() == "close")
     {
-        
-        register_process_to_kqueue(client_info, kqueue_fd);
-        register_sock_pair_to_kqueue(client_info, kqueue_fd);
-        /* set start time  */
-        response->set_start_time(std::time(0)); // current time in seconds
-        return;
+        socketManager.delete_client(client_info->get_ident());
+    }
+    else
+    {
+        client_info->delete_request();
+        client_info->delete_response();
+        client_info->set_request(new Request());
+        kqueueManager.switch_interest(client_info, EVFILT_WRITE, EVFILT_READ);
+    }
+}
+
+static std::time_t max_time = 10; // sec
+
+void check_timeout(Response & response)
+{
+    if (std::time(0) - response.get_start_time() > max_time)
+    {
+        kill(response.get_process_id(), SIGKILL);
+        response.set_status(504);
+    }
+}
+
+void send_response(int sock_fd, const std::string & msg)
+{
+    if (send(sock_fd, (void *) msg.c_str(), msg.length(), 0) == -1)
+        throw std::runtime_error("send failed");
+}
+
+
+void    respond_to_client(ClientSocket* client_info, SocketManager& socketManager, KqueueEventQueue & kqueueManager )
+{
+    Response *response = client_info->get_response();
+
+    if ( response->is_cgi() && !response->p_is_running && response->get_exit_stat() == -1 ) /* check if process not started ( to avoid creation of multi process ) */
+    {
+        register_process_in_kqueue(client_info, kqueueManager.get_kqueue_fd());
+        register_sock_pair_in_kqueue(client_info, kqueueManager.get_kqueue_fd());
+        response->set_start_time(std::time(0)); /* set start time  */
+    }
+    else if (is_response_ready_to_sent(*response))
+    {
+        send_response(client_info->get_ident(), response->getResponse());
+    }
+    else if (response->is_cgi() && response->p_is_running && response->get_exit_stat() == -1)/* checking if process still running  */
+    {
+        check_timeout(*response);
     }
 
-    if (!response->is_cgi() || (status >= 400 && status <= 599) || (response->is_cgi() && response->p_is_running && response->get_exit_stat() != -1))
+    if ( is_response_finish(*response) )
     {
-        std::string rsp = response->getResponse();
-        if (send(client_info->get_ident(), (void *) rsp.c_str(), rsp.length(), 0) == -1)
-            throw std::runtime_error("send failed");
+        create_new_request(client_info, socketManager, kqueueManager);
     }
-    else if (response->is_cgi() && response->p_is_running && response->get_exit_stat() == -1)
-    {
-        /* check timeout */
-        if (std::time(0) - response->get_start_time() > max_time)
-        {
-            kill(response->get_process_id(), SIGKILL);
-            response->set_status(504);
-        }
-    }
-
 }

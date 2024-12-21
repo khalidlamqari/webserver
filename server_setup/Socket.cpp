@@ -114,6 +114,9 @@ ClientSocket::~ClientSocket()
 {
     if (this->_request)
         delete this->_request;
+    // ADD NEW
+    if (this->_response)
+        delete this->_response;
 }
 
 void    ClientSocket::set_ident( const int & id )

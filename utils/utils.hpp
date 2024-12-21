@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/01 21:45:38 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/20 17:17:02 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/21 11:10:12 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,6 +25,9 @@
 #include <sys/types.h>
 #include <sys/time.h>
 #include <unistd.h>
+#include "../response/Response.hpp"
+
+class Response;
 
 bool    is_space(char c);
 void    err_throw( const char * message );
@@ -40,5 +43,7 @@ bool                is_dir( const std::string & path );
 bool                is_file(std::string path);
 void                set_connection(const std::map<std::string , std::string> & headers, std::string & connection );
 bool                is_existe(const std::string & path);
+bool                check_is_cgi(std::string & path, std::string & cgi_extention, bool is_bad_request);
+void                create_socket_pair(Response & response);
 
 #endif
