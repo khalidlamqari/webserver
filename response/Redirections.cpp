@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/31 22:33:17 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/21 15:44:12 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/22 12:45:27 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -33,16 +33,23 @@ void    Response::redirection_handler( unsigned short status, std::string msg_or
 
     if ( (status > 300 && status < 304) || 307 == status || 308 == status )
     {
-        this->message.append( "HTTP/1.1 "  + default_info.getCodeMsg( status ) + "\r\n" ) ;
-        this->message.append( "Location: " + msg_or_file + "\r\nContent-Length: 0\r\nConnection: "\
-        + this->connection + "\r\n\r\n" ) ;
+        this->message.append( "HTTP/1.1 "  + default_info.getCodeMsg( status ) + "\r\n" );
+        this->message.append( "Location: " + msg_or_file + "\r\nContent-Length: 0\r\n" );
+        if (this->clientsocket.get_request()->get_is_persistent())
+            this->message.append("Connection: close\r\n\r\n");
+        else
+            this->message.append("Connection: keep-alive\r\n\r\n");
     }
     else
     {
         ss << msg_or_file.length() ;
-        this->message.append( "HTTP/1.1 "  + default_info.getCodeMsg( status ) + "\r\n" ) ;
-        this->message.append("Content-Length: " + ss.str() + "\r\nConnection: "\
-        + this->connection + "\r\n\r\n" + msg_or_file );
+        this->message.append( "HTTP/1.1 "  + default_info.getCodeMsg( status ) + "\r\n" );
+        this->message.append("Content-Length: " + ss.str() + "\r\n");
+        if (this->clientsocket.get_request()->get_is_persistent())
+            this->message.append("Connection: close\r\n\r\n");
+        else
+            this->message.append("Connection: keep-alive\r\n\r\n");
+        this->message.append("\r\n\r\n" + msg_or_file );
     }
     this->_end_of_response = true ;
 }

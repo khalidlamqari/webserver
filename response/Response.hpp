@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/21 11:56:44 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/22 13:03:31 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,14 +28,16 @@
 class CgiPairSocket;
 class CgiProcess;
 class Request ;
+class ClientSocket;
 
 static DefaultInfo default_info ;
 
 class Response
 {
     private :
-        const ServerContext                     & server_context ;
-        Request                                 & request ;
+        const ServerContext                     * server_context ;
+        // Request                                 & request ;
+        ClientSocket                            & clientsocket ;
         std::string                             message ;
         bool                                    _end_of_response ;
         bool                                    _tranfer_encoding ;
@@ -56,7 +58,7 @@ class Response
         std::string                             path_input;
         int                                     exit_stat ;
         pid_t                                   pid ;
-        std::string                             connection;
+        
         std::string                             unparsed_content;
         std::string                             data_out;
         size_t                                  offset;
@@ -83,7 +85,8 @@ class Response
         void                                    tranfer_encod_headers();
         // redirection          
         void                                    redirection_handler( unsigned short status, const std::string msg_or_file ) ;
-        LocationContext *                       find_match_more_location( std::string target ) ;
+        // LocationContext *                       find_match_more_location( std::string target ) ;
+        void                find_match_more_location();
             
         // error            
         std::string                             find_error_page( unsigned  short error ) ;
@@ -102,16 +105,16 @@ class Response
         // methods
         void                                    delete_file( ) ;
 
-        void                                    process_target(const std::string & target);
+        void                                    process_requset();
         void                                    parse_headers();
         void                                    get_response_body();
         
     public:
 
-        Response ( const ServerContext & server_context, Request & request ) ;
-
+        // Response ( const ServerContext & server_context, Request & request ) ;
+        Response ( ClientSocket & clientsocket );
         /* Getters */
-        const std::string &         get_connection() const;
+
         const std::string &         getResponse  (void);
         const std::string &         getUploadDir  (void);
         const std::ifstream &       getPageStream(void);
@@ -134,12 +137,23 @@ class Response
         void                        set_end_of_response(bool stat);
         int                         get_status();
         void                        set_status(int stat);
-        bool                        is_allowd_method();
+        bool                        is_allowed_method();
         void                        set_start_time(std::time_t tm);
         std::time_t                 get_start_time();
         const std::string &         get_input_path();
         void                        set_input_path(const std::string & path);
         void                        set_data_to_input(const std::string & data);
+
+        // ADD NEW
+        void                        set_path(const std::string & path);
+        void                        set_cgi_extention(const std::string & ext);
+        void                        set_upload_dir(const std::string & dir);
+        void                        set_target(const std::string & target);
+        
+        const std::string &         get_target(void) const;
+        const std::string &         get_path(void) const;
+        
+        
         
         CgiProcess*		get_cgi_process(void);
 		CgiPairSocket* 	get_cgi_pair_socket(void);

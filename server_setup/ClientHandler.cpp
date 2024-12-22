@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:37:00 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/21 12:12:33 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/22 12:39:43 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,27 +15,6 @@
 
 #include <signal.h>
 #include "Socket.hpp"
- 
-// ADD NEW
-static  const ServerContext * get_server_context(ClientSocket * clientsocket)
-{
-    std::string host = clientsocket->get_request()->get_headers().find("HOST")->second ; // TODO : store host separatly in the request
-
-    for (std::vector<const ServerContext*>::const_iterator i = clientsocket->get_servers().begin() ; i != clientsocket->get_servers().end() ; ++i)
-    {
-        std::vector<std::string>::const_iterator b = (*i)->get_server_names().begin();
-        std::vector<std::string>::const_iterator e = (*i)->get_server_names().end();
-
-        for ( std::vector<std::string>::const_iterator j = b ; j != e ; ++j)
-        {
-            if ( host == *j )
-            {
-                return ( *i );
-            }
-        }
-    }
-    return (clientsocket->get_servers().front()) ;
-}
 
 void    determine_parsing_stage(ClientSocket* client_info, std::string & rcvdMsg)
 {
@@ -65,8 +44,8 @@ void    determine_parsing_stage(ClientSocket* client_info, std::string & rcvdMsg
     // ADD NEW
     if (!client_info->get_response())
     {
-        const ServerContext *  servercontext = get_server_context( client_info );
-        client_info->set_response( new Response( *servercontext, *request ) ); // TODO khalid : pass client info and remove request inside response
+        // const ServerContext *  servercontext = get_server_context( client_info );
+        client_info->set_response( new Response( *client_info) ); // TODO khalid : pass client info and remove request inside response
     }
 
     if (request->get_method() != "POST")
@@ -210,10 +189,10 @@ bool is_response_finish(Response & response)
 /* create new request and delete old request and response or delete client  */
 void create_new_request(ClientSocket* client_info, SocketManager& socketManager, KqueueEventQueue & kqueueManager)
 {
-    Response *response = client_info->get_response();
+    // Response *response = client_info->get_response();
 
     std::cout << "end of response " << std::endl;
-    if ( response->get_connection() == "close")
+    if ( client_info->get_request()->get_is_persistent())
     {
         socketManager.delete_client(client_info->get_ident());
     }

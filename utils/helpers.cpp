@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/15 14:16:59 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/21 11:07:04 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/22 10:43:05 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,17 +50,18 @@ std::string get_rand_file_name(size_t & file_num)
     }
 }
 
-bool normalize_target(std::string &target)
+void normalize_target(std::string &target, short & status)
 {
     if ( target.find("..") == std::string::npos )
-        return false ;
+        return ;
     std::vector<std::string> directories = _split_(target, '/');
     std::vector<std::string>::iterator it = directories.begin();
     while (it != directories.end())
     {
         if (it == directories.begin() && *it == "..")
         {   
-            return true;
+            status = 403;
+            return ;
         }
         if (*it != ".." && it + 1 != directories.end() && *(it + 1) == "..")
         {
@@ -78,7 +79,6 @@ bool normalize_target(std::string &target)
     target = "/";
     for (std::vector<std::string>::iterator it = directories.begin() ; it != directories.end() ; ++it) 
         target += "/" + *it;
-    return false ;
 }
 
 

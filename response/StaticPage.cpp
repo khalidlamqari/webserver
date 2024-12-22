@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/21 14:47:11 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/22 13:13:27 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ bool    Response::path_from_root()
     {
         return true;
     }
-    if (is_dir( this->_path_ ) && this->server_context.get_auto_index())
+    if (is_dir( this->_path_ ) && this->server_context->get_auto_index())
     {
         this->respond_list_files();
         this->_end_of_response = true;
@@ -75,11 +75,11 @@ void    Response::get_static_page()
     {   
         return ;
     }
-    if ( !this->_tranfer_encoding && !this->is_allowd_method())
+    if ( !this->_tranfer_encoding && !this->is_allowed_method())
     {
         throw 405 ;
     }
-    if ( !this->_tranfer_encoding && this->request.get_method() == "DELETE" )
+    if ( !this->_tranfer_encoding && this->clientsocket.get_request()->get_method() == "DELETE" )
     {
         this->delete_file() ;
         return ;
@@ -136,7 +136,7 @@ void Response::parse_headers()
             this->_tranfer_encoding = true;
 
         this->message.append("HTTP/1.1 " + default_info.getCodeMsg( this->status ) + "\r\n");
-        if (this->connection == "close" || (this->status >= 400 && this->status <= 599))
+        if (this->clientsocket.get_request()->get_is_persistent() || (this->status >= 400 && this->status <= 599))
             this->message.append("Connection: close\r\n");
         else
             this->message.append("Connection: keep-alive\r\n");
@@ -241,43 +241,28 @@ void    Response::generate_message( char * content, size_t size )
     }
 }
 
-LocationContext * Response::find_match_more_location(std::string target)
+void Response::find_match_more_location()
 {
-    LocationContext * location = NULL;
-
+    std::string target = this->_target;
     while ( true )
     {
-        location = this->find_location( target );
-        if ( location )
+        _location = this->find_location( target );
+        if ( _location )
         {   
-            return ( location );
+            return ;
         }
         this->remove_last_slash( target );
         if ( target == "" )
         {   
-            return ( NULL );
+            return ;
         }
     }
-    return ( NULL );
 }
 
-// LocationContext * Response::find_exact_location(const std::string &target)
-// {
-//     const std::vector<LocationContext> & locations = this->server_context.get_locations() ;
-
-//     for (std::vector<LocationContext>::const_iterator i = locations.begin(); i != locations.end(); ++i)
-//     {
-//         if (i->get_location() == target && i->is_exact_location() )
-//         {
-//             return (LocationContext *)&(*i) ;
-//         }
-//     }
-//     return ( NULL );
-// }
 
 LocationContext * Response::find_location(const std::string &target)
 {
-    const std::vector<LocationContext> & locations = this->server_context.get_locations();
+    const std::vector<LocationContext> & locations = this->server_context->get_locations();
 
     for (std::vector<LocationContext>::const_iterator i = locations.begin(); i != locations.end(); ++i)
     {
@@ -367,43 +352,99 @@ void    Response::get_pathinfo_form_target()
     this->_target    = this->_target.substr(0, 4 + pos);
 }
 
- /* search for location and set upload directory and path and checking path is existe  & check is file or folder */
-void    Response::process_target(const std::string & target)
+// ADD NEW
+static  const ServerContext * get_server_context(ClientSocket & clientsocket)
 {
-    this->_target = target;
-    set_connection(this->request.get_headers(), this->connection); // TODO khalid : request.is_persistent()
-    if (normalize_target( this->_target ))
-        this->status = 403;
-    this->get_pathinfo_form_target();
-    _location = find_match_more_location( this->_target );
-    
-    if (_location && (_location)->redirect_is_set)
-        return;
-    if ( _location ) // && !(_location)->redirect_is_set
+    std::string host = clientsocket.get_request()->get_headers().find("HOST")->second ; // TODO : store host separatly in the request
+
+    for (std::vector<const ServerContext*>::const_iterator i = clientsocket.get_servers().begin() ; i != clientsocket.get_servers().end() ; ++i)
     {
-        _upload_dir = _location->get_upload_dir();
-        this->_path_ = (_location)->get_root_directory() + this->_target;
-        this->_cgi_extention = _location->get_cgi_extension();
-        if (is_dir(this->_path_) && is_file(this->_path_ + (_location)->get_index()))
-        {   
-            this->_path_.append("/" + (_location)->get_index());
-        }
-    }
-    else
-    {
-        _upload_dir =  this->server_context.get_upload_dir();
-        this->_path_ = this->server_context.get_root_directory() + this->_target ;
-        this->_cgi_extention = this->server_context.get_cgi_extension();
-        if ( is_dir(this->_path_) && is_file(this->_path_ + this->server_context.get_index()) )
+        std::vector<std::string>::const_iterator b = (*i)->get_server_names().begin();
+        std::vector<std::string>::const_iterator e = (*i)->get_server_names().end();
+
+        for ( std::vector<std::string>::const_iterator j = b ; j != e ; ++j)
         {
-            this->_path_ +=  this->server_context.get_index();
+            if ( host == *j )
+            {
+                return ( *i );
+            }
         }
     }
-    if (!this->is_allowd_method() && this->status != 200)
-        this->status = 405;
-    if (!is_existe(this->_path_))
-        this->status = 404;
+    return (clientsocket.get_servers().front()) ;
 }
+
+static void extract_info_from_location(Response & response, LocationContext & location)
+{
+    response.set_upload_dir(location.get_upload_dir());
+    response.set_path(location.get_root_directory() + response.get_target());
+    response.set_cgi_extention(location.get_cgi_extension());
+
+    /* if the target is a directory. check if insid it a index . if index existe concatinat it with the path */
+    if (is_dir(response.get_path()) && is_file(response.get_path() + "/" + location.get_index()))
+        response.set_path(response.get_path() + "/" + location.get_index());
+    else if (is_dir(response.get_path()) && !location.get_auto_index())  /* if this path is a directory and autoindex off . that means error 403 (forbidden) */
+        response.set_status(403);
+    else if (!is_existe(response.get_path()))
+        response.set_status(404);
+
+}
+
+static void extract_info_from_server(Response & response,  const ServerContext & servercontext)
+{
+    response.set_upload_dir(servercontext.get_upload_dir());
+    response.set_path(servercontext.get_root_directory() + response.get_target());
+    response.set_cgi_extention(servercontext.get_cgi_extension());
+
+    /* if the target is a directory. check if insid it a index . if index existe concatinat it with the path */
+    if (is_dir(response.get_path()) && is_file(response.get_path() + "/" + servercontext.get_index()))
+        response.set_path(response.get_path() + "/" + servercontext.get_index());
+    else if (is_dir(response.get_path()) && !servercontext.get_auto_index())  /* if this path is a directory and autoindex off . that means error 403 (forbidden) */
+        response.set_status(403);
+    else if (!is_existe(response.get_path()))
+        response.set_status(404);
+}
+
+/*
+    set servercontext
+    check target
+    find location
+    check methods
+    check is redirect
+    init info (upload dir path extention status)
+*/
+
+void    Response::process_requset()
+{
+    this->server_context = get_server_context(this->clientsocket);
+
+    /* 1 set and checking target */
+    set_target(clientsocket.get_request()->get_target());
+    normalize_target( this->_target , this->status);
+    get_pathinfo_form_target();
+
+    /* 2 find location */
+    find_match_more_location();
+
+    /* 3 check is allowed method */
+    if (!this->is_allowed_method() && this->status == 200)
+    {
+        this->status = 405;
+        return ;
+    }
+
+    /* 4 check is redirect */
+    if (_location && _location->redirect_is_set)
+        return;
+
+    /* 5 extracte and init info ( upload dir path extention status ) */
+    if ( _location )
+        extract_info_from_location(*this, *_location);
+    else
+        extract_info_from_server(*this, *(this->server_context));
+}
+
+
+
 
 void    Response::normall_headers(char * content, size_t size )
 {
@@ -416,14 +457,14 @@ void    Response::normall_headers(char * content, size_t size )
                                             + get_content_type(this->_path_)
                                             + "\r\n");
 
-    if (this->connection == "close" || (this->status >= 400 && this->status <= 599))
+    if (this->clientsocket.get_request()->get_is_persistent() || (this->status >= 400 && this->status <= 599))
     {
         this->message.append("Connection: close\r\n");
     }
     else
         this->message.append("Connection: keep-alive\r\n");
     this->message.append("\r\n");
-    if (  this->request.get_method() != "HEAD" )
+    if (  this->clientsocket.get_request()->get_method() != "HEAD" )
         this->message.append(content, size);
 }
 
@@ -432,7 +473,7 @@ void    Response::tranfer_encod_headers()
     this->message.append("HTTP/1.1 " + default_info.getCodeMsg( this->status )
                                         + "\r\nTransfer-Encoding: chunked"
                                         + get_content_type(this->_path_) + "\r\n");
-    if (this->connection == "close" || (this->status >= 400 && this->status <= 599))
+    if (this->clientsocket.get_request()->get_is_persistent() || (this->status >= 400 && this->status <= 599))
         this->message.append("Connection: close\r\n");
     else
         this->message.append("Connection: keep-alive\r\n");

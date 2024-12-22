@@ -6,14 +6,13 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/21 15:28:29 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/22 13:03:27 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "Response.hpp"
 // static size_t num_file = 0;
-Response::Response ( const ServerContext & server_context, Request & request) :\
-                    server_context(server_context), request(request)
+Response::Response ( ClientSocket & clientsocket ) : clientsocket(clientsocket)
 {
     this->_end_of_response  = false;
     this->_tranfer_encoding = false;
@@ -30,9 +29,10 @@ Response::Response ( const ServerContext & server_context, Request & request) :\
     this->offset            = 0;
     this->_cgi_process      = NULL;
     this->_cgi_pair_socket  = NULL;
+    this->server_context    = NULL;
 
-    process_target(this->request.get_target());
-    if (check_is_cgi(this->_path_, this->_cgi_extention, request.isBadRequest()))
+    process_requset();
+    if (check_is_cgi(this->_path_, this->_cgi_extention, false)) // , request.isBadRequest()
     {
         this->_is_cgi = true;
     }
@@ -50,11 +50,6 @@ Response::Response ( const ServerContext & server_context, Request & request) :\
 
 void    Response::format_message( void )
 {
-    if ( this->request.isBadRequest() )
-    {
-        this->status = 500;
-    }
-
     if (this->get_status() == 200)
     {
         try
@@ -123,17 +118,17 @@ void Response::responde_with_default_page( short error )
     this->_end_of_response = true;
 }
 
-bool Response::is_allowd_method()
+bool Response::is_allowed_method()
 {
     /* search in location */
     if ( _location &&  (std::find( this->_location->get_allowed_methods().begin(), this->_location->get_allowed_methods().end(), \
-    this->request.get_method() ) !=  this->_location->get_allowed_methods().end()) )
+    this->clientsocket.get_request()->get_method() ) !=  this->_location->get_allowed_methods().end()) )
     {
         return ( true ) ;
     }
     /* search in server */
-    if (!_location && (std::find(this->server_context.get_allowed_methods().begin(), this->server_context.get_allowed_methods().end(), \
-    this->request.get_method()) != this->server_context.get_allowed_methods().end()) )
+    if (!_location && (std::find(this->server_context->get_allowed_methods().begin(), this->server_context->get_allowed_methods().end(), \
+    this->clientsocket.get_request()->get_method()) != this->server_context->get_allowed_methods().end()) )
     {
         return ( true ) ;
     }
@@ -169,12 +164,12 @@ std::string Response::find_error_page( unsigned short error )
     }
     else
     {
-        const std::vector<t_error_page> & pages = this->server_context.get_error_pages();
+        const std::vector<t_error_page> & pages = this->server_context->get_error_pages();
         for ( i = pages.begin() ; i != pages.end() ; ++i )
         {
             if ( i->err_code == error )
             {
-                return ( this->server_context.get_root_directory() + "/" + i->path );
+                return ( this->server_context->get_root_directory() + "/" + i->path );
             }
         }
     }
@@ -255,10 +250,6 @@ int Response::get_status()
     return this->status;
 }
 
-const std::string & Response::get_connection() const
-{
-    return this->connection;
-}
 
 std::time_t Response::get_start_time()
 {
@@ -317,7 +308,39 @@ void            Response::set_cgi_process(CgiProcess* proc)
     this->_cgi_process = proc;
 }
 
-void            Response::set_cgi_pair_socket(CgiPairSocket* cgi_sock)
+void    Response::set_cgi_pair_socket(CgiPairSocket* cgi_sock)
 {
     this->_cgi_pair_socket = cgi_sock;    
+}
+
+
+void    Response::set_path(const std::string & path)
+{
+    this->_path_ = path;
+}
+
+void    Response::set_cgi_extention(const std::string & ext)
+{
+    this->_cgi_extention = ext;
+}
+
+void    Response::set_upload_dir(const std::string & dir)
+{
+    this->_upload_dir = dir;
+}
+
+void    Response::set_target(const std::string & target)
+{
+    this->_target = target;
+}
+
+
+const std::string &         Response::get_target(void) const
+{
+    return (this->_target);
+}
+
+const std::string &         Response::get_path(void) const
+{
+    return (this->_path_);
 }

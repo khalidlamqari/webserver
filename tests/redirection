@@ -7,6 +7,8 @@ location /folder {
             return 302 /index.html;
         }
 
+redirct to /index.html
+
 ------------------------------------
 
 http://127.0.0.1:9999/notexiste
@@ -16,15 +18,17 @@ location /notexiste {
             return 302 /index.html;
         }
 
+redirct to /index.html
 
 ------------------------------------
 
-http://127.0.0.1:9999/index.html
+http://127.0.0.1:9999/file
 
 location /file {
             return 302 /index.html;
         }
 
+redirct to /index.html
 
 ---------- autoindex -----------
 
@@ -32,7 +36,7 @@ location /file {
             autoindex on;
             return 302 /index.html;
         }
-
+return first
 ------------------------------------
 
 http://127.0.0.1:9999/folder
@@ -41,7 +45,7 @@ location /folder {
             autoindex on;
         }
 
-if  index existe in folder final --> root/folder/index.html
+if  index existe in folder final --> root/folder/index.html (responde content of index.html)
 if index not existe list content of folder 
 
 ------------------------------------
@@ -63,5 +67,16 @@ location /file {
 responde content of file (ignor autoindex)
 
 ------------------------------------
+
+this method first
+
+location /folder {
+            allowed_methods POST;
+            autoindex on;
+        }
+
+should check method first redirtion and autoindex in folder location
+
+
 
 
