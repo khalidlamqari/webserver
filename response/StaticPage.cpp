@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/23 16:09:07 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/23 21:00:32 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,7 +40,6 @@ static bool is_directory_list(const std::string & path, LocationContext * locati
     return false;
 }
 
-
 void    Response::format_response()
 {
     if ( !_tranfer_encoding && is_redirect(_location) )
@@ -55,7 +54,7 @@ void    Response::format_response()
     {
         directory_listing();
     }
-    else if (_is_cgi )
+    else if (_is_cgi)
     {
         format_cgi_response();
     }
@@ -187,7 +186,7 @@ void check_end_of_file(std::ifstream & page_content, bool & end_of_response, boo
 
 void Response::format_start_line()
 {
-    if (_tranfer_encoding && is_first_message || !_tranfer_encoding)
+    if ((_tranfer_encoding && is_first_message) || !_tranfer_encoding)
         message.append("HTTP/1.1 " + default_info.getCodeMsg( status ) + "\r\n" );
 }
 
@@ -196,101 +195,61 @@ void  Response::format_headers(size_t size)
     if (_tranfer_encoding && is_first_message)
     {
         message += "Transfer-Encoding: chunked";
-        this->is_first_message = false;
+        
     }
     else if ( !_tranfer_encoding )
     {
         std::ostringstream ss ;
         ss << size ;
-        this->message += "Content-Length: " + ss.str();
+        message += "Content-Length: " + ss.str();
     }
 
     /* shared headers */
-    if (_tranfer_encoding && is_first_message || !_tranfer_encoding)
+    if ((_tranfer_encoding && is_first_message ) || !_tranfer_encoding)
     {
-        message += get_content_type(this->_path_) +  "\r\n";
+        message += get_content_type(_path_) +  "\r\n";
         
-        if (this->clientsocket.get_request()->get_is_persistent() || (this->status >= 400 && this->status <= 599))
-            this->message += ("Connection: close\r\n");
+        if (clientsocket.get_request()->get_is_persistent() || (status >= 400 && status <= 599))
+            message += ("Connection: close\r\n");
         else
-            this->message += ("Connection: keep-alive\r\n");
-        this->message += ("\r\n");
+            message += ("Connection: keep-alive\r\n");
+        message += ("\r\n");
+        is_first_message = false;
     }
     
 }
 
-void Response::format_body(size_t size)
+void Response::format_body(char * content, size_t size)
 {
     if ( _tranfer_encoding )    /* body of tranfer encoding (chunck) */
     {
-        
+        std::ostringstream size_hex ;
+        size_hex << std::hex << size ;
+        message.append(size_hex.str());
+        message.append("\r\n");
+        message.append(content, size);
+        message.append("\r\n");
     }
     else                        /* normal body  */
     {
-        
+        if (  clientsocket.get_request()->get_method() != "HEAD" )
+             message.append(content, size);
     }
 }
 
 void Response::format_static_response()
 {
-    char    buffer[ RESP_BUFF ]  ;
-    size_t size = 0 ;
-    
+    char    buffer[ RESP_BUFF ];
+    size_t size = 0;
+
     open_file(_tranfer_encoding, page_content, _path_);
-
     read_file(page_content, buffer, size);
-
     check_end_of_file(page_content, _end_of_response, _tranfer_encoding);
 
-    // generate_message( buffer, page_content.gcount() );
-    /*
-        set start line
-        set headers 
-        set body
-    */
-   
+
     format_start_line();
     format_headers(size);
-    format_body(size);
-    // std::ostringstream ss ;
-    // if ( this->_tranfer_encoding )
-    // {
-    //     ss << std::hex << size ;
-    //     if ( this->is_first_message )
-    //     {
-    //         this->tranfer_encod_headers();
-    //     }
-    //     this->message.append(ss.str());
-    //     this->message.append("\r\n");
-    //     this->message.append(content, size);
-    //     this->message.append("\r\n");
-    // }
-    // else
-    // {
-    //     this->normall_headers( content, size );
-    // }
-
-}
-
-void    Response::generate_message( char * content, size_t size )
-{
-    std::ostringstream ss ;
-    if ( this->_tranfer_encoding )
-    {
-        ss << std::hex << size ;
-        if ( this->is_first_message )
-        {
-            this->tranfer_encod_headers();
-        }
-        this->message.append(ss.str());
-        this->message.append("\r\n");
-        this->message.append(content, size);
-        this->message.append("\r\n");
-    }
-    else
-    {
-        this->normall_headers( content, size );
-    }
+    format_body(buffer, size);
 }
 
 std::string extract_headers(const std::string & unparsed_content, size_t pos)
@@ -309,7 +268,9 @@ void Response::parse_headers()
     std::ostringstream ss ;
     std::ostringstream len ;
     size_t pos;
-
+    std::cout << "----------------------------" << std::endl;
+    std::cout << data_out << std::endl;
+    std::cout << "----------------------------" << std::endl;
     pos = data_out.find("\r\n\r\n");
     if (pos == std::string::npos)
     {
@@ -486,41 +447,4 @@ void    Response::process_requset()
     /* 7 check is a cgi request & if cgi create socketpair for IPC and open file in tmp */
     set_cgi_requerements(*this, _is_cgi, input_data); /* input_data is a ostream for pass body to child process (cgi) */
     
-}
-
-void    Response::normall_headers(char * content, size_t size )
-{
-    std::ostringstream ss ;
-    ss << size ;
-    this->message.append("HTTP/1.1 " + default_info.getCodeMsg( this->status ) 
-                                        + "\r\nServer: webserv/0.0\r\n");
-
-    this->message.append("Content-Length: " + ss.str()
-                                            + get_content_type(this->_path_)
-                                            + "\r\n");
-
-    if (this->clientsocket.get_request()->get_is_persistent() || (this->status >= 400 && this->status <= 599))
-    {
-        this->message.append("Connection: close\r\n");
-    }
-    else
-        this->message.append("Connection: keep-alive\r\n");
-    this->message.append("\r\n");
-    if (  this->clientsocket.get_request()->get_method() != "HEAD" )
-        this->message.append(content, size);
-        
-}
-
-void    Response::tranfer_encod_headers()
-{
-    this->message.append("HTTP/1.1 " + default_info.getCodeMsg( this->status )
-                                        + "\r\nTransfer-Encoding: chunked"
-                                        + get_content_type(this->_path_) + "\r\n");
-    if (this->clientsocket.get_request()->get_is_persistent() || (this->status >= 400 && this->status <= 599))
-        this->message.append("Connection: close\r\n");
-    else
-        this->message.append("Connection: keep-alive\r\n");
-    this->message.append("\r\n");
-
-    this->is_first_message = false;
 }

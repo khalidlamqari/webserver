@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/23 11:42:31 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/23 21:19:02 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,7 +19,7 @@ Response::Response ( ClientSocket & clientsocket ) : clientsocket(clientsocket)
     this->is_first_message  = true;
     this->_location         = NULL;
     this->exit_stat         = -1;
-    this->status            = 200;
+    this->status            = 200; 
     this->p_is_running      = false;
     this->_is_cgi           = false;
     this->s_fds[0]          = -1;
@@ -39,7 +39,7 @@ const std::string & Response::getResponse( void )
     this->message = "";
     if ( this->_end_of_response )
         return ( this->message );
-    
+
     /*  checking if an error in request ( request parse ) */
     if ( get_status() >= 400 && get_status() <= 599)
     {
@@ -61,7 +61,6 @@ const std::string & Response::getResponse( void )
     return message;
 }
 
-
 void    Response::error_response( short error )
 {
     std::string err_page_path;
@@ -71,6 +70,7 @@ void    Response::error_response( short error )
         this->responde_with_overrided_page( this->_path_ );
         return ;
     }
+
     err_page_path = this->find_error_page( error );
     if ( err_page_path == "" )
     {
@@ -82,15 +82,20 @@ void    Response::error_response( short error )
     }
 }
 
+ // TODO : khalid
 void Response::responde_with_overrided_page( std::string err_page_path )
 {
     if ( ! this->_tranfer_encoding )
     {
-        this->_path_ = err_page_path ;
+        this->_path_ = err_page_path;// TODO : khalid
+        set_cgi_requerements(*this, _is_cgi, input_data); /* input_data is a ostream for pass body to child process (cgi) */
+        if (_is_cgi)
+            throw (int)10001;// TODO : khalid
     }
     try
     {
-        this->read_and_format_msg();
+        // this->format_static_response();
+        format_response();
     }
     catch(int err)
     {
@@ -134,25 +139,31 @@ bool Response::is_allowed_method()
 std::string Response::find_error_page( unsigned short error )
 {
     std::vector<t_error_page>::const_iterator i ;
-    if ( this->_location )
+    if ( this->_location )    /*    search in location context     */
     {
         const std::vector<t_error_page> & pages = this->_location->get_error_pages();
         for ( i = pages.begin() ; i != pages.end() ; ++i )
         {
             if ( i->err_code == error )
             {
-                return ( this->_location->get_root_directory() + "/" + i->path ) ;
+                if (is_file(this->_location->get_root_directory() + "/" + i->path))
+                    return ( this->_location->get_root_directory() + "/" + i->path ) ;
+                else
+                    return "";
             }
         }
     }
-    else
+    else            /*       search in server context        */
     {
         const std::vector<t_error_page> & pages = this->server_context->get_error_pages();
         for ( i = pages.begin() ; i != pages.end() ; ++i )
         {
             if ( i->err_code == error )
             {
-                return ( this->server_context->get_root_directory() + "/" + i->path );
+                if (is_file(this->server_context->get_root_directory() + "/" + i->path))
+                    return ( this->server_context->get_root_directory() + "/" + i->path );
+                else
+                    return "";
             }
         }
     }

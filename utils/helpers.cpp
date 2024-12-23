@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/15 14:16:59 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/23 15:25:22 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/23 19:07:28 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -258,6 +258,7 @@ void    set_cgi_requerements( Response & response, bool & is_cgi , std::ofstream
     if (is_cgi)
     {
         create_socket_pair(response);
+        std::cout << "get_pair_fds : " << response.get_pair_fds()[0] << std::endl;
         input_data.open(response.get_input_path());
         if (!input_data.is_open())
         {

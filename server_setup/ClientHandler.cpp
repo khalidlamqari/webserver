@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:37:00 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/23 09:34:36 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/23 21:14:38 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -108,7 +108,7 @@ CgiProcess * create_cgi_process_ident(ClientSocket* client_info)
     CgiProcess * process = new CgiProcess();
 
     process->set_response(client_info->get_response());
-
+    
     client_info->get_response()->execute_cgi();
 
     process->set_ident(client_info->get_response()->get_process_id());
@@ -234,7 +234,17 @@ void    respond_to_client(ClientSocket* client_info, SocketManager& socketManage
     }
     else if (is_response_ready_to_sent(*response))
     {
-        send_response(client_info->get_ident(), response->getResponse());
+        std::string res = ""; // TODO : khalid
+        try{
+            res = response->getResponse();
+        }
+        catch(int x)
+        {
+            (void)x;
+            return ;    
+        }
+
+        send_response(client_info->get_ident(), res);
     }
     else if (response->is_cgi() && response->p_is_running && response->get_exit_stat() == -1) /* checking if process still running  */
     {

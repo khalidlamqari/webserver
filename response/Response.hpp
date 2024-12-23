@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/23 16:04:30 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/23 18:21:49 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -70,16 +70,15 @@ class Response
 		CgiPairSocket* 	_cgi_pair_socket;
         
         void                                    format_response() ;
-        void                                    generate_message( char * content, size_t size ) ;
+ 
         LocationContext *                       find_location( const std::string & target ) ;
 
         void                                    format_static_response();
         
-        void                                    normall_headers(char * content, size_t size );
-        void                                    tranfer_encod_headers();
+
         // redirection          
         void                                    redirection_handler() ;
-        // LocationContext *                       find_match_more_location( std::string target ) ;
+
         void                                    find_match_more_location();
             
         // error            
@@ -106,7 +105,7 @@ class Response
 
         void format_start_line();
         void  format_headers(size_t size);
-        void   format_body(size_t size);
+        void   format_body(char * content, size_t size);
         
     public:
 
