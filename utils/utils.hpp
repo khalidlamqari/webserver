@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/01 21:45:38 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/22 10:42:17 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/23 12:54:01 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -28,6 +28,7 @@
 #include "../response/Response.hpp"
 
 class Response;
+class ClientSocket;
 
 bool    is_space(char c);
 void    err_throw( const char * message );
@@ -41,9 +42,21 @@ std::string         get_content_type( const std::string & file_name );
 const std::string   get_time(time_t sec);
 bool                is_dir( const std::string & path );
 bool                is_file(std::string path);
-void                set_connection(const std::map<std::string , std::string> & headers, std::string & connection );
 bool                is_existe(const std::string & path);
-bool                check_is_cgi(std::string & path, std::string & cgi_extention, bool is_bad_request);
+bool                check_is_cgi(const std::string & path, const std::string & cgi_extention, bool is_bad_request) ;
 void                create_socket_pair(Response & response);
+
+
+
+void    create_html_table(std::string & ls_files, const std::string & target);
+void    set_headers(std::string & message, const std::string & content_len);
+void    append_row( std::string  path , std::string target, struct dirent * f, std::string & ls_files );
+void    set_cgi_requerements( Response & response, bool & is_cgi , std::ofstream & input_data);
+const ServerContext * get_server_context(ClientSocket & clientsocket);
+void extract_info_from_location(Response & response, LocationContext & location);
+void extract_info_from_server(Response & response,  const ServerContext & servercontext);
+void  remove_last_slash( std::string & target );
+
+
 
 #endif

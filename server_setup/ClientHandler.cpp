@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:37:00 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/22 12:39:43 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/23 09:34:36 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -44,7 +44,6 @@ void    determine_parsing_stage(ClientSocket* client_info, std::string & rcvdMsg
     // ADD NEW
     if (!client_info->get_response())
     {
-        // const ServerContext *  servercontext = get_server_context( client_info );
         client_info->set_response( new Response( *client_info) ); // TODO khalid : pass client info and remove request inside response
     }
 
@@ -237,7 +236,7 @@ void    respond_to_client(ClientSocket* client_info, SocketManager& socketManage
     {
         send_response(client_info->get_ident(), response->getResponse());
     }
-    else if (response->is_cgi() && response->p_is_running && response->get_exit_stat() == -1)/* checking if process still running  */
+    else if (response->is_cgi() && response->p_is_running && response->get_exit_stat() == -1) /* checking if process still running  */
     {
         check_timeout(*response);
     }

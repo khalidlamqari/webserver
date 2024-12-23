@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/22 13:03:27 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/23 11:42:31 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -32,43 +32,35 @@ Response::Response ( ClientSocket & clientsocket ) : clientsocket(clientsocket)
     this->server_context    = NULL;
 
     process_requset();
-    if (check_is_cgi(this->_path_, this->_cgi_extention, false)) // , request.isBadRequest()
-    {
-        this->_is_cgi = true;
-    }
-
-    if (this->_is_cgi)
-    {
-        create_socket_pair(*this);
-        this->input_data.open(get_input_path());
-        if (!this->input_data.is_open())
-        {
-            throw std::runtime_error("open failed");
-        }
-    }
 }
 
-void    Response::format_message( void )
+const std::string & Response::getResponse( void )
 {
-    if (this->get_status() == 200)
+    this->message = "";
+    if ( this->_end_of_response )
+        return ( this->message );
+    
+    /*  checking if an error in request ( request parse ) */
+    if ( get_status() >= 400 && get_status() <= 599)
     {
-        try
-        {
-            this->get_static_page() ;
-        }
-        catch ( int error )
-        {
-            this->_tranfer_encoding = false ;
-            this->is_first_message = true ;
-            this->status = error ;
-            this->error_response( error ) ;
-        }
+        error_response(get_status());
+        return message;
     }
-    else
+
+    try
     {
-        this->error_response( this->get_status() ) ;
+        format_response();
     }
+    catch(int status_code)
+    {
+        _tranfer_encoding = false;
+        is_first_message = true;
+        status = status_code;
+        error_response(status_code);
+    }
+    return message;
 }
+
 
 void    Response::error_response( short error )
 {
@@ -137,16 +129,7 @@ bool Response::is_allowed_method()
 
 /* Getters */
 
-const std::string & Response::getResponse( void )
-{
-    this->message = "";
-    if ( this->_end_of_response )
-        return ( this->message ) ;
 
-    this->format_message() ;
-
-    return ( this->message ) ;
-}
 
 std::string Response::find_error_page( unsigned short error )
 {
@@ -343,4 +326,9 @@ const std::string &         Response::get_target(void) const
 const std::string &         Response::get_path(void) const
 {
     return (this->_path_);
+}
+
+const std::string &        Response::get_cgi_exrention(void) const
+{
+    return (this->_cgi_extention);
 }

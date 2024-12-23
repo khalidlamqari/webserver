@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/15 14:16:59 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/22 10:43:05 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/23 12:51:07 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -178,24 +178,6 @@ bool is_file(std::string path)
     return false;
 }
 
-
-void    set_connection(const std::map<std::string , std::string> & headers, std::string & connection )
-{
-    std::map<std::string, std::string>::const_iterator it = headers.find("CONNECTION");
-    if ( it == headers.end() )
-    {
-        connection = "keep-alive";
-    }
-    else if ( it->second != "close")
-    {
-        connection = "keep-alive";
-    }
-    else
-    {
-        connection = it->second;
-    }
-}
-
 bool is_existe(const std::string & path)
 {
     if ( access(path.c_str(), F_OK) == 0)
@@ -203,7 +185,7 @@ bool is_existe(const std::string & path)
     return false;
 }
 
-bool check_is_cgi(std::string & path, std::string & cgi_extention, bool is_bad_request)
+bool check_is_cgi(const std::string & path, const std::string & cgi_extention, bool is_bad_request) 
 {
     return (!is_bad_request && !cgi_extention.empty()
         && (path.length() - cgi_extention.length() > 0)
@@ -218,4 +200,140 @@ void create_socket_pair(Response & response)
         throw std::runtime_error("socketpair failed");
     }
     response.set_input_path(get_rand_file_name(num_file));
+}
+
+void create_html_table(std::string & ls_files, const std::string & target)
+{
+    ls_files.append("<!DOCTYPE html><html lang=\"en\"><head><meta "
+    "charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width"
+    ", initial-scale=1.0\"><title>" + target + "</title>"
+    "<style>table{ padding-left: 100px;}td{ padding: 5px;}"
+    "thead{ text-align: left;}</style></head><body><h1> Index of "
+    + target + "</h1> <hr><table><thead><tr><th>Name</th>"
+    "<th>Size</th><th>Date Modified</th></tr></thead><tbody>") ;
+}
+
+void    set_headers(std::string & message, const std::string & content_len)
+{
+    message += ("HTTP/1.1 200 OK\r\nContent-Length: "\
+            + content_len \
+            + "\r\nContent-Type: text/html\r\n\r\n");
+}
+
+/* get info about file or dir and set it html table row & appent it in ls_files (body of response) */
+void    append_row( std::string  path , std::string target, struct dirent * f, std::string & ls_files )
+{
+    std::stringstream size ;
+    struct stat s;
+
+    if (path.back() != '/')
+        path += ("/");
+        
+    if (target.back() != '/')
+        target += ("/");
+
+    path += (f->d_name);
+
+    if ( stat(path.c_str(), &s ) == -1)
+        throw 404;
+
+    size << f->d_reclen;        /* get the size of file and convert it to string (stringstream) */
+    target += (f->d_name);     /* concatinat target with / file name */
+
+    /* set info to table row */
+    ls_files += ("<tr><td><a href='" + target + "'>");
+    ls_files += (f->d_name);
+    ls_files += ("</a></td><td>" + size.str() + " bytes</td><td>");
+    ls_files += (get_time(s.st_mtime));   /* time of last modification */
+    ls_files += ("</td></tr>");
+}
+
+void    set_cgi_requerements( Response & response, bool & is_cgi , std::ofstream & input_data)
+{
+    if (check_is_cgi(response.get_path(), response.get_cgi_exrention() , response.clientsocket.get_request()->isBadRequest() )) // , 
+    {
+        is_cgi = true;
+    }
+
+    if (is_cgi)
+    {
+        create_socket_pair(response);
+        input_data.open(response.get_input_path());
+        if (!input_data.is_open())
+        {
+            throw std::runtime_error("open failed");
+        }
+    }
+}
+
+
+const ServerContext * get_server_context(ClientSocket & clientsocket)
+{
+    std::string host = clientsocket.get_request()->get_headers().find("HOST")->second ; // TODO : store host separatly in the request
+
+    for (std::vector<const ServerContext*>::const_iterator i = clientsocket.get_servers().begin() ; i != clientsocket.get_servers().end() ; ++i)
+    {
+        std::vector<std::string>::const_iterator b = (*i)->get_server_names().begin();
+        std::vector<std::string>::const_iterator e = (*i)->get_server_names().end();
+
+        for ( std::vector<std::string>::const_iterator j = b ; j != e ; ++j)
+        {
+            if ( host == *j )
+            {
+                return ( *i );
+            }
+        }
+    }
+    return (clientsocket.get_servers().front()) ;
+}
+
+void extract_info_from_location(Response & response, LocationContext & location)
+{
+    response.set_cgi_extention(location.get_cgi_extension());
+    response.extract_pathinfo_form_target(location.get_root_directory());
+    
+    response.set_upload_dir(location.get_upload_dir());
+    response.set_path(location.get_root_directory() + response.get_target());
+    
+    if (is_dir(response.get_path()) && is_file(response.get_path() + "/" + location.get_index())) /* if the target is a directory. check if insid it a index . if index existe concatinat it with the path */
+        response.set_path(response.get_path() + "/" + location.get_index());
+        
+    else if (is_dir(response.get_path()) && !location.get_auto_index())  /* if this path is a directory and autoindex off . that means error 403 (forbidden) */
+        response.set_status(403);
+
+    else if (!is_existe(response.get_path()))
+        response.set_status(404);
+}
+
+void extract_info_from_server(Response & response,  const ServerContext & servercontext)
+{
+    response.set_cgi_extention(servercontext.get_cgi_extension());
+    response.extract_pathinfo_form_target(servercontext.get_root_directory());
+    
+    response.set_upload_dir(servercontext.get_upload_dir());
+    response.set_path(servercontext.get_root_directory() + response.get_target());
+
+    if (is_dir(response.get_path()) && is_file(response.get_path() + "/" + servercontext.get_index())) /* if the target is a directory. check if insid it a index . if index existe concatinat it with the path */
+        response.set_path(response.get_path() + "/" + servercontext.get_index());
+    else if (is_dir(response.get_path()) && !servercontext.get_auto_index())  /* if this path is a directory and autoindex off . that means error 403 (forbidden) */
+        response.set_status(403);
+    else if (!is_existe(response.get_path()))
+        response.set_status(404);
+}
+
+
+void  remove_last_slash( std::string & target )
+{
+    size_t end = target.find_last_of('/') ;
+    if ( end != std::string::npos )
+    {
+        if ( target.back() == '/' )
+            target.pop_back();
+        else
+            target = target.substr(0, end + 1) ;
+    }
+    else
+    {   
+        target = "" ;
+    }
 }

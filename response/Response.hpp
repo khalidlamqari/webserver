@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/22 13:03:31 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/23 13:01:25 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,6 @@ class Response
     private :
         const ServerContext                     * server_context ;
         // Request                                 & request ;
-        ClientSocket                            & clientsocket ;
         std::string                             message ;
         bool                                    _end_of_response ;
         bool                                    _tranfer_encoding ;
@@ -70,23 +69,18 @@ class Response
         CgiProcess*		_cgi_process;
 		CgiPairSocket* 	_cgi_pair_socket;
         
-        void                                    format_message( void ) ;
-        void                                    get_static_page() ;
+        void                                    format_response() ;
         void                                    generate_message( char * content, size_t size ) ;
         LocationContext *                       find_location( const std::string & target ) ;
-        // LocationContext *                       find_exact_location( const std::string &target ) ;
-        void                                    remove_last_slash( std::string & target ) ;
-        bool                                    get_path_of_page() ;
-        bool                                    path_from_location();
-        bool                                    path_from_root();
+
         void                                    read_and_format_msg();
-        void                                    get_pathinfo_form_target();
+        
         void                                    normall_headers(char * content, size_t size );
         void                                    tranfer_encod_headers();
         // redirection          
-        void                                    redirection_handler( unsigned short status, const std::string msg_or_file ) ;
+        void                                    redirection_handler() ;
         // LocationContext *                       find_match_more_location( std::string target ) ;
-        void                find_match_more_location();
+        void                                    find_match_more_location();
             
         // error            
         std::string                             find_error_page( unsigned  short error ) ;
@@ -95,8 +89,8 @@ class Response
         void                                    responde_with_overrided_page( std::string err_page_path ) ;
 
         // auto index           
-        void                                    respond_list_files() ;
-        void                                    append_row( std::string  path , std::string target, struct dirent * f, std::string & ls_files ) ;
+        void                                    directory_listing() ;
+        // void                                    append_row( std::string  path , std::string target, struct dirent * f, std::string & ls_files ) ;
 
         // cgi
         void                                    setup_environment(std::vector<std::string> & string_env);
@@ -114,7 +108,8 @@ class Response
         // Response ( const ServerContext & server_context, Request & request ) ;
         Response ( ClientSocket & clientsocket );
         /* Getters */
-
+        ClientSocket                            & clientsocket ;
+        
         const std::string &         getResponse  (void);
         const std::string &         getUploadDir  (void);
         const std::ifstream &       getPageStream(void);
@@ -128,7 +123,7 @@ class Response
         
 
         // cgi
-        void                                    read_cgi_output() ;
+        void                        read_cgi_output() ;
         void                        execute_cgi();
         bool                        is_cgi();
         bool                        p_is_running;
@@ -150,8 +145,11 @@ class Response
         void                        set_upload_dir(const std::string & dir);
         void                        set_target(const std::string & target);
         
+        void                        extract_pathinfo_form_target(const std::string & root);
+
         const std::string &         get_target(void) const;
         const std::string &         get_path(void) const;
+        const std::string &         get_cgi_exrention(void) const;
         
         
         
