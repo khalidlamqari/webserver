@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/15 14:16:59 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/23 12:51:07 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/23 15:25:22 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -213,7 +213,7 @@ void create_html_table(std::string & ls_files, const std::string & target)
     "<th>Size</th><th>Date Modified</th></tr></thead><tbody>") ;
 }
 
-void    set_headers(std::string & message, const std::string & content_len)
+void    set_headers(std::string & message, const std::string & content_len) // connection
 {
     message += ("HTTP/1.1 200 OK\r\nContent-Length: "\
             + content_len \

@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/23 13:01:25 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/23 16:04:30 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -73,7 +73,7 @@ class Response
         void                                    generate_message( char * content, size_t size ) ;
         LocationContext *                       find_location( const std::string & target ) ;
 
-        void                                    read_and_format_msg();
+        void                                    format_static_response();
         
         void                                    normall_headers(char * content, size_t size );
         void                                    tranfer_encod_headers();
@@ -94,7 +94,7 @@ class Response
 
         // cgi
         void                                    setup_environment(std::vector<std::string> & string_env);
-        void                                    format_cgi_msg();
+        void                                    format_cgi_response();
 
         // methods
         void                                    delete_file( ) ;
@@ -102,6 +102,11 @@ class Response
         void                                    process_requset();
         void                                    parse_headers();
         void                                    get_response_body();
+        
+
+        void format_start_line();
+        void  format_headers(size_t size);
+        void   format_body(size_t size);
         
     public:
 

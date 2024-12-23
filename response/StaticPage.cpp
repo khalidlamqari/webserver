@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/23 13:00:33 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/23 16:09:07 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -57,11 +57,11 @@ void    Response::format_response()
     }
     else if (_is_cgi )
     {
-        format_cgi_msg();
+        format_cgi_response();
     }
     else
     {
-        read_and_format_msg();
+        format_static_response();
     }
 }
 
@@ -137,7 +137,7 @@ void    Response::directory_listing()
 }
 
 
-void    Response::format_cgi_msg()
+void    Response::format_cgi_response()
 {
     if (!this->is_parsed)   /* in case tranfer encoding send headers only in first chunck */
     {
@@ -150,33 +150,148 @@ void    Response::format_cgi_msg()
     }
 }
 
-void Response::read_and_format_msg()
-{
-    char    buffer[ RESP_BUFF ]  ;
 
-    if ( !this->_tranfer_encoding )
+void open_file(const bool & tranfer_encoding, std::ifstream & page_content, const std::string & path)
+{
+    /* open file once */
+    if ( !tranfer_encoding )
     {
-        this->page_content.open( this->_path_ );
-        if ( ! this->page_content.is_open() )
+        page_content.open( path );
+        if ( ! page_content.is_open() )
             throw 404 ;
     }
-
-    this->page_content.read( buffer, (RESP_BUFF - 1)) ;
-    if ( this->page_content.fail() && ! this->page_content.eof() )
-        throw 500 ;
-
-    buffer[this->page_content.gcount()] = '\0';
-    if ( this->page_content.eof())
-        this->_end_of_response = true;
-    else
-        this->_tranfer_encoding = true;
-
-    if ( this->_tranfer_encoding && this->page_content.gcount() != 0 )
-        this->_end_of_response = false;
-
-    this->generate_message( buffer, this->page_content.gcount() );
 }
 
+void read_file(std::ifstream & page_content, char *buffer, size_t & size)
+{
+    page_content.read( buffer, (RESP_BUFF - 1)) ;
+    if ( page_content.fail() && ! page_content.eof() )
+        throw 500 ;
+    buffer[page_content.gcount()] = '\0';
+    
+    size = page_content.gcount();
+}
+
+/* in case large file eof = false and tranfer chuncks by chunck */
+void check_end_of_file(std::ifstream & page_content, bool & end_of_response, bool & tranfer_encoding )
+{
+    if ( page_content.eof())
+        end_of_response = true;
+    else
+        tranfer_encoding = true;
+
+    if ( tranfer_encoding && page_content.gcount() != 0 )
+        end_of_response = false;
+}
+
+
+void Response::format_start_line()
+{
+    if (_tranfer_encoding && is_first_message || !_tranfer_encoding)
+        message.append("HTTP/1.1 " + default_info.getCodeMsg( status ) + "\r\n" );
+}
+
+void  Response::format_headers(size_t size)
+{
+    if (_tranfer_encoding && is_first_message)
+    {
+        message += "Transfer-Encoding: chunked";
+        this->is_first_message = false;
+    }
+    else if ( !_tranfer_encoding )
+    {
+        std::ostringstream ss ;
+        ss << size ;
+        this->message += "Content-Length: " + ss.str();
+    }
+
+    /* shared headers */
+    if (_tranfer_encoding && is_first_message || !_tranfer_encoding)
+    {
+        message += get_content_type(this->_path_) +  "\r\n";
+        
+        if (this->clientsocket.get_request()->get_is_persistent() || (this->status >= 400 && this->status <= 599))
+            this->message += ("Connection: close\r\n");
+        else
+            this->message += ("Connection: keep-alive\r\n");
+        this->message += ("\r\n");
+    }
+    
+}
+
+void Response::format_body(size_t size)
+{
+    if ( _tranfer_encoding )    /* body of tranfer encoding (chunck) */
+    {
+        
+    }
+    else                        /* normal body  */
+    {
+        
+    }
+}
+
+void Response::format_static_response()
+{
+    char    buffer[ RESP_BUFF ]  ;
+    size_t size = 0 ;
+    
+    open_file(_tranfer_encoding, page_content, _path_);
+
+    read_file(page_content, buffer, size);
+
+    check_end_of_file(page_content, _end_of_response, _tranfer_encoding);
+
+    // generate_message( buffer, page_content.gcount() );
+    /*
+        set start line
+        set headers 
+        set body
+    */
+   
+    format_start_line();
+    format_headers(size);
+    format_body(size);
+    // std::ostringstream ss ;
+    // if ( this->_tranfer_encoding )
+    // {
+    //     ss << std::hex << size ;
+    //     if ( this->is_first_message )
+    //     {
+    //         this->tranfer_encod_headers();
+    //     }
+    //     this->message.append(ss.str());
+    //     this->message.append("\r\n");
+    //     this->message.append(content, size);
+    //     this->message.append("\r\n");
+    // }
+    // else
+    // {
+    //     this->normall_headers( content, size );
+    // }
+
+}
+
+void    Response::generate_message( char * content, size_t size )
+{
+    std::ostringstream ss ;
+    if ( this->_tranfer_encoding )
+    {
+        ss << std::hex << size ;
+        if ( this->is_first_message )
+        {
+            this->tranfer_encod_headers();
+        }
+        this->message.append(ss.str());
+        this->message.append("\r\n");
+        this->message.append(content, size);
+        this->message.append("\r\n");
+    }
+    else
+    {
+        this->normall_headers( content, size );
+    }
+}
 
 std::string extract_headers(const std::string & unparsed_content, size_t pos)
 {
@@ -267,26 +382,7 @@ void Response::read_cgi_output()
 
 
 
-void    Response::generate_message( char * content, size_t size )
-{
-    std::ostringstream ss ;
-    if ( this->_tranfer_encoding )
-    {
-        ss << std::hex << size ;
-        if ( this->is_first_message )
-        {
-            this->tranfer_encod_headers();
-        }
-        this->message.append(ss.str());
-        this->message.append("\r\n");
-        this->message.append(content, size);
-        this->message.append("\r\n");
-    }
-    else
-    {
-        this->normall_headers( content, size );
-    }
-}
+
 
 void Response::find_match_more_location()
 {
@@ -412,6 +508,7 @@ void    Response::normall_headers(char * content, size_t size )
     this->message.append("\r\n");
     if (  this->clientsocket.get_request()->get_method() != "HEAD" )
         this->message.append(content, size);
+        
 }
 
 void    Response::tranfer_encod_headers()
