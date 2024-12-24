@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:37:00 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/23 21:14:38 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/24 20:53:44 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -191,7 +191,7 @@ void create_new_request(ClientSocket* client_info, SocketManager& socketManager,
     // Response *response = client_info->get_response();
 
     std::cout << "end of response " << std::endl;
-    if ( client_info->get_request()->get_is_persistent())
+    if ( !client_info->get_request()->get_is_persistent())
     {
         socketManager.delete_client(client_info->get_ident());
     }

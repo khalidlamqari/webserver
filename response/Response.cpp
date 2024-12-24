@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/23 21:19:02 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/24 20:14:10 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,6 @@ Response::Response ( ClientSocket & clientsocket ) : clientsocket(clientsocket)
     this->s_fds[0]          = -1;
     this->s_fds[1]          = -1;
     this->pid               = -1;
-    this->is_parsed         = false;
     this->offset            = 0;
     this->_cgi_process      = NULL;
     this->_cgi_pair_socket  = NULL;
@@ -36,9 +35,9 @@ Response::Response ( ClientSocket & clientsocket ) : clientsocket(clientsocket)
 
 const std::string & Response::getResponse( void )
 {
-    this->message = "";
-    if ( this->_end_of_response )
-        return ( this->message );
+    message = "";
+    if ( _end_of_response )
+        return ( message );
 
     /*  checking if an error in request ( request parse ) */
     if ( get_status() >= 400 && get_status() <= 599)
@@ -56,6 +55,7 @@ const std::string & Response::getResponse( void )
         _tranfer_encoding = false;
         is_first_message = true;
         status = status_code;
+        _is_cgi = false;
         error_response(status_code);
     }
     return message;

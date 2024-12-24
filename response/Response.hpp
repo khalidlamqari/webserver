@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/23 18:21:49 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/24 19:41:09 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -100,13 +100,16 @@ class Response
 
         void                                    process_requset();
         void                                    parse_headers();
-        void                                    get_response_body();
+        // void                                    get_response_body();
+
         
 
         void format_start_line();
         void  format_headers(size_t size);
         void   format_body(char * content, size_t size);
-        
+    
+
+
     public:
 
         // Response ( const ServerContext & server_context, Request & request ) ;
@@ -131,7 +134,7 @@ class Response
         void                        execute_cgi();
         bool                        is_cgi();
         bool                        p_is_running;
-        bool                        is_parsed;
+
         void                        set_exit_stat(int stat);
         void                        set_end_of_response(bool stat);
         int                         get_status();

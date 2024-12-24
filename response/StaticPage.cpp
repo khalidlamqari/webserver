@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/23 21:00:32 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/24 20:53:30 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -40,24 +40,65 @@ static bool is_directory_list(const std::string & path, LocationContext * locati
     return false;
 }
 
+void open_file(const bool & tranfer_encoding, std::ifstream & page_content, const std::string & path)
+{
+    /* open file once */
+    if ( !tranfer_encoding )
+    {
+        page_content.open( path );
+        if ( ! page_content.is_open() )
+            throw 404 ;
+    }
+}
+
+void read_file(std::ifstream & page_content, char *buffer, size_t & size)
+{
+    page_content.read( buffer, (RESP_BUFF - 1)) ;
+    if ( page_content.fail() && ! page_content.eof() )
+        throw 500 ;
+    buffer[page_content.gcount()] = '\0';
+    
+    size = page_content.gcount();
+}
+
+/* in case large file eof = false and tranfer chuncks by chunck */
+void check_end_of_file(std::ifstream & page_content, bool & end_of_response, bool & tranfer_encoding )
+{
+    if ( page_content.eof())
+        end_of_response = true;
+    else
+        tranfer_encoding = true;
+
+    if ( tranfer_encoding && page_content.gcount() != 0 )
+        end_of_response = false;
+}
+
+
 void    Response::format_response()
 {
-    if ( !_tranfer_encoding && is_redirect(_location) )
+    /* check if return is set in location .  */
+    if ( is_first_message && is_redirect(_location) )
     {
         redirection_handler();
     }
-    else if ( !_tranfer_encoding && clientsocket.get_request()->get_method() == "DELETE" )
+    
+    /* */
+    else if ( is_first_message && clientsocket.get_request()->get_method() == "DELETE" )
     {
         delete_file();
     }
-    else if ( !_tranfer_encoding && is_directory_list(_path_, _location, *(server_context)) )
+
+    /* */
+    else if ( is_first_message && is_directory_list(_path_, _location, *(server_context)) )
     {
         directory_listing();
     }
+    /* */
     else if (_is_cgi)
     {
         format_cgi_response();
     }
+    /* */
     else
     {
         format_static_response();
@@ -66,32 +107,32 @@ void    Response::format_response()
 
 void    Response::redirection_handler()
 {
+    std::cout << "redirect" << std::endl;
     std::stringstream ss;
     unsigned short status = _location->get_redirection().status_code;
-    std::string msg_or_file = _location->get_redirection().target;
+    std::string target = _location->get_redirection().target;
+
+    format_start_line();
     
+    if ( !clientsocket.get_request()->get_is_persistent() )
+        message.append("Connection: close\r\n");
+    else
+        message.append("Connection: keep-alive\r\n");
+
     if ( (status > 300 && status < 304) || 307 == status || 308 == status )
     {
-        message.append( "HTTP/1.1 "  + default_info.getCodeMsg( status ) + "\r\n" );
-        message.append( "Location: " + msg_or_file + "\r\nContent-Length: 0\r\n" );
-        if (clientsocket.get_request()->get_is_persistent())
-            message.append("Connection: close\r\n\r\n");
-        else
-            message.append("Connection: keep-alive\r\n\r\n");
+        message.append( "Location: " + target + "\r\nContent-Length: 0\r\n\r\n" );
     }
     else
     {
-        ss << msg_or_file.length() ;
-        message.append( "HTTP/1.1 "  + default_info.getCodeMsg( status ) + "\r\n" );
+        ss << target.length() ;
         message.append("Content-Length: " + ss.str() + "\r\n");
-        if (clientsocket.get_request()->get_is_persistent())
-            message.append("Connection: close\r\n\r\n");
-        else
-            message.append("Connection: keep-alive\r\n\r\n");
-        message.append("\r\n\r\n" + msg_or_file );
+        message.append("\r\n" + target );
     }
     _end_of_response = true ;
 }
+
+
 
 /* TODO : delete directory and check if delete method in process request  */
 void Response::delete_file()
@@ -136,52 +177,8 @@ void    Response::directory_listing()
 }
 
 
-void    Response::format_cgi_response()
-{
-    if (!this->is_parsed)   /* in case tranfer encoding send headers only in first chunck */
-    {
-        this->parse_headers();
-        this->get_response_body();
-    }
-    else
-    {
-        this->get_response_body();
-    }
-}
 
 
-void open_file(const bool & tranfer_encoding, std::ifstream & page_content, const std::string & path)
-{
-    /* open file once */
-    if ( !tranfer_encoding )
-    {
-        page_content.open( path );
-        if ( ! page_content.is_open() )
-            throw 404 ;
-    }
-}
-
-void read_file(std::ifstream & page_content, char *buffer, size_t & size)
-{
-    page_content.read( buffer, (RESP_BUFF - 1)) ;
-    if ( page_content.fail() && ! page_content.eof() )
-        throw 500 ;
-    buffer[page_content.gcount()] = '\0';
-    
-    size = page_content.gcount();
-}
-
-/* in case large file eof = false and tranfer chuncks by chunck */
-void check_end_of_file(std::ifstream & page_content, bool & end_of_response, bool & tranfer_encoding )
-{
-    if ( page_content.eof())
-        end_of_response = true;
-    else
-        tranfer_encoding = true;
-
-    if ( tranfer_encoding && page_content.gcount() != 0 )
-        end_of_response = false;
-}
 
 
 void Response::format_start_line()
@@ -195,7 +192,6 @@ void  Response::format_headers(size_t size)
     if (_tranfer_encoding && is_first_message)
     {
         message += "Transfer-Encoding: chunked";
-        
     }
     else if ( !_tranfer_encoding )
     {
@@ -207,33 +203,68 @@ void  Response::format_headers(size_t size)
     /* shared headers */
     if ((_tranfer_encoding && is_first_message ) || !_tranfer_encoding)
     {
-        message += get_content_type(_path_) +  "\r\n";
-        
-        if (clientsocket.get_request()->get_is_persistent() || (status >= 400 && status <= 599))
-            message += ("Connection: close\r\n");
+        if (!_is_cgi)
+            message += get_content_type(_path_);
+        if ( !clientsocket.get_request()->get_is_persistent() || (status >= 400 && status <= 599))
+            message += ("\r\nConnection: close\r\n");
         else
-            message += ("Connection: keep-alive\r\n");
-        message += ("\r\n");
+            message += ("\r\nConnection: keep-alive\r\n");
+        
+        if (!_is_cgi)
+            message += ("\r\n");
         is_first_message = false;
     }
-    
+}
+
+
+std::string extract_headers(const std::string & unparsed_content, size_t pos)
+{
+    return ( unparsed_content.substr(0, pos + 4) );
+}
+
+std::string extract_body(const std::string & unparsed_content, size_t pos)
+{
+    return (unparsed_content.substr(pos, RESP_BUFF));
 }
 
 void Response::format_body(char * content, size_t size)
 {
-    if ( _tranfer_encoding )    /* body of tranfer encoding (chunck) */
+    std::string body = "";
+
+    if ( clientsocket.get_request()->get_method() == "HEAD" )
+    {
+        _end_of_response = true;
+        return ;
+    }
+
+    /* in case cgi the data stored in string , so a read from string. otherwise i read from the file directly. the data commes in parameters */
+    if (_is_cgi)
+    {
+        body = extract_body(data_out, offset); /* extract_body function get data from string (data_out) and move the offset to the next position */
+        offset += body.length();
+
+        /* i set end_of_response = true , in case no data to send */
+        if ((_tranfer_encoding && body.length() == 0) || !_tranfer_encoding)
+            _end_of_response = true;
+
+    }
+    else
+    {
+        body.append(content, size);
+    }
+
+    /* body of tranfer encoding (chunck) */
+    if ( _tranfer_encoding )    
     {
         std::ostringstream size_hex ;
-        size_hex << std::hex << size ;
-        message.append(size_hex.str());
-        message.append("\r\n");
-        message.append(content, size);
-        message.append("\r\n");
+
+        size_hex << std::hex << body.length();
+        message.append(size_hex.str() + "\r\n");
+        message.append(body + "\r\n");
     }
-    else                        /* normal body  */
+    else   /* normal body  */
     {
-        if (  clientsocket.get_request()->get_method() != "HEAD" )
-             message.append(content, size);
+        message.append(body);
     }
 }
 
@@ -246,85 +277,38 @@ void Response::format_static_response()
     read_file(page_content, buffer, size);
     check_end_of_file(page_content, _end_of_response, _tranfer_encoding);
 
-
     format_start_line();
     format_headers(size);
     format_body(buffer, size);
 }
 
-std::string extract_headers(const std::string & unparsed_content, size_t pos)
+void    Response::format_cgi_response()
 {
-    return ( unparsed_content.substr(0, pos + 4) );
-}
+    format_start_line();
 
-std::string extract_body(const std::string & unparsed_content, size_t pos)
-{
-    return (unparsed_content.substr(pos, RESP_BUFF));
+    parse_headers();
+
+    format_body(NULL, 0);
 }
 
 void Response::parse_headers()
 {
-    std::string body;
-    std::ostringstream ss ;
-    std::ostringstream len ;
     size_t pos;
-    std::cout << "----------------------------" << std::endl;
-    std::cout << data_out << std::endl;
-    std::cout << "----------------------------" << std::endl;
+
+    if (!is_first_message)
+        return ;
+
     pos = data_out.find("\r\n\r\n");
     if (pos == std::string::npos)
-    {
-        this->is_parsed = false;
         throw 500;
-    }
-    else
-    {
-        if ( this->data_out.length() - pos + 4 > RESP_BUFF ) // if body > RES_...
-            this->_tranfer_encoding = true;
 
-        this->message.append("HTTP/1.1 " + default_info.getCodeMsg( this->status ) + "\r\n");
-        if (this->clientsocket.get_request()->get_is_persistent() || (this->status >= 400 && this->status <= 599))
-            this->message.append("Connection: close\r\n");
-        else
-            this->message.append("Connection: keep-alive\r\n");
-        if ( !this->_tranfer_encoding)
-        {
-            len << (this->data_out.length() - pos - 4);
-            this->message.append("Content-Length: " + len.str() + "\r\n");
-        }
-        else
-        {
-            this->message.append("Transfer-Encoding: chunked\r\n");
-        }
-        this->message.append(extract_headers(data_out, pos));
-        this->offset += pos + 4;
+    if ( data_out.length() - pos + 4 > RESP_BUFF )
+        _tranfer_encoding = true;
 
-        this->is_first_message = false;
-        this->is_parsed = true;
-    }
-}
+    format_headers(data_out.length() - pos - 4);
 
-void Response::get_response_body()
-{
-    std::ostringstream ss ;
-    std::string body = extract_body(this->data_out, this->offset);
-    this->offset += body.length();
-
-    if (this->_tranfer_encoding)
-    {
-        ss << std::hex << body.length() ;
-        this->message.append(ss.str());
-        this->message.append("\r\n");
-        this->message.append(body);
-        this->message.append("\r\n");
-        if ( body.length() == 0 )
-            this->_end_of_response = true;
-    }
-    else
-    {
-        this->message.append(body);
-        this->_end_of_response = true;
-    }
+    message.append(extract_headers(data_out, pos));
+    offset += pos + 4;
 }
 
 void Response::read_cgi_output()
@@ -340,10 +324,6 @@ void Response::read_cgi_output()
     buffer[n] = '\0';
     this->data_out.append(buffer, n);
 }
-
-
-
-
 
 void Response::find_match_more_location()
 {
@@ -363,7 +343,6 @@ void Response::find_match_more_location()
     }
 }
 
-
 LocationContext * Response::find_location(const std::string &target)
 {
     const std::vector<LocationContext> & locations = this->server_context->get_locations();
@@ -377,8 +356,6 @@ LocationContext * Response::find_location(const std::string &target)
     }
     return ( NULL );
 }
-
-
 
 void    Response::extract_pathinfo_form_target(const std::string & root)
 {
@@ -419,7 +396,7 @@ void    Response::process_requset()
     this->server_context = get_server_context(this->clientsocket);
 
     /* TODO should check status of request */
-    
+
     /* 2 set and checking target */
     set_target(clientsocket.get_request()->get_target());
     normalize_target( this->_target , this->status);
@@ -443,7 +420,7 @@ void    Response::process_requset()
         extract_info_from_location(*this, *_location);
     else
         extract_info_from_server(*this, *(this->server_context));
-    
+
     /* 7 check is a cgi request & if cgi create socketpair for IPC and open file in tmp */
     set_cgi_requerements(*this, _is_cgi, input_data); /* input_data is a ostream for pass body to child process (cgi) */
     
