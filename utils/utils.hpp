@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/01 21:45:38 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/23 12:54:01 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/24 21:37:18 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -37,7 +37,7 @@ void	*ft_memset(void *b, int c, size_t len);
 
 
 std::string         get_rand_file_name(size_t & file_num);
-void                normalize_target(std::string &target, short & status);
+void                normalize_target(std::string &target, unsigned short & status);
 std::string         get_content_type( const std::string & file_name );
 const std::string   get_time(time_t sec);
 bool                is_dir( const std::string & path );

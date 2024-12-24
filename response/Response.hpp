@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/24 19:41:09 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/24 21:36:11 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -43,7 +43,7 @@ class Response
         bool                                    is_first_message ;
         std::ifstream                           page_content ;
         LocationContext *                       _location;
-        short                                   status;
+        unsigned short                          status;
         std::string                             _upload_dir ;
         bool                                    _running_post ;
         std::string                             _path_ ;

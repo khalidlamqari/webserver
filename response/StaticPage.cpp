@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/24 20:53:30 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/24 21:42:08 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,9 +74,19 @@ void check_end_of_file(std::ifstream & page_content, bool & end_of_response, boo
 }
 
 
+std::string extract_headers(const std::string & unparsed_content, size_t pos)
+{
+    return ( unparsed_content.substr(0, pos + 4) );
+}
+
+std::string extract_body(const std::string & unparsed_content, size_t pos)
+{
+    return (unparsed_content.substr(pos, RESP_BUFF));
+}
+
 void    Response::format_response()
 {
-    /* check if return is set in location .  */
+    /* check if return is set in location . and this is the first chunck or message */
     if ( is_first_message && is_redirect(_location) )
     {
         redirection_handler();
@@ -88,39 +98,50 @@ void    Response::format_response()
         delete_file();
     }
 
-    /* */
+    /* check if the request for listing directory content . and this is the first chunck or message */
     else if ( is_first_message && is_directory_list(_path_, _location, *(server_context)) )
     {
         directory_listing();
     }
-    /* */
+
+    /* the data was readed from child process stored in string . and athers data should be readed directly from the file, that why i separate cgi and athers response */
     else if (_is_cgi)
     {
         format_cgi_response();
     }
-    /* */
+    /*  */
     else
     {
         format_static_response();
     }
 }
 
+void    set_connection_header(std::string & message, bool close, unsigned short & status)
+{
+    if ( !close || (status >= 400 && status <= 599))
+        message += ("Connection: close\r\n");
+    else
+        message += ("Connection: keep-alive\r\n");
+}
+
 void    Response::redirection_handler()
 {
-    std::cout << "redirect" << std::endl;
+   
     std::stringstream ss;
-    unsigned short status = _location->get_redirection().status_code;
+    status = _location->get_redirection().status_code;
     std::string target = _location->get_redirection().target;
-
     format_start_line();
-    
-    if ( !clientsocket.get_request()->get_is_persistent() )
-        message.append("Connection: close\r\n");
-    else
-        message.append("Connection: keep-alive\r\n");
+
+    set_connection_header(message, !clientsocket.get_request()->get_is_persistent(), status);
+
+    // if ( !clientsocket.get_request()->get_is_persistent() )
+    //     message.append("Connection: close\r\n");
+    // else
+    //     message.append("Connection: keep-alive\r\n");
 
     if ( (status > 300 && status < 304) || 307 == status || 308 == status )
     {
+        std::cout << "location set" << std::endl;
         message.append( "Location: " + target + "\r\nContent-Length: 0\r\n\r\n" );
     }
     else
@@ -130,6 +151,7 @@ void    Response::redirection_handler()
         message.append("\r\n" + target );
     }
     _end_of_response = true ;
+    std::cout << message << std::endl;
 }
 
 
@@ -177,97 +199,6 @@ void    Response::directory_listing()
 }
 
 
-
-
-
-
-void Response::format_start_line()
-{
-    if ((_tranfer_encoding && is_first_message) || !_tranfer_encoding)
-        message.append("HTTP/1.1 " + default_info.getCodeMsg( status ) + "\r\n" );
-}
-
-void  Response::format_headers(size_t size)
-{
-    if (_tranfer_encoding && is_first_message)
-    {
-        message += "Transfer-Encoding: chunked";
-    }
-    else if ( !_tranfer_encoding )
-    {
-        std::ostringstream ss ;
-        ss << size ;
-        message += "Content-Length: " + ss.str();
-    }
-
-    /* shared headers */
-    if ((_tranfer_encoding && is_first_message ) || !_tranfer_encoding)
-    {
-        if (!_is_cgi)
-            message += get_content_type(_path_);
-        if ( !clientsocket.get_request()->get_is_persistent() || (status >= 400 && status <= 599))
-            message += ("\r\nConnection: close\r\n");
-        else
-            message += ("\r\nConnection: keep-alive\r\n");
-        
-        if (!_is_cgi)
-            message += ("\r\n");
-        is_first_message = false;
-    }
-}
-
-
-std::string extract_headers(const std::string & unparsed_content, size_t pos)
-{
-    return ( unparsed_content.substr(0, pos + 4) );
-}
-
-std::string extract_body(const std::string & unparsed_content, size_t pos)
-{
-    return (unparsed_content.substr(pos, RESP_BUFF));
-}
-
-void Response::format_body(char * content, size_t size)
-{
-    std::string body = "";
-
-    if ( clientsocket.get_request()->get_method() == "HEAD" )
-    {
-        _end_of_response = true;
-        return ;
-    }
-
-    /* in case cgi the data stored in string , so a read from string. otherwise i read from the file directly. the data commes in parameters */
-    if (_is_cgi)
-    {
-        body = extract_body(data_out, offset); /* extract_body function get data from string (data_out) and move the offset to the next position */
-        offset += body.length();
-
-        /* i set end_of_response = true , in case no data to send */
-        if ((_tranfer_encoding && body.length() == 0) || !_tranfer_encoding)
-            _end_of_response = true;
-
-    }
-    else
-    {
-        body.append(content, size);
-    }
-
-    /* body of tranfer encoding (chunck) */
-    if ( _tranfer_encoding )    
-    {
-        std::ostringstream size_hex ;
-
-        size_hex << std::hex << body.length();
-        message.append(size_hex.str() + "\r\n");
-        message.append(body + "\r\n");
-    }
-    else   /* normal body  */
-    {
-        message.append(body);
-    }
-}
-
 void Response::format_static_response()
 {
     char    buffer[ RESP_BUFF ];
@@ -290,6 +221,9 @@ void    Response::format_cgi_response()
 
     format_body(NULL, 0);
 }
+
+
+
 
 void Response::parse_headers()
 {
@@ -377,6 +311,88 @@ void    Response::extract_pathinfo_form_target(const std::string & root)
     {
         _target = tmp_target;
         _path_info = tmp_info;
+    }
+}
+
+
+
+void Response::format_start_line()
+{
+    if ((_tranfer_encoding && is_first_message) || !_tranfer_encoding)
+        message.append("HTTP/1.1 " + default_info.getCodeMsg( status ) + "\r\n" );
+}
+
+void  Response::format_headers(size_t size)
+{
+    if (_tranfer_encoding && is_first_message)
+    {
+        message += "Transfer-Encoding: chunked";
+    }
+    else if ( !_tranfer_encoding )
+    {
+        std::ostringstream ss ;
+        ss << size ;
+        message += "Content-Length: " + ss.str();
+    }
+
+    /* shared headers */
+    if ((_tranfer_encoding && is_first_message ) || !_tranfer_encoding)
+    {
+        if (!_is_cgi)
+            message += get_content_type(_path_);
+
+        if ( !clientsocket.get_request()->get_is_persistent() || (status >= 400 && status <= 599))
+            message += ("\r\nConnection: close\r\n");
+        else
+            message += ("\r\nConnection: keep-alive\r\n");
+        
+        if (!_is_cgi)
+            message += ("\r\n");
+        is_first_message = false;
+    }
+}
+
+
+
+
+void Response::format_body(char * content, size_t size)
+{
+    std::string body = "";
+
+    if ( clientsocket.get_request()->get_method() == "HEAD" )
+    {
+        _end_of_response = true;
+        return ;
+    }
+
+    /* in case cgi the data stored in string , so a read from string. otherwise i read from the file directly. the data commes in parameters */
+    if (_is_cgi)
+    {
+        body = extract_body(data_out, offset); /* extract_body function get data from string (data_out) and move the offset to the next position */
+        offset += body.length();
+
+        /* i set end_of_response = true , in case no data to send */
+        if ((_tranfer_encoding && body.length() == 0) || !_tranfer_encoding)
+            _end_of_response = true;
+
+    }
+    else
+    {
+        body.append(content, size);
+    }
+
+    /* body of tranfer encoding (chunck) */
+    if ( _tranfer_encoding )    
+    {
+        std::ostringstream size_hex ;
+
+        size_hex << std::hex << body.length();
+        message.append(size_hex.str() + "\r\n");
+        message.append(body + "\r\n");
+    }
+    else   /* normal body  */
+    {
+        message.append(body);
     }
 }
 

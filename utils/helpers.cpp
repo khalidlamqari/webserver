@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/15 14:16:59 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/23 19:07:28 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/24 21:37:06 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -50,7 +50,7 @@ std::string get_rand_file_name(size_t & file_num)
     }
 }
 
-void normalize_target(std::string &target, short & status)
+void normalize_target(std::string &target, unsigned short & status)
 {
     if ( target.find("..") == std::string::npos )
         return ;
