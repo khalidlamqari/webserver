@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 19:31:45 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/22 12:47:21 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/25 13:04:30 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -74,25 +74,24 @@ void Response::execute_cgi( void )
 
     this->pid = fork() ;
     if (this->pid == -1)
-    {
         throw std::runtime_error("fork failed");
-    }
-    else if (this->pid == 0)
+
+
+    if (this->pid == 0)
     {
         if (close(this->s_fds[0])  == -1)
             exit(1);
 
         int fd = open(this->input_path.c_str(), O_RDONLY , 0777);
+        if (fd != -1 && (dup2(fd, 0) == -1 || close(fd) == -1))
+        {
+            exit(1);
+        }
+
         if (dup2(this->s_fds[1], 1) == -1)
             exit(1);
 
         if (close(this->s_fds[1])  == -1)
-            exit(1);
-
-        if (dup2(fd, 0) == -1)
-            exit(1);
-
-        if (close(fd) == -1)
             exit(1);
 
         execve(av[0], av, env);

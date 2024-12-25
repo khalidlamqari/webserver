@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/24 20:14:10 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/25 13:58:29 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -88,7 +88,7 @@ void Response::responde_with_overrided_page( std::string err_page_path )
     if ( ! this->_tranfer_encoding )
     {
         this->_path_ = err_page_path;// TODO : khalid
-        set_cgi_requerements(*this, _is_cgi, input_data); /* input_data is a ostream for pass body to child process (cgi) */
+        set_cgi_requerements(*this, _is_cgi);
         if (_is_cgi)
             throw (int)10001;// TODO : khalid
     }
@@ -135,38 +135,55 @@ bool Response::is_allowed_method()
 /* Getters */
 
 
+std::string get_page_from_location(LocationContext * location, unsigned short error)
+{
+    std::vector<t_error_page>::const_iterator i ;
+
+    const std::vector<t_error_page> pages = location->get_error_pages();
+    for ( i = pages.begin() ; i != pages.end() ; ++i )
+    {
+        if ( i->err_code == error )
+        {
+            if (is_file(location->get_root_directory() + "/" + i->path))
+                return ( location->get_root_directory() + "/" + i->path );
+            else
+                return "";
+        }
+    }
+    return "";
+}
+
+std::string get_page_from_server(const ServerContext * server_context, unsigned short error)
+{
+    std::vector<t_error_page>::const_iterator i ;
+    const std::vector<t_error_page> pages = server_context->get_error_pages();
+
+    for ( i = pages.begin() ; i != pages.end() ; ++i )
+    {
+        if ( i->err_code == error )
+        {
+            if (is_file(server_context->get_root_directory() + "/" + i->path))
+                return ( server_context->get_root_directory() + "/" + i->path );
+            else
+                return "";
+        }
+    }
+    return "";
+}
 
 std::string Response::find_error_page( unsigned short error )
 {
-    std::vector<t_error_page>::const_iterator i ;
-    if ( this->_location )    /*    search in location context     */
-    {
-        const std::vector<t_error_page> & pages = this->_location->get_error_pages();
-        for ( i = pages.begin() ; i != pages.end() ; ++i )
-        {
-            if ( i->err_code == error )
-            {
-                if (is_file(this->_location->get_root_directory() + "/" + i->path))
-                    return ( this->_location->get_root_directory() + "/" + i->path ) ;
-                else
-                    return "";
-            }
-        }
-    }
-    else            /*       search in server context        */
-    {
-        const std::vector<t_error_page> & pages = this->server_context->get_error_pages();
-        for ( i = pages.begin() ; i != pages.end() ; ++i )
-        {
-            if ( i->err_code == error )
-            {
-                if (is_file(this->server_context->get_root_directory() + "/" + i->path))
-                    return ( this->server_context->get_root_directory() + "/" + i->path );
-                else
-                    return "";
-            }
-        }
-    }
+
+    /* search in location context */
+    if ( this->_location )    
+        return get_page_from_location(_location, error);
+
+
+     /* search in server context */
+    else
+        return get_page_from_server(server_context, error);
+
+
     return ( "" ) ;
 }
 
@@ -259,11 +276,6 @@ const std::string & Response::get_input_path()
 void    Response::set_input_path(const std::string & path)
 {
     this->input_path = path;
-}
-    
-void    Response::set_data_to_input(const std::string & data)
-{
-    this->input_data << data;
 }
 
 void Response::set_status(int stat)

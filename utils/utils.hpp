@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/01 21:45:38 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/24 21:37:18 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/25 12:06:06 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,9 +49,8 @@ void                create_socket_pair(Response & response);
 
 
 void    create_html_table(std::string & ls_files, const std::string & target);
-void    set_headers(std::string & message, const std::string & content_len);
 void    append_row( std::string  path , std::string target, struct dirent * f, std::string & ls_files );
-void    set_cgi_requerements( Response & response, bool & is_cgi , std::ofstream & input_data);
+void    set_cgi_requerements( Response & response, bool & is_cgi);
 const ServerContext * get_server_context(ClientSocket & clientsocket);
 void extract_info_from_location(Response & response, LocationContext & location);
 void extract_info_from_server(Response & response,  const ServerContext & servercontext);
@@ -60,3 +59,12 @@ void  remove_last_slash( std::string & target );
 
 
 #endif
+
+
+
+/* 
+
+delete folder OK
+
+
+*/

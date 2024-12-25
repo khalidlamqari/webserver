@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/27 15:21:34 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/18 10:18:21 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/25 12:31:24 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,74 +14,53 @@
 
 DefaultInfo::DefaultInfo()
 {
-    this->init_pages() ;
+    init_pages() ;
 }
 
 void DefaultInfo::init_pages(void) {
-    this->error_pages[400] = BAD_REQUEST;
-    this->error_pages[401] = UNAUTHORIZED;
-    this->error_pages[402] = PAYMENT_REQUIRED;
-    this->error_pages[403] = FORBIDDEN;
-    this->error_pages[404] = NOT_FOUND;
-    this->error_pages[405] = METHOD_NOT_ALLOWED ;
-    this->error_pages[406] = NOT_ACCEPTABLE;
-    this->error_pages[407] = PROXY_AUTHENTICATION_REQUIRED ;
-    this->error_pages[408] = REQUEST_TIMEOUT ;
-    this->error_pages[409] = CONFLICT ;
-    this->error_pages[410] = GONE ;
-    this->error_pages[411] = LENGTH_REQUIRED;
-    this->error_pages[412] = PRECONDITION_FAILED;
-    this->error_pages[413] = PAYLOAD_TOO_LARGE;
-    this->error_pages[414] = URI_TOO_LONG ;
-    this->error_pages[415] = UNSUPPORTED_MEDIA_TYPE ;
-    this->error_pages[416] = RANGE_NOT_SATISFIABLE;
-    this->error_pages[417] = EXPECTATION_FAILED ;
-    this->error_pages[418] = IM_A_TEAPOT;
-    this->error_pages[421] = MISDIRECTED_REQUEST ;
-    this->error_pages[422] = UNPROCESSABLE_ENTITY ;
-    this->error_pages[423] = LOCKED ;
-    this->error_pages[424] = FAILED_DEPENDENCY;
-    this->error_pages[425] = TOO_EARLY ;
-    this->error_pages[426] = UPGRADE_REQUIRED;
-    this->error_pages[428] = PRECONDITION_REQUIRED ;
-    this->error_pages[429] = TOO_MANY_REQUESTS ;
-    this->error_pages[431] = REQUEST_HEADER_FIELDS_TOO_LARGE ;
-    this->error_pages[451] = UNAVAILABLE_FOR_LEGAL_REASONS ;
+    error_pages[400] = BAD_REQUEST;
+    error_pages[401] = UNAUTHORIZED;
+    error_pages[403] = FORBIDDEN;
+    error_pages[404] = NOT_FOUND;
+    error_pages[405] = METHOD_NOT_ALLOWED ;
+    error_pages[406] = NOT_ACCEPTABLE;
 
-    
+    error_pages[408] = REQUEST_TIMEOUT ;
+
+    error_pages[411] = LENGTH_REQUIRED;
+    error_pages[412] = PRECONDITION_FAILED;
+    error_pages[413] = PAYLOAD_TOO_LARGE;
+    error_pages[414] = URI_TOO_LONG ;
+
+    error_pages[421] = MISDIRECTED_REQUEST ;
+
+    error_pages[428] = PRECONDITION_REQUIRED ;
+
+    error_pages[431] = REQUEST_HEADER_FIELDS_TOO_LARGE ;
+
+
     // Server error responses
-    this->error_pages[500] = INTERNAL_SERVER_ERROR;
-    this->error_pages[501] = NOT_IMPLEMENTED;
-    this->error_pages[502] = BAD_GATEWAY ;
-    this->error_pages[503] = SERVICE_UNAVAILABLE ;
-    this->error_pages[504] = GATEWAY_TIMEOUT ;
-    this->error_pages[505] = HTTP_VERSION_NOT_SUPPORTED ;
-    this->error_pages[506] = VARIANT_ALSO_NEGOTIATES ;
-    this->error_pages[507] = INSUFFICIENT_STORAGE ;
-    this->error_pages[508] = LOOP_DETECTED ;
-    this->error_pages[510] = NOT_EXTENDED ;
-    this->error_pages[511] = NETWORK_AUTHENTICATION_REQUIRED ;
-
+    error_pages[500] = INTERNAL_SERVER_ERROR;
+    error_pages[502] = BAD_GATEWAY ;
+    error_pages[504] = GATEWAY_TIMEOUT ;
+    error_pages[505] = HTTP_VERSION_NOT_SUPPORTED ;
+    error_pages[508] = LOOP_DETECTED ;
     // Redirection messages
-    this->error_pages[300] = MULTIPLE_CHOICES ;
-    this->error_pages[301] = MOVED_PERMANENTLY ;
-    this->error_pages[302] = FOUND ;
-    this->error_pages[303] = SEE_OTHER ;
-    this->error_pages[304] = NOT_MODIFIED ;
-    this->error_pages[307] = TEMPORARY_REDIRECT ;
-    this->error_pages[308] = PERMANENT_REDIRECT ;
+    error_pages[300] = MULTIPLE_CHOICES ;
+    error_pages[301] = MOVED_PERMANENTLY ;
+    error_pages[302] = FOUND ;
+    error_pages[303] = SEE_OTHER ;
+    error_pages[304] = NOT_MODIFIED ;
+    error_pages[307] = TEMPORARY_REDIRECT ;
+    error_pages[308] = PERMANENT_REDIRECT ;
 
     // Successful responses
-    this->error_pages[200] = OK;
-    this->error_pages[201] = CREATED ;
-    this->error_pages[202] = ACCEPTED ;
-    this->error_pages[203] = NON_AUTHORITATIVE_INFORMATION ;
-    this->error_pages[204] = NO_CONTENT ;
-    this->error_pages[205] = RESET_CONTENT ;
-    this->error_pages[206] = PARTIAL_CONTENT ;
-    this->error_pages[207] = MULTI_STATUS ;
-    this->error_pages[208] = ALREADY_REPORTED ;
-    
+    error_pages[200] = OK;
+    error_pages[201] = CREATED ;
+    error_pages[202] = ACCEPTED ;
+    error_pages[203] = NON_AUTHORITATIVE_INFORMATION ;
+    error_pages[204] = NO_CONTENT ;
+
 }
 
 /*

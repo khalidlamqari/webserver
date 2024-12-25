@@ -6,18 +6,12 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/24 21:42:08 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/25 14:34:52 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "Response.hpp"
 
-
-/*
-    redirect
-    autoindex
-    file content
-*/
 
 static bool is_redirect(LocationContext * location)
 {
@@ -61,7 +55,7 @@ void read_file(std::ifstream & page_content, char *buffer, size_t & size)
     size = page_content.gcount();
 }
 
-/* in case large file eof = false and tranfer chuncks by chunck */
+/* in case large file eof = false and tranfer chunck by chunck */
 void check_end_of_file(std::ifstream & page_content, bool & end_of_response, bool & tranfer_encoding )
 {
     if ( page_content.eof())
@@ -84,6 +78,15 @@ std::string extract_body(const std::string & unparsed_content, size_t pos)
     return (unparsed_content.substr(pos, RESP_BUFF));
 }
 
+void    set_connection_header(std::string & message, bool close, unsigned short & status)
+{
+    if ( close || (status >= 400 && status <= 599))
+        message += ("Connection: close\r\n");
+    else
+        message += ("Connection: keep-alive\r\n");
+}
+
+
 void    Response::format_response()
 {
     /* check if return is set in location . and this is the first chunck or message */
@@ -91,7 +94,7 @@ void    Response::format_response()
     {
         redirection_handler();
     }
-    
+
     /* */
     else if ( is_first_message && clientsocket.get_request()->get_method() == "DELETE" )
     {
@@ -109,6 +112,7 @@ void    Response::format_response()
     {
         format_cgi_response();
     }
+
     /*  */
     else
     {
@@ -116,13 +120,7 @@ void    Response::format_response()
     }
 }
 
-void    set_connection_header(std::string & message, bool close, unsigned short & status)
-{
-    if ( !close || (status >= 400 && status <= 599))
-        message += ("Connection: close\r\n");
-    else
-        message += ("Connection: keep-alive\r\n");
-}
+
 
 void    Response::redirection_handler()
 {
@@ -131,43 +129,69 @@ void    Response::redirection_handler()
     status = _location->get_redirection().status_code;
     std::string target = _location->get_redirection().target;
     format_start_line();
-
     set_connection_header(message, !clientsocket.get_request()->get_is_persistent(), status);
-
-    // if ( !clientsocket.get_request()->get_is_persistent() )
-    //     message.append("Connection: close\r\n");
-    // else
-    //     message.append("Connection: keep-alive\r\n");
 
     if ( (status > 300 && status < 304) || 307 == status || 308 == status )
     {
-        std::cout << "location set" << std::endl;
         message.append( "Location: " + target + "\r\nContent-Length: 0\r\n\r\n" );
     }
     else
     {
         ss << target.length() ;
         message.append("Content-Length: " + ss.str() + "\r\n");
-        message.append("\r\n" + target );
+        message.append("\r\n" + target ); // add target to body of response 
     }
     _end_of_response = true ;
-    std::cout << message << std::endl;
 }
 
 
+void remove_file(const std::string & path)
+{
+    std::cout << "path to remove : " << path << std::endl;
+    if (remove(path.c_str()) == -1 )
+        throw 403 ;
+}
+
+void remove_dir_recursive(const std::string & path)
+{
+    DIR * dir;
+    struct  dirent *file;
+
+    dir = opendir(path.c_str());
+    if (!dir)
+        throw 500;
+
+    while ((file = readdir(dir)) && file != NULL )
+    {
+        if (std::string(file->d_name) == ".." || std::string(file->d_name) == ".")
+            continue;
+
+        if ( is_file(path + "/" + file->d_name ))
+            remove_file(path + "/" + file->d_name);
+
+        else if (is_dir(path + "/" + file->d_name))
+            remove_dir_recursive(path + "/" + file->d_name);
+    }
+
+    remove_file(path);
+}
 
 /* TODO : delete directory and check if delete method in process request  */
 void Response::delete_file()
 {
-    struct stat f ;
     std::cout << "path : " << _path_ << std::endl;
-    if ( stat( this->_path_.c_str(), &f ) == -1)
-        throw 404 ;
+    if ( is_file(_path_) )
+    {
+        remove_file(_path_);
+        throw 204 ;
+    }
+    else if (is_dir(_path_))
+    {
+        remove_dir_recursive(_path_);
+        throw 204;
+    }
 
-    int status = remove(this->_path_.c_str()) ;
-    if ( status == -1 )
-        throw 430 ;
-    throw 204 ;
+    throw 404 ;
 }
 
 /* this function open directory and  get its content (files directories ... ) one by one and format it in html table  */
@@ -176,7 +200,6 @@ void    Response::directory_listing()
     std::string ls_files ;
     DIR *d ;
     struct dirent *f ;
-    std::stringstream ss ;
 
     d = opendir(this->_path_.c_str()) ;
     if ( !d )
@@ -192,8 +215,9 @@ void    Response::directory_listing()
     if ( closedir(d) == -1 )
         throw 500 ;
     ls_files += "</tbody></table><hr><center><h5>webserv</h5></center><hr></body></html>" ;
-    ss << ls_files.length() ;
-    set_headers(message, ss.str());
+    
+    format_start_line();
+    format_headers(ls_files.length());
     message += ls_files ; /* add body content to message */
     _end_of_response = true ;
 }
@@ -205,11 +229,15 @@ void Response::format_static_response()
     size_t size = 0;
 
     open_file(_tranfer_encoding, page_content, _path_);
+
     read_file(page_content, buffer, size);
+
     check_end_of_file(page_content, _end_of_response, _tranfer_encoding);
 
     format_start_line();
+
     format_headers(size);
+    
     format_body(buffer, size);
 }
 
@@ -221,9 +249,6 @@ void    Response::format_cgi_response()
 
     format_body(NULL, 0);
 }
-
-
-
 
 void Response::parse_headers()
 {
@@ -314,8 +339,6 @@ void    Response::extract_pathinfo_form_target(const std::string & root)
     }
 }
 
-
-
 void Response::format_start_line()
 {
     if ((_tranfer_encoding && is_first_message) || !_tranfer_encoding)
@@ -330,7 +353,7 @@ void  Response::format_headers(size_t size)
     }
     else if ( !_tranfer_encoding )
     {
-        std::ostringstream ss ;
+        std::ostringstream ss;
         ss << size ;
         message += "Content-Length: " + ss.str();
     }
@@ -338,22 +361,19 @@ void  Response::format_headers(size_t size)
     /* shared headers */
     if ((_tranfer_encoding && is_first_message ) || !_tranfer_encoding)
     {
-        if (!_is_cgi)
+        if (is_first_message && is_directory_list(_path_, _location, *(server_context)))
+            message += "\r\nContent-Type: text/html";
+        else if (!_is_cgi)
             message += get_content_type(_path_);
 
-        if ( !clientsocket.get_request()->get_is_persistent() || (status >= 400 && status <= 599))
-            message += ("\r\nConnection: close\r\n");
-        else
-            message += ("\r\nConnection: keep-alive\r\n");
-        
+        message += "\r\n";
+
+        set_connection_header(message, !clientsocket.get_request()->get_is_persistent(), status);
         if (!_is_cgi)
             message += ("\r\n");
         is_first_message = false;
     }
 }
-
-
-
 
 void Response::format_body(char * content, size_t size)
 {
@@ -374,7 +394,6 @@ void Response::format_body(char * content, size_t size)
         /* i set end_of_response = true , in case no data to send */
         if ((_tranfer_encoding && body.length() == 0) || !_tranfer_encoding)
             _end_of_response = true;
-
     }
     else
     {
@@ -438,6 +457,6 @@ void    Response::process_requset()
         extract_info_from_server(*this, *(this->server_context));
 
     /* 7 check is a cgi request & if cgi create socketpair for IPC and open file in tmp */
-    set_cgi_requerements(*this, _is_cgi, input_data); /* input_data is a ostream for pass body to child process (cgi) */
-    
+    set_cgi_requerements(*this, _is_cgi); 
+
 }

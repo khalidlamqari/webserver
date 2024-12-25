@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/15 14:16:59 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/24 21:37:06 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/25 14:45:23 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -82,14 +82,23 @@ void normalize_target(std::string &target, unsigned short & status)
 }
 
 
-std::string get_content_type( const std::string & file_name )
+static std::string is_image(const std::string & file_name)
 {
     std::string imgs[] = {".png",".avif", ".gif", ".webp", ".dmp", ".apng"} ;
-    std::string jpeg[] = {".jpg", ".jpeg", ".jfif", ".pjpeg", ".pjp"} ;
-    std::string ico[] = {".ico", ".cur"} ;
+
+    for (size_t i = 0; i < imgs->length(); ++i)
+    {
+        if ( file_name.find(imgs[i], file_name.length() - imgs[i].length()) != std::string::npos )
+            return ( "\r\nContent-Type: image/" +  imgs[i].erase(0, 1) ) ;
+    }
+    return "";
+}
+
+static std::string is_text(const std::string & file_name)
+{
     std::string texts[] = {".txt", ".html", ".htm", ".css", ".js"} ;
-    size_t size = sizeof(texts) / sizeof(texts[0]) ;
-    for (size_t i = 0; i < size ; ++i)
+    
+    for (size_t i = 0; i < texts->length() ; ++i)
     {
         if ( file_name.find(texts[i], file_name.length() - texts[i].length()) != std::string::npos )
         {
@@ -98,29 +107,64 @@ std::string get_content_type( const std::string & file_name )
             return ( "\r\nContent-Type: text/" +  texts[i].erase(0, 1) + "; charset=utf-8") ;
         }
     }
-    size = sizeof(imgs) / sizeof(imgs[0]) ;
-    for (size_t i = 0; i < 6; ++i)
-    {
-        if ( file_name.find(imgs[i], file_name.length() - imgs[i].length()) != std::string::npos )
-            return ( "\r\nContent-Type: image/" +  imgs[i].erase(0, 1) ) ;
-    }
-    size = sizeof(jpeg) / sizeof( jpeg[0]) ;
-    for ( size_t i = 0; i < size ; ++i)
+    return "";
+}
+
+static std::string is_image_jpeg(const std::string & file_name)
+{
+    std::string jpeg[] = {".jpg", ".jpeg", ".jfif", ".pjpeg", ".pjp"};
+
+    for ( size_t i = 0; i < jpeg->length() ; ++i)
     {
         if ( file_name.find(jpeg[i], file_name.length() - jpeg[i].length()) != std::string::npos)
             return ( "\r\nContent-Type: image/jpeg" ) ;
     }
-    size = sizeof(ico) / sizeof(ico[0]) ;
+    return "";
+}
+
+static std::string is_image_icon(const std::string & file_name)
+{
+    std::string ico[] = {".ico", ".cur"} ;
+
     for (size_t i = 0; i < ico->length(); ++i)
     {
         if ( file_name.find(ico[i] ,file_name.length() - ico[i].length()) != std::string::npos )
             return ( "\r\nContent-Type: image/x-icon" ) ;
     }
+    return "";
+}
+
+static std::string is_video(const std::string & file_name)
+{
     if ( file_name.find(".mp4", file_name.length() - 4) != std::string::npos )
         return ( "\r\nContent-Type: video/mp4" ) ;
-        
-    if ( file_name.find(".php", file_name.length() - 4) != std::string::npos )
-        return ( "\r\nContent-Type: text/html" ) ;
+    return "";
+}
+
+std::string get_content_type(const std::string & file_name)
+{
+    std::string type = "";
+    
+    type = is_text(file_name);
+    if (type != "")
+        return type;
+    
+    type = is_image(file_name);
+    if (type != "")
+        return type;
+
+    type = is_image_jpeg(file_name);
+    if (type != "")
+        return type;
+
+    type = is_image_icon(file_name);
+    if (type != "")
+        return type;
+    
+    type = is_video(file_name);
+    if (type != "")
+        return type;
+
     return ("") ;
 }
 
@@ -205,19 +249,11 @@ void create_socket_pair(Response & response)
 void create_html_table(std::string & ls_files, const std::string & target)
 {
     ls_files.append("<!DOCTYPE html><html lang=\"en\"><head><meta "
-    "charset=\"UTF-8\"><meta name=\"viewport\" content=\"width=device-width"
-    ", initial-scale=1.0\"><title>" + target + "</title>"
+    "charset=\"UTF-8\"><title>" + target + "</title>"
     "<style>table{ padding-left: 100px;}td{ padding: 5px;}"
     "thead{ text-align: left;}</style></head><body><h1> Index of "
     + target + "</h1> <hr><table><thead><tr><th>Name</th>"
     "<th>Size</th><th>Date Modified</th></tr></thead><tbody>") ;
-}
-
-void    set_headers(std::string & message, const std::string & content_len) // connection
-{
-    message += ("HTTP/1.1 200 OK\r\nContent-Length: "\
-            + content_len \
-            + "\r\nContent-Type: text/html\r\n\r\n");
 }
 
 /* get info about file or dir and set it html table row & appent it in ls_files (body of response) */
@@ -248,7 +284,7 @@ void    append_row( std::string  path , std::string target, struct dirent * f, s
     ls_files += ("</td></tr>");
 }
 
-void    set_cgi_requerements( Response & response, bool & is_cgi , std::ofstream & input_data)
+void    set_cgi_requerements( Response & response, bool & is_cgi)
 {
     if (check_is_cgi(response.get_path(), response.get_cgi_exrention() , response.clientsocket.get_request()->isBadRequest() )) // , 
     {
@@ -256,15 +292,8 @@ void    set_cgi_requerements( Response & response, bool & is_cgi , std::ofstream
     }
 
     if (is_cgi)
-    {
         create_socket_pair(response);
-        std::cout << "get_pair_fds : " << response.get_pair_fds()[0] << std::endl;
-        input_data.open(response.get_input_path());
-        if (!input_data.is_open())
-        {
-            throw std::runtime_error("open failed");
-        }
-    }
+    
 }
 
 
@@ -299,7 +328,7 @@ void extract_info_from_location(Response & response, LocationContext & location)
     if (is_dir(response.get_path()) && is_file(response.get_path() + "/" + location.get_index())) /* if the target is a directory. check if insid it a index . if index existe concatinat it with the path */
         response.set_path(response.get_path() + "/" + location.get_index());
         
-    else if (is_dir(response.get_path()) && !location.get_auto_index())  /* if this path is a directory and autoindex off . that means error 403 (forbidden) */
+    else if (is_dir(response.get_path()) && !location.get_auto_index() && response.clientsocket.get_request()->get_method() != "DELETE")  /* if this path is a directory and autoindex off . that means error 403 (forbidden) */
         response.set_status(403);
 
     else if (!is_existe(response.get_path()))
@@ -316,12 +345,13 @@ void extract_info_from_server(Response & response,  const ServerContext & server
 
     if (is_dir(response.get_path()) && is_file(response.get_path() + "/" + servercontext.get_index())) /* if the target is a directory. check if insid it a index . if index existe concatinat it with the path */
         response.set_path(response.get_path() + "/" + servercontext.get_index());
-    else if (is_dir(response.get_path()) && !servercontext.get_auto_index())  /* if this path is a directory and autoindex off . that means error 403 (forbidden) */
+
+    else if (is_dir(response.get_path()) && !servercontext.get_auto_index() && response.clientsocket.get_request()->get_method() != "DELETE")  /* if this path is a directory and autoindex off . that means error 403 (forbidden) */
         response.set_status(403);
+
     else if (!is_existe(response.get_path()))
         response.set_status(404);
 }
-
 
 void  remove_last_slash( std::string & target )
 {

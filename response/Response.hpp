@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/24 21:36:11 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/25 13:30:36 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -49,7 +49,7 @@ class Response
         std::string                             _path_ ;
         std::string                             _path_info ;
         std::string                             _target ;
-        
+
         std::string                             _cgi_extention ;
         bool                                    _is_cgi ;
         int                                     s_fds[2] ;
@@ -57,14 +57,13 @@ class Response
         std::string                             path_input;
         int                                     exit_stat ;
         pid_t                                   pid ;
-        
+
         std::string                             unparsed_content;
         std::string                             data_out;
         size_t                                  offset;
 
         std::time_t                             start_time;
         std::string                             input_path;
-        std::ofstream                           input_data;
         
         CgiProcess*		_cgi_process;
 		CgiPairSocket* 	_cgi_pair_socket;
@@ -74,7 +73,7 @@ class Response
         LocationContext *                       find_location( const std::string & target ) ;
 
         void                                    format_static_response();
-        
+
 
         // redirection          
         void                                    redirection_handler() ;
