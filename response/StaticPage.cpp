@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/25 14:34:52 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/25 15:02:20 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -147,7 +147,6 @@ void    Response::redirection_handler()
 
 void remove_file(const std::string & path)
 {
-    std::cout << "path to remove : " << path << std::endl;
     if (remove(path.c_str()) == -1 )
         throw 403 ;
 }
@@ -172,7 +171,8 @@ void remove_dir_recursive(const std::string & path)
         else if (is_dir(path + "/" + file->d_name))
             remove_dir_recursive(path + "/" + file->d_name);
     }
-
+    if ( closedir(dir) == -1 )
+        throw 500 ;
     remove_file(path);
 }
 
