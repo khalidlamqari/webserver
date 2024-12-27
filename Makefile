@@ -26,9 +26,7 @@ REQUEST_SRCS		=	Request/Request.cpp \
 
 RESPONSE_SRCS		=	response/Response.cpp \
 						response/StaticPage.cpp \
-						response/Redirections.cpp \
 						response/ExecuteCgi.cpp \
-					 	response/Methods.cpp \
 					 	response/response_tools.cpp
 
 #-------------------------------------------------------------------------------------------------------------------------------#

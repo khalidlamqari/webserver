@@ -20,12 +20,15 @@ void    KqueueEventQueue::create_kqueue( void )
 	queue_created = true;
 }
 
-void    KqueueEventQueue::register_socket_in_kqueue(Socket * sock_data, short filter)
+void    KqueueEventQueue::register_event_in_kqueue(KqueueIdent * data, short filter)
 {
 	struct kevent ev;
 
-	// memset(&ev, 0, sizeof(struct kevent));
-	EV_SET(&ev, sock_data->get_ident(), filter, EV_ADD | EV_ENABLE, 0, 0, (void *) sock_data);
+	memset(&ev, 0, sizeof(struct kevent));
+	if (dynamic_cast<CgiProcess *> (data))
+		EV_SET(&ev, data->get_ident(), filter, EV_ADD | EV_ENABLE, NOTE_EXITSTATUS | NOTE_SIGNAL, 0, (void *) data);
+	else
+		EV_SET(&ev, data->get_ident(), filter, EV_ADD | EV_ENABLE, 0, 0, (void *) data);
 
 	if (kevent(kqueue_fd, &ev, 1, NULL, 0, NULL) == -1)
 		throw std::runtime_error(std::string("Webserv : kevent(4) failed, reason : ") + strerror(errno));
@@ -56,7 +59,7 @@ void    KqueueEventQueue::register_listeners_in_kqueue(std::vector<ListenerSocke
 	for ( ; it != end; it++)
 	{
 		it->mark_ident_as_set();
-		register_socket_in_kqueue(&(it->get_instance()), EVFILT_READ);
+		register_event_in_kqueue(&(it->get_instance()), EVFILT_READ);
 	}
 }
 

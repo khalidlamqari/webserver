@@ -6,14 +6,12 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/12/27 08:55:51 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/27 10:27:25 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/27 18:00:35 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "includes/main.hpp"
 # include "DefaultInfo.hpp"
-
-
 
 void remove_file(const std::string & path)
 {

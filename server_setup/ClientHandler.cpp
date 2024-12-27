@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:37:00 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/25 23:37:25 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/27 20:49:58 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -118,21 +118,6 @@ CgiProcess * create_cgi_process_ident(ClientSocket* client_info)
     return (process);
 }
 
-void    register_process_in_kqueue(ClientSocket* client_info, int kqueue_fd)
-{
-    struct kevent ev;
-    CgiProcess * process = create_cgi_process_ident(client_info);
-
-    ft_memset(&ev, 0, sizeof(struct kevent));
-
-    EV_SET(&ev, process->get_ident(), EVFILT_PROC, EV_ADD | EV_ENABLE , NOTE_EXITSTATUS , 0, (void *)process );
-    kevent(kqueue_fd, &ev, 1, NULL, 0, NULL);
-    if (kevent(kqueue_fd, &ev, 1, NULL, 0, NULL) == -1)
-    {
-        throw std::runtime_error(std::string("Webserv12 : kevent(4) failed, reason : ") + strerror(errno));
-    }
-    client_info->get_response()->p_is_running = true ;
-}
 
 
 // ADD NEW
@@ -150,21 +135,6 @@ CgiPairSocket * create_pair_sock_ident(ClientSocket* client_info)
     return (pair_soc);
 }
 
-void    register_sock_pair_in_kqueue(ClientSocket* client_info, int kqueue_fd)
-{
-    struct kevent ev;
-    CgiPairSocket * pair_soc = create_pair_sock_ident(client_info);
-    
-    fcntl(pair_soc->get_ident(), F_SETFL, O_NONBLOCK);
-    
-    ft_memset(&ev, 0, sizeof(struct kevent));
-    EV_SET(&ev, pair_soc->get_ident(), EVFILT_READ, EV_ADD | EV_ENABLE, 0, 0, (void *)pair_soc);
-    if (kevent(kqueue_fd, &ev, 1, NULL, 0, NULL) == -1)
-    {
-        throw std::runtime_error(std::string(("Webserv2 : kevent(4) failed, reason : ")) + strerror(errno));
-    }
-}
-
 // ADD NEW
 
 
@@ -178,18 +148,13 @@ bool is_response_ready_to_sent(Response & response)
 
 }
 
-bool is_response_finish(Response & response)
-{
-    return ( (!response.is_cgi() && response.end_of_response())
-             || (response.is_cgi() && response.get_exit_stat()
-                != -1 && response.end_of_response()) );
-}
+
 
 /* create new request and delete old request and response or delete client  */
-void create_new_request(ClientSocket* client_info, SocketManager& socketManager, KqueueEventQueue & kqueueManager)
+void create_new_request(ClientSocket* client_info, SocketManager& socketManager)
 {
     // Response *response = client_info->get_response();
-
+    
     std::cout << "end of response " << std::endl;
     if ( !client_info->get_request()->get_is_persistent())
     {
@@ -200,13 +165,12 @@ void create_new_request(ClientSocket* client_info, SocketManager& socketManager,
         client_info->delete_request();
         client_info->delete_response();
         client_info->set_request(new Request());
-        kqueueManager.switch_interest(client_info, EVFILT_WRITE, EVFILT_READ);
     }
 }
 
 static std::time_t max_time = 10; // sec
 
-void check_timeout(Response & response)
+void check_timeout(Response & response) // TODO: 
 {
     if (std::time(0) - response.get_start_time() > max_time)
     {
@@ -221,15 +185,21 @@ void send_response(int sock_fd, const std::string & msg)
         throw std::runtime_error("send failed");
 }
 
-
-void    respond_to_client(ClientSocket* client_info, SocketManager& socketManager, KqueueEventQueue & kqueueManager )
+ 
+void    respond_to_client(ClientSocket* client_info, KqueueEventQueue & kqueueManager )
 {
     Response *response = client_info->get_response();
 
     if ( response->is_cgi() && !response->p_is_running && response->get_exit_stat() == -1 ) /* check if process not started ( to avoid creation of multi process ) */
     {
-        register_process_in_kqueue(client_info, kqueueManager.get_kqueue_fd());
-        register_sock_pair_in_kqueue(client_info, kqueueManager.get_kqueue_fd());
+        CgiProcess * process = create_cgi_process_ident(client_info);
+        CgiPairSocket * pair_soc = create_pair_sock_ident(client_info);
+        
+        kqueueManager.register_event_in_kqueue(process, EVFILT_PROC);
+        
+        kqueueManager.register_event_in_kqueue(pair_soc, EVFILT_READ);
+        
+        client_info->get_response()->p_is_running = true ;
         response->set_start_time(std::time(0)); /* set start time  */
     }
     else if (is_response_ready_to_sent(*response))
@@ -241,7 +211,7 @@ void    respond_to_client(ClientSocket* client_info, SocketManager& socketManage
         catch(int x)
         {
             (void)x;
-            return ;    
+            return ;
         }
         send_response(client_info->get_ident(), res);
     }
@@ -250,8 +220,8 @@ void    respond_to_client(ClientSocket* client_info, SocketManager& socketManage
         check_timeout(*response);
     }
 
-    if ( is_response_finish(*response) )
-    {
-        create_new_request(client_info, socketManager, kqueueManager);
-    }
+    // if ( is_response_finish(*response) )
+    // {
+    //     create_new_request(client_info, socketManager);
+    // }
 }

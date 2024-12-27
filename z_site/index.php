@@ -11,9 +11,9 @@
 </head>
 <body>
     <?php
-        for ($i = 0 ; $i < 1 ; $i++)
-            echo "hello world:\n";
-        echo "123";
+        // sleep(1000000);
+        for ($i = 0; $i < 10000; $i++)
+            echo ("hello ");
     ?>
 </body>
 </html>

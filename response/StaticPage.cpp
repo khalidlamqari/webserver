@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/27 12:43:01 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/27 17:59:51 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -139,18 +139,9 @@ void    Response::format_cgi_response()
     parse_headers();
 
     format_body(NULL, 0);
-    
-    std::cout << message << std::endl;
+
 }
 
-// bool is_start_line_existe(const std::string & data_out)
-// {
-//     size_t pos;
-//     data_out.find("\r\n");
-//     if (pos == std::string::npos)
-//         throw 500;
-//     data_out.find("HTTP");
-// }
 
 std::string find_header(const std::string & headers, const std::string & header_name)
 {

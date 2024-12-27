@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 16:08:35 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/21 08:16:12 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/27 18:39:24 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -46,8 +46,8 @@ class Server {
 
 /*                              Cient Management                              */
 void    handle_client_request(ClientSocket* client_info);
-void    respond_to_client(ClientSocket* client_info, SocketManager& socketManager, KqueueEventQueue & kqueueManager );
-
+void    respond_to_client(ClientSocket* client_info, KqueueEventQueue & kqueueManager );
+void create_new_request(ClientSocket* client_info, SocketManager& socketManager);
 
 
 #endif
