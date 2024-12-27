@@ -6,29 +6,30 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:37 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/25 13:58:29 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/27 10:18:18 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "Response.hpp"
-// static size_t num_file = 0;
+# include "DefaultInfo.hpp"
+
 Response::Response ( ClientSocket & clientsocket ) : clientsocket(clientsocket)
 {
-    this->_end_of_response  = false;
-    this->_tranfer_encoding = false;
-    this->is_first_message  = true;
-    this->_location         = NULL;
-    this->exit_stat         = -1;
-    this->status            = 200; 
-    this->p_is_running      = false;
-    this->_is_cgi           = false;
-    this->s_fds[0]          = -1;
-    this->s_fds[1]          = -1;
-    this->pid               = -1;
-    this->offset            = 0;
-    this->_cgi_process      = NULL;
-    this->_cgi_pair_socket  = NULL;
-    this->server_context    = NULL;
+    _end_of_response  = false;
+    _tranfer_encoding = false;
+    is_first_message  = true;
+    _location         = NULL;
+    exit_stat         = -1;
+    status            = 200; 
+    p_is_running      = false;
+    _is_cgi           = false;
+    s_fds[0]          = -1;
+    s_fds[1]          = -1;
+    pid               = -1;
+    offset            = 0;
+    _cgi_process      = NULL;
+    _cgi_pair_socket  = NULL;
+    server_context    = NULL;
 
     process_requset();
 }

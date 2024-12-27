@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/09 15:05:35 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/21 11:41:52 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/27 10:05:53 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -19,6 +19,7 @@
 
 int main(int argc, char *argv[])
 {
+    // default_info.init_pages() ;
 	// atexit(f);
 	std::string file_name;
 

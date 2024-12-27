@@ -6,15 +6,11 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/08 19:31:45 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/25 13:04:30 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/27 10:18:31 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "Response.hpp"
-# include <unistd.h>
-#include <cstdlib>
-#include <string>
-#include <stdio.h>
 
 /*
 (char *)"REDIRECT_STATUS=1",

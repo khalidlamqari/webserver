@@ -1,3 +1,7 @@
+<?php
+    header("Status: 400 OK");
+?>
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -7,8 +11,7 @@
 </head>
 <body>
     <?php
-        
-        for ($i = 0 ; $i < 100000 ; $i++)
+        for ($i = 0 ; $i < 1 ; $i++)
             echo "hello world:\n";
         echo "123";
     ?>

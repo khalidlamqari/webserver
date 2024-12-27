@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/25 13:30:36 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/27 12:42:37 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,23 +14,11 @@
 #ifndef RESPONSE_HPP
 # define RESPONSE_HPP
 
-# include "../includes/main.hpp"
-# include "DefaultInfo.hpp"
-# include <sys/stat.h>
-# include <dirent.h>
-#include <time.h>
-#include <ctime>
-#include <fstream>
-#include "../Request/Request.hpp"
-#include "../Utils/utils.hpp"
-#include "../server_setup/Socket.hpp"
-
+# include "includes/main.hpp"
 class CgiPairSocket;
 class CgiProcess;
 class Request ;
 class ClientSocket;
-
-static DefaultInfo default_info ;
 
 class Response
 {
@@ -131,7 +119,11 @@ class Response
         // cgi
         void                        read_cgi_output() ;
         void                        execute_cgi();
+        
+        
         bool                        is_cgi();
+        //
+        
         bool                        p_is_running;
 
         void                        set_exit_stat(int stat);
@@ -143,7 +135,6 @@ class Response
         std::time_t                 get_start_time();
         const std::string &         get_input_path();
         void                        set_input_path(const std::string & path);
-        void                        set_data_to_input(const std::string & data);
 
         // ADD NEW
         void                        set_path(const std::string & path);

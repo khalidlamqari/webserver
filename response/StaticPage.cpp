@@ -6,86 +6,12 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/25 15:02:20 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/27 12:43:01 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 # include "Response.hpp"
-
-
-static bool is_redirect(LocationContext * location)
-{
-    if (location && location->redirect_is_set)
-        return true;
-    return false;
-}
-
-static bool is_directory_list(const std::string & path, LocationContext * location, const ServerContext & servercontext)
-{
-    bool autoindex;
-
-    if (location)
-        autoindex = location->get_auto_index();
-    else
-        autoindex = servercontext.get_auto_index();
-    
-    if (is_dir( path ) && autoindex)
-        return true;
-    return false;
-}
-
-void open_file(const bool & tranfer_encoding, std::ifstream & page_content, const std::string & path)
-{
-    /* open file once */
-    if ( !tranfer_encoding )
-    {
-        page_content.open( path );
-        if ( ! page_content.is_open() )
-            throw 404 ;
-    }
-}
-
-void read_file(std::ifstream & page_content, char *buffer, size_t & size)
-{
-    page_content.read( buffer, (RESP_BUFF - 1)) ;
-    if ( page_content.fail() && ! page_content.eof() )
-        throw 500 ;
-    buffer[page_content.gcount()] = '\0';
-    
-    size = page_content.gcount();
-}
-
-/* in case large file eof = false and tranfer chunck by chunck */
-void check_end_of_file(std::ifstream & page_content, bool & end_of_response, bool & tranfer_encoding )
-{
-    if ( page_content.eof())
-        end_of_response = true;
-    else
-        tranfer_encoding = true;
-
-    if ( tranfer_encoding && page_content.gcount() != 0 )
-        end_of_response = false;
-}
-
-
-std::string extract_headers(const std::string & unparsed_content, size_t pos)
-{
-    return ( unparsed_content.substr(0, pos + 4) );
-}
-
-std::string extract_body(const std::string & unparsed_content, size_t pos)
-{
-    return (unparsed_content.substr(pos, RESP_BUFF));
-}
-
-void    set_connection_header(std::string & message, bool close, unsigned short & status)
-{
-    if ( close || (status >= 400 && status <= 599))
-        message += ("Connection: close\r\n");
-    else
-        message += ("Connection: keep-alive\r\n");
-}
-
+# include "DefaultInfo.hpp"
 
 void    Response::format_response()
 {
@@ -120,11 +46,8 @@ void    Response::format_response()
     }
 }
 
-
-
 void    Response::redirection_handler()
 {
-   
     std::stringstream ss;
     status = _location->get_redirection().status_code;
     std::string target = _location->get_redirection().target;
@@ -145,41 +68,9 @@ void    Response::redirection_handler()
 }
 
 
-void remove_file(const std::string & path)
-{
-    if (remove(path.c_str()) == -1 )
-        throw 403 ;
-}
-
-void remove_dir_recursive(const std::string & path)
-{
-    DIR * dir;
-    struct  dirent *file;
-
-    dir = opendir(path.c_str());
-    if (!dir)
-        throw 500;
-
-    while ((file = readdir(dir)) && file != NULL )
-    {
-        if (std::string(file->d_name) == ".." || std::string(file->d_name) == ".")
-            continue;
-
-        if ( is_file(path + "/" + file->d_name ))
-            remove_file(path + "/" + file->d_name);
-
-        else if (is_dir(path + "/" + file->d_name))
-            remove_dir_recursive(path + "/" + file->d_name);
-    }
-    if ( closedir(dir) == -1 )
-        throw 500 ;
-    remove_file(path);
-}
-
 /* TODO : delete directory and check if delete method in process request  */
 void Response::delete_file()
 {
-    std::cout << "path : " << _path_ << std::endl;
     if ( is_file(_path_) )
     {
         remove_file(_path_);
@@ -215,7 +106,7 @@ void    Response::directory_listing()
     if ( closedir(d) == -1 )
         throw 500 ;
     ls_files += "</tbody></table><hr><center><h5>webserv</h5></center><hr></body></html>" ;
-    
+
     format_start_line();
     format_headers(ls_files.length());
     message += ls_files ; /* add body content to message */
@@ -243,11 +134,37 @@ void Response::format_static_response()
 
 void    Response::format_cgi_response()
 {
-    format_start_line();
+    // format_start_line();
 
     parse_headers();
 
     format_body(NULL, 0);
+    
+    std::cout << message << std::endl;
+}
+
+// bool is_start_line_existe(const std::string & data_out)
+// {
+//     size_t pos;
+//     data_out.find("\r\n");
+//     if (pos == std::string::npos)
+//         throw 500;
+//     data_out.find("HTTP");
+// }
+
+std::string find_header(const std::string & headers, const std::string & header_name)
+{
+    size_t pos = 0;
+    size_t end = 0;
+
+    pos = headers.find(header_name);
+    if ( pos == std::string::npos)
+        return "";
+
+    end = headers.find("\r\n", pos);
+    
+
+    return (headers.substr(pos + header_name.length(), end - (pos + header_name.length())));
 }
 
 void Response::parse_headers()
@@ -261,12 +178,25 @@ void Response::parse_headers()
     if (pos == std::string::npos)
         throw 500;
 
+    std::string headers = extract_headers(data_out, pos);
+
     if ( data_out.length() - pos + 4 > RESP_BUFF )
         _tranfer_encoding = true;
 
+    std::string header = find_header(headers, "Status:");
+    if (header == "")
+        format_start_line();
+    else
+        message += "HTTP/1.1 " + header + "\r\n";
+
+
+    header = find_header(headers, "Content-type:");
+    if (header != "")
+        message += "Content-type:" + header + "\r\n";
+
     format_headers(data_out.length() - pos - 4);
 
-    message.append(extract_headers(data_out, pos));
+    // message.append(headers);
     offset += pos + 4;
 }
 
@@ -369,8 +299,7 @@ void  Response::format_headers(size_t size)
         message += "\r\n";
 
         set_connection_header(message, !clientsocket.get_request()->get_is_persistent(), status);
-        if (!_is_cgi)
-            message += ("\r\n");
+        message += "\r\n";
         is_first_message = false;
     }
 }

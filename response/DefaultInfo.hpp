@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/27 15:21:52 by klamqari          #+#    #+#             */
-/*   Updated: 2024/11/30 11:32:15 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/27 10:14:08 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -14,7 +14,7 @@
 #ifndef DEFAULTINFO_HPP
 #define DEFAULTINFO_HPP
 
-# include "../includes/main.hpp"
+# include "includes/main.hpp"
 
 
 class DefaultInfo
@@ -34,5 +34,7 @@ class DefaultInfo
         std::string  getDefaultPage( const std::string & error_message );
         
 };
+
+static DefaultInfo default_info;
 
 #endif
