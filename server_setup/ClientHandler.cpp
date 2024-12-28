@@ -6,15 +6,26 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/05 11:37:00 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/27 20:49:58 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/28 11:43:54 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
 #include "Server.hpp"
 
-
 #include <signal.h>
 #include "Socket.hpp"
+
+static void performPrimaryCheck(ClientSocket* client_info)
+{
+	if(client_info->get_request()->get_method() == "POST" && ! client_info->get_request()->isChunked() && !client_info->get_request()->ContentLengthIsSet())
+		client_info->get_request()->markAsBad(963);
+
+    if (!client_info->get_response()) // TODO :
+    {
+        client_info->set_response( new Response( *client_info) );
+    }
+    
+}
 
 void    determine_parsing_stage(ClientSocket* client_info, std::string & rcvdMsg)
 {
@@ -42,10 +53,11 @@ void    determine_parsing_stage(ClientSocket* client_info, std::string & rcvdMsg
     }
 
     // ADD NEW
-    if (!client_info->get_response())
-    {
-        client_info->set_response( new Response( *client_info) ); // TODO khalid : pass client info and remove request inside response
-    }
+    performPrimaryCheck(client_info);
+    // if (!client_info->get_response())
+    // {
+    //     client_info->set_response( new Response( *client_info) );
+    // }
 
     if (request->get_method() != "POST")
     {
@@ -67,18 +79,12 @@ void    parse_client_request(ClientSocket* client_info, std::string & rcvdMsg)
 {
     try
     {
-        // if (!request.hasParsedHeaders())
-        // {
-        //     size_t null_term_pos = rcvdMsg.find('\0');
-        //     for (size_t i = null_term_pos; i < rcvdMsg.length() ; ++i)
-        //     {
-        //         if ( rcvdMsg[i] != '\0' )
-        //             request.markAsBad(true);
-        //     }
-        // }
-
         determine_parsing_stage(client_info, rcvdMsg);
     }
+    catch(const char * e)
+	{
+		return ;
+	}
     catch(const std::exception & e)
     {
         std::cerr << e.what() << std::endl;
@@ -148,15 +154,13 @@ bool is_response_ready_to_sent(Response & response)
 
 }
 
-
-
 /* create new request and delete old request and response or delete client  */
 void create_new_request(ClientSocket* client_info, SocketManager& socketManager)
 {
     // Response *response = client_info->get_response();
     
     std::cout << "end of response " << std::endl;
-    if ( !client_info->get_request()->get_is_persistent())
+    if ( !client_info->get_request()->isPersistent())
     {
         socketManager.delete_client(client_info->get_ident());
     }
@@ -168,14 +172,19 @@ void create_new_request(ClientSocket* client_info, SocketManager& socketManager)
     }
 }
 
-static std::time_t max_time = 10; // sec
+static std::time_t max_time = 500; // sec
 
-void check_timeout(Response & response) // TODO: 
+void check_timeout(Response & response, int kq_fd) // TODO: 
 {
     if (std::time(0) - response.get_start_time() > max_time)
     {
         kill(response.get_process_id(), SIGKILL);
         response.set_status(504);
+        
+        struct kevent ev;
+        EV_SET(&ev, response.get_cgi_process()->get_ident(), EVFILT_PROC, EV_DELETE, 0, 0, (void *) response.get_cgi_process());
+        if (kevent(kq_fd, &ev, 1, NULL, 0, NULL) == -1)
+            throw std::runtime_error("kevent (DELETE) failed");
     }
 }
 
@@ -185,43 +194,36 @@ void send_response(int sock_fd, const std::string & msg)
         throw std::runtime_error("send failed");
 }
 
- 
-void    respond_to_client(ClientSocket* client_info, KqueueEventQueue & kqueueManager )
+void    respond_to_client(ClientSocket* client_info, KqueueEventQueue & kqueueManager)
 {
     Response *response = client_info->get_response();
 
-    if ( response->is_cgi() && !response->p_is_running && response->get_exit_stat() == -1 ) /* check if process not started ( to avoid creation of multi process ) */
+     /* check if process not started ( to avoid creation of multi process ) */
+    if ( response->is_cgi() && !response->p_is_running && response->get_exit_stat() == -1 )
     {
         CgiProcess * process = create_cgi_process_ident(client_info);
         CgiPairSocket * pair_soc = create_pair_sock_ident(client_info);
-        
+
         kqueueManager.register_event_in_kqueue(process, EVFILT_PROC);
-        
         kqueueManager.register_event_in_kqueue(pair_soc, EVFILT_READ);
-        
         client_info->get_response()->p_is_running = true ;
         response->set_start_time(std::time(0)); /* set start time  */
     }
     else if (is_response_ready_to_sent(*response))
     {
         std::string res = ""; // TODO : khalid
-        try{
+        try
+        {
             res = response->getResponse();
         }
         catch(int x)
         {
-            (void)x;
             return ;
         }
         send_response(client_info->get_ident(), res);
     }
     else if (response->is_cgi() && response->p_is_running && response->get_exit_stat() == -1) /* checking if process still running  */
     {
-        check_timeout(*response);
+        check_timeout(*response, kqueueManager.get_kqueue_fd());
     }
-
-    // if ( is_response_finish(*response) )
-    // {
-    //     create_new_request(client_info, socketManager);
-    // }
 }

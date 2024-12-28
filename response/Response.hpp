@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/23 23:40:57 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/27 12:42:37 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/28 10:50:32 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -24,7 +24,6 @@ class Response
 {
     private :
         const ServerContext                     * server_context ;
-        // Request                                 & request ;
         std::string                             message ;
         bool                                    _end_of_response ;
         bool                                    _tranfer_encoding ;
@@ -62,12 +61,11 @@ class Response
 
         void                                    format_static_response();
 
-
         // redirection          
         void                                    redirection_handler() ;
 
         void                                    find_match_more_location();
-            
+
         // error            
         std::string                             find_error_page( unsigned  short error ) ;
         void                                    error_response( short error ) ;

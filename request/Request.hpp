@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/11/04 17:07:06 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/22 12:29:58 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/28 10:17:48 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -23,37 +23,25 @@
 typedef struct  s_part {
 
     std::string     file_name;
-    std::string     file_content;
-    std::ofstream   file;
-    std::string     content_type;
+    std::ofstream   *file;
 	bool		    header_parsed;
 	bool		    is_complete;
     bool            is_new;
+    bool            file_opened;
 
     std::string unparsed_bytes;
 
-    s_part() {};
-    s_part( const s_part & other )
-    {
-        std::cout << "Copy called!" <<std::endl;
-        this->file_name = other.file_name;
-        this->content_type = other.content_type;
-        this->header_parsed = other.header_parsed;
-        this->is_complete = other.is_complete;
-        this->is_new = other.is_new;
-    }
+    ~s_part();
+
 } t_part;
 
 class Request {
 
     public :
 
-        size_t                              total_chunks_length;
-        
-
+        size_t                  total_body_length;
 
         bool                    first_chunk_fixed;
-
 
         /* Constructors */
         Request( void );
@@ -62,19 +50,13 @@ class Request {
         ~Request();
 
         /* Getters */
-		t_part &	get_latest_part();
-        size_t      get_total_chunks_length();
+		t_part &  	get_latest_part();
         std::string get_target();
         std::string get_query();
         std::string get_method();
         std::string get_body();
         size_t      getContentLength();
         std::string get_boundary();
-
-        // struct ClientSocket * get_ClientSocket() { return this->clientsocket ;}
-        // void set_ClientSocket(struct ClientSocket * clientsocket) { this->clientsocket = clientsocket ;}
-        const std::map<std::string, std::string> & get_headers() const ;
-
         bool    hasParsedStartLine();
         bool    hasParsedHeaders();
         bool    hasParsedBody();
@@ -89,12 +71,11 @@ class Request {
         std::string getUnparsedMsg();
         std::string get_version();
 
-        bool    hasReachedFirstPart( void );
-        bool    hasReachedLastPart( void );
-        size_t   hasAnUndoneChunk( void );
+        bool    hasReachedFirstPart( void );       
+        bool    hasReachedLastPart( void ); 
+        size_t   hasAnUndoneChunk( void ); 
 
         /* Setters */
-        void      set_total_chunks_length(size_t total_length);
 		void	set_new_part( t_part & new_part );
 
         void    set_method( const std::string & method );
@@ -119,21 +100,20 @@ class Request {
         void    markLastPartAsReached();
         void    set_parsingErrorCode( short code );
         void    storeUnparsedMsg(const std::string & msg );
-        void    markAsHasUndoneChunk( bool undone, size_t size_left );
+        void    markAsHasUndoneChunk( size_t & size_left );
 
         /* Methods */
         void    resetUnparsedMsg();
         void    setHeader( const std::string& name, const std::string& value );
 
         void    print_headrs();
-        void    print_files();
 
         void    drop_last_part();
 
         std::string    build_boundary(int type);
-        bool            get_is_persistent() { return this->is_persistent;} // 
-
         
+        const std::map<std::string, std::string> & get_headers() const;
+
     private : 
 
         std::map<std::string, std::string>  headers;
@@ -171,7 +151,6 @@ class Request {
         bool					first_part_reached; // In case of a multipart body.
         bool					last_part_reached;
         bool					has_incomplete_part;
-        bool                    undone_chunk;
         size_t                  size_left;
 };
 

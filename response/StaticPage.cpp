@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/29 12:21:32 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/27 17:59:51 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/28 10:50:02 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -52,7 +52,7 @@ void    Response::redirection_handler()
     status = _location->get_redirection().status_code;
     std::string target = _location->get_redirection().target;
     format_start_line();
-    set_connection_header(message, !clientsocket.get_request()->get_is_persistent(), status);
+    set_connection_header(message, !clientsocket.get_request()->isPersistent(), status);
 
     if ( (status > 300 && status < 304) || 307 == status || 308 == status )
     {
@@ -153,7 +153,6 @@ std::string find_header(const std::string & headers, const std::string & header_
         return "";
 
     end = headers.find("\r\n", pos);
-    
 
     return (headers.substr(pos + header_name.length(), end - (pos + header_name.length())));
 }
@@ -289,7 +288,7 @@ void  Response::format_headers(size_t size)
 
         message += "\r\n";
 
-        set_connection_header(message, !clientsocket.get_request()->get_is_persistent(), status);
+        set_connection_header(message, !clientsocket.get_request()->isPersistent(), status);
         message += "\r\n";
         is_first_message = false;
     }
@@ -334,7 +333,6 @@ void Response::format_body(char * content, size_t size)
         message.append(body);
     }
 }
-
 
 /*
     set servercontext

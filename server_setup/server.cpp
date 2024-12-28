@@ -6,7 +6,7 @@
 /*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2024/10/28 15:07:44 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/27 20:51:41 by klamqari         ###   ########.fr       */
+/*   Updated: 2024/12/28 11:50:59 by klamqari         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -64,12 +64,7 @@ void    get_exit_status(CgiProcess  & process_info)
         response->set_status(500);
 }
 
-bool is_response_finish(Response & response)
-{
-    return ( (!response.is_cgi() && response.end_of_response())
-             || (response.is_cgi() && response.get_exit_stat()
-                != -1 && response.end_of_response()) );
-}
+
 
 void    Server::start()
 {
@@ -108,8 +103,7 @@ void    Server::start()
                 ClientSocket  * client_info = (ClientSocket *) events[i].udata;
                 respond_to_client(client_info ,kqueueManager);
 
-                // if (client_info->get_response()->end_of_response())
-                if (is_response_finish(*(client_info->get_response())) )
+                if (client_info->get_response()->end_of_response() )
                 {
                     kqueueManager.switch_interest(client_info, EVFILT_WRITE, EVFILT_READ);
                     create_new_request(client_info, socketManager);
