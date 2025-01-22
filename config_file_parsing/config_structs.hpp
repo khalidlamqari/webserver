@@ -22,7 +22,7 @@ typedef struct token_info
     bool            is_sep; // This indecates if the token is a separator or not. Separators are (";" and "{" and "}")
 } token_info;
 
-// TODO : can be wrapped inside a namespace!
+
 typedef enum	e_ConfigParseError
 {
 	EMPTY,

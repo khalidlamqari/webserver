@@ -7,6 +7,13 @@ ConfigValueExtractor::ConfigValueExtractor(std::queue<token_info> & tokens) : to
 
 }
 
+token_info &	ConfigValueExtractor::front_token(const token_info & directive)
+{
+	if (tokens_queue.empty())
+		ConfigException::throwParsingError(UNTERMINATED, directive);
+	return tokens_queue.front();
+}
+
 std::string	ConfigValueExtractor::extract_single_string_value(void (ConfigValueExtractor::*validator)(const token_info &))
 {
 	std::string	value;
@@ -16,7 +23,7 @@ std::string	ConfigValueExtractor::extract_single_string_value(void (ConfigValueE
 	directive = tokens_queue.front();
 
     tokens_queue.pop();
-    token = tokens_queue.front();
+    token = front_token(directive);
 
 	if (!tokens_queue.empty() && token.is_sep)
 		ConfigException::throwParsingError(UNEXPECTED, token);
@@ -27,7 +34,7 @@ std::string	ConfigValueExtractor::extract_single_string_value(void (ConfigValueE
 		(this->*validator)(token);
 
 	tokens_queue.pop();
-	token = tokens_queue.front();
+	token = front_token(directive);
 
 	validate_directive_ending(token, directive);
 
@@ -44,7 +51,7 @@ std::vector<std::string>	ConfigValueExtractor::extract_multi_string_value(void (
 	directive = tokens_queue.front();
 
     tokens_queue.pop();
-    token = tokens_queue.front();
+    token = front_token(directive);
 
 	if (!tokens_queue.empty() && token.is_sep)
 		ConfigException::throwParsingError(UNEXPECTED, token);
@@ -56,7 +63,7 @@ std::vector<std::string>	ConfigValueExtractor::extract_multi_string_value(void (
 
 		value.push_back(token.token);
 		tokens_queue.pop();
-		token = tokens_queue.front();
+		token = front_token(directive);
 	}
 
 	validate_directive_ending(token, directive);
@@ -74,7 +81,7 @@ std::vector<unsigned short>	ConfigValueExtractor::extract_port_nums()
 	directive = tokens_queue.front();
 
     tokens_queue.pop();
-    token = tokens_queue.front();
+    token = front_token(directive);
 
 	if (!tokens_queue.empty() && token.is_sep)
 		ConfigException::throwParsingError(UNEXPECTED, token);
@@ -82,9 +89,9 @@ std::vector<unsigned short>	ConfigValueExtractor::extract_port_nums()
 	while (!tokens_queue.empty() && !token.is_sep)
 	{
 		validate_port_number(token);
-		value.push_back(std::stoi(token.token));
+		value.push_back(my_stoi(token.token));
 		tokens_queue.pop();
-		token = tokens_queue.front();
+		token = front_token(directive);
 	}
 
 	validate_directive_ending(token, directive);
@@ -102,17 +109,17 @@ size_t    ConfigValueExtractor::extract_max_body_size()
 	directive = tokens_queue.front();
 
     tokens_queue.pop();
-    token = tokens_queue.front();
+    token = front_token(directive);
 
     if (!tokens_queue.empty() && token.is_sep)
 		ConfigException::throwParsingError(UNEXPECTED, token);
 
 	validate_max_body_size(token);
 
-	size = std::stoul(token.token);
+	size = my_stoul(token.token);
 
     tokens_queue.pop();
-    token = tokens_queue.front();
+    token = front_token(directive);
 
     validate_directive_ending(token, directive);
 
@@ -129,17 +136,17 @@ t_error_page	ConfigValueExtractor::extract_error_page_info()
 	directive = tokens_queue.front();
 
     tokens_queue.pop();
-    token = tokens_queue.front();
+    token = front_token(directive);
 
 	if (!tokens_queue.empty() && token.is_sep)
 		ConfigException::throwParsingError(UNEXPECTED, token);
 	
 	validate_http_code_value(token);
 
-	info.err_code = std::stoi(token.token);
+	info.err_code = my_stoi(token.token);
 
 	tokens_queue.pop();
-    token = tokens_queue.front();
+    token = front_token(directive);
 
 	if (!tokens_queue.empty() && token.is_sep && token.token == ";")
 		ConfigException::throwParsingError(WRONG_ARGS_NUM, directive);
@@ -149,7 +156,42 @@ t_error_page	ConfigValueExtractor::extract_error_page_info()
 	info.path = token.token;
 
 	tokens_queue.pop();
-    token = tokens_queue.front();
+    token = front_token(directive);
+
+    validate_directive_ending(token, directive);
+
+	tokens_queue.pop();
+	return info;
+}
+
+std::pair<extension, execPath>	ConfigValueExtractor::extract_cgi_info()
+{
+	std::pair<extension, execPath>	info;
+	token_info						token;
+	token_info						directive;
+
+	directive = tokens_queue.front();
+
+	tokens_queue.pop();
+    token = front_token(directive);
+
+	if (!tokens_queue.empty() && token.is_sep)
+		ConfigException::throwParsingError(UNEXPECTED, token);
+
+	info.first = token.token;
+
+	tokens_queue.pop();
+    token = front_token(directive);
+
+	if (!tokens_queue.empty() && token.is_sep && token.token == ";")
+		ConfigException::throwParsingError(WRONG_ARGS_NUM, directive);
+	if (!tokens_queue.empty() && token.is_sep)
+		ConfigException::throwParsingError(UNEXPECTED, token);
+	
+	info.second = token.token;
+
+	tokens_queue.pop();
+    token = front_token(directive);
 
     validate_directive_ending(token, directive);
 
@@ -161,9 +203,12 @@ std::string	ConfigValueExtractor::extract_location()
 {
 	std::string	value;
 	token_info	token;
+	token_info	directive;
 
+	directive = tokens_queue.front();
 	tokens_queue.pop();
-	token = tokens_queue.front();
+
+	token = front_token(directive);
 
 	if (!tokens_queue.empty() && token.is_sep)
 		ConfigException::throwParsingError(UNEXPECTED, token);
@@ -181,17 +226,17 @@ t_redirection_info			ConfigValueExtractor::extract_redirection_info()
 	directive = tokens_queue.front();
 
 	tokens_queue.pop();
-	token = tokens_queue.front();
+	token = front_token(directive);
 
 	if (!tokens_queue.empty() && token.is_sep)
 		ConfigException::throwParsingError(UNEXPECTED, token);
 
 	validate_redirection_code(token);
 
-	info.status_code = std::stoi(token.token);
+	info.status_code = my_stoi(token.token);
 
 	tokens_queue.pop();
-    token = tokens_queue.front();
+    token = front_token(directive);
 
 	if (!tokens_queue.empty() && token.is_sep && token.token != ";")
 		ConfigException::throwParsingError(UNTERMINATED, directive);
@@ -201,11 +246,38 @@ t_redirection_info			ConfigValueExtractor::extract_redirection_info()
 		tokens_queue.pop();
 	}
 
-	token = tokens_queue.front();
+	token = front_token(directive);
 	validate_directive_ending(token, directive);
 
 	tokens_queue.pop();
 	return info;
+}
+
+time_t	ConfigValueExtractor::extract_time_value()
+{
+	token_info	token;
+	token_info	directive;
+	time_t		time = 0;
+
+	directive = tokens_queue.front();
+
+    tokens_queue.pop();
+    token = front_token(directive);
+
+    if (!tokens_queue.empty() && token.is_sep)
+		ConfigException::throwParsingError(UNEXPECTED, token);
+
+	validate_time_value(token);
+
+	time = my_stoul(token.token);
+
+    tokens_queue.pop();
+    token = front_token(directive);
+
+    validate_directive_ending(token, directive);
+
+	tokens_queue.pop();
+    return time;
 }
 
 void	ConfigValueExtractor::validate_directive_ending(const token_info & token, const token_info & directive)
@@ -218,7 +290,6 @@ void	ConfigValueExtractor::validate_directive_ending(const token_info & token, c
 	else
 		ConfigException::throwParsingError(WRONG_ARGS_NUM, directive);
 }
-
 
 void	ConfigValueExtractor::validate_port_number(const token_info & token)
 {
@@ -245,12 +316,6 @@ void	ConfigValueExtractor::validate_auto_indx_value(const token_info & token)
 {
 	if ((token.token != "on") && (token.token != "off"))
 		ConfigException::throwWrongValueError(AUTO_INDX_DIR, token);
-}
-
-void	ConfigValueExtractor::validate_cgi_ext_value(const token_info & token)
-{
-	if (token.token != ".php")
-		ConfigException::throwWrongValueError(CGI_EXCT_DIR, token);
 }
 
 void	ConfigValueExtractor::validate_http_code_value(const token_info & token)
@@ -281,5 +346,16 @@ void	ConfigValueExtractor::validate_method(const token_info & token)
 		&& (token.token != "HEAD"))
 	{
 		ConfigException::throwWrongValueError(ALLOWED_METHODS_DIR, token);
+	}
+}
+
+void	ConfigValueExtractor::validate_time_value(const token_info & token)
+{
+	if (!is_all_digits(token.token)
+		|| (token.token.length() > 19)
+		|| ((token.token.length() == 19) && (token.token > "9223372036854775807"))
+		|| ((token.token.length() == 1) && (token.token < "3")))
+	{
+		ConfigException::throwWrongValueError(CGI_RD_TMOUT_DIR, token);
 	}
 }

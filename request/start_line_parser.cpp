@@ -1,14 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   start_line_parser.cpp                              :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/11/06 18:06:26 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/28 10:11:36 by klamqari         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 #include "request_parse.hpp"
 
@@ -23,7 +12,7 @@ static char hex_to_char(const std::string & hex_code, Request & request)
         || (hex_chars.find(first) == std::string::npos)
         || (hex_chars.find(second) == std::string::npos))
     {
-        request.markAsBad(9);
+        request.markAsBad(400, __FILE__, __LINE__);
     }
     return (16 * hex_chars.find(first) + hex_chars.find(second));
 }
@@ -33,7 +22,7 @@ static void    check_method(Request& request, std::string& method)
     for (size_t i = 0; i < method.length(); i++)
     {
         if (method[i] < 'A' || method[i] > 'Z')
-            request.markAsBad(22);
+            request.markAsBad(400, __FILE__, __LINE__);
     }
     request.set_method(method);
 }
@@ -50,10 +39,13 @@ void    extract_target(const std::string & uri, Request & request)
         else if (i <= target_length - 3)    // Ensure '%' is followed by exactly two characters for valid hex encoding
         {
             decoded_target += hex_to_char(uri.substr(i + 1, 2), request);
+			if (static_cast<int> (decoded_target.back()) > 128)
+				request.markAsBad(400, __FILE__, __LINE__);
+
             i += 2;
         }
         else
-            request.markAsBad(10);
+            request.markAsBad(400, __FILE__, __LINE__);
     }
     request.set_target(decoded_target);
 }
@@ -61,7 +53,7 @@ void    extract_target(const std::string & uri, Request & request)
 static void check_uri(std::string & uri, Request & request)
 {
     if (uri[0] != '/')
-        request.markAsBad(11);
+        request.markAsBad(400, __FILE__, __LINE__);
 
     size_t  fragment_start_pos = uri.find('#');
     size_t      query_start_pos = uri.find('?');
@@ -81,8 +73,11 @@ static void check_uri(std::string & uri, Request & request)
 
 static void check_version(std::string& version, Request& request)
 {
+    if (version.find("HTTP/") || (version.length() <= 5) || !isdigit(version[5]))
+        request.markAsBad(400, __FILE__, __LINE__);
+
     if ((version != "HTTP/1.1") && (version != "HTTP/1.0"))
-        request.markAsBad(12);
+        request.markAsBad(505, __FILE__, __LINE__);
 
     request.set_version(version);
 }
@@ -107,12 +102,12 @@ void    parse_start_line(Request & request, const std::string & start_line)
                 check_version(token, request);
                 break ;
             default :
-                request.markAsBad(13);
+                request.markAsBad(400, __FILE__, __LINE__);
         }
         i++;
     }
     if (i != 3)
-        request.markAsBad(14);
+        request.markAsBad(400, __FILE__, __LINE__);
 
     request.markStartLineParsed(true);
 }

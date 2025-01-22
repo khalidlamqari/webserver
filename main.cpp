@@ -1,48 +1,24 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   main.cpp                                           :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/10/09 15:05:35 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/27 10:05:53 by klamqari         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 #include "webserv.hpp"
+#include <signal.h>
 
-// void f()
-// {
-// 	system("leaks webserv");
-// }
-
-int main(int argc, char *argv[])
+static bool	validate_file_name(const std::string & file_name)
 {
-    // default_info.init_pages() ;
-	// atexit(f);
-	std::string file_name;
-
-	/*  Better create a function called usageERR to show this message! */
-	if (argc != 2)
-	{
-		std::cerr << "Usage : ./webserv file.config" << std::endl;
-		return (1);
-	}
-
-	file_name = argv[1];
-	
-	if((file_name.length() <= 7) || (file_name.find(".config" ,file_name.length() - 7) == std::string::npos))
+	if ((file_name.length() <= 5) || (file_name.find(".conf" ,file_name.length() - 5) == std::string::npos))
 	{
 		std::cerr << "Wrong file extension!" << std::endl;
 		std::cerr << "Usage : ./webserv file.config" << std::endl;
-		return (1);
+		return 0;
 	}
+	return 1;
+}
 
+static int	setupAndStartWebServer(const std::string & file_name)
+{
 	try
 	{
-		HttpContext                         http_config;
-		Server                              server;
+		HttpContext	http_config;
+		Server		server;
 
 		http_config = ConfigParser::getConfig(file_name);
 		server.setup(http_config);
@@ -58,4 +34,35 @@ int main(int argc, char *argv[])
 		std::cerr << err_msg << '\n';
 		return (1);
 	}
+	catch(const std::string & err_msg)
+	{
+		std::cerr << err_msg << '\n';
+		return (1);
+	}
+	return 0;
+}
+
+int main(int argc, char *argv[])
+{
+	signal(SIGPIPE, SIG_IGN);
+
+	std::string file_name;
+
+	if (argc == 2)
+	{
+		file_name = argv[1];
+		if (!validate_file_name(file_name))
+			return 1;
+	}
+	else if (argc == 1)
+	{
+		file_name = "Configs/default.conf";
+	}
+	else
+	{
+		std::cerr << "Usage : ./webserv file.config" << std::endl;
+		return (1);
+	}
+
+	return setupAndStartWebServer(file_name);
 }

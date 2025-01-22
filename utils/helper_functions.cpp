@@ -1,15 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   helper_functions.cpp                               :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: ymafaman <ymafaman@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/10/11 21:38:05 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/03 10:27:24 by ymafaman         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
-
 
 #include "utils.hpp"
 
@@ -45,6 +33,39 @@ void	*ft_memset(void *b, int c, size_t len)
 
 void    err_throw( const char * message )
 {
-    throw (std::string("Webserv : ") + message).c_str();
+    std::string err_msg;
+    
+    err_msg += "Webserv : ";
+    err_msg += message;
+
+    throw err_msg;
 }
 
+
+bool is_all_WS( const std::string & str )
+{
+    for ( size_t i = 0; i < str.length() ; i++ )
+        if ( ! std::iswspace(str[i]) )
+            return ( false ) ;
+    return ( true ) ;
+}
+
+long    my_stoul(const std::string & str)
+{
+    std::stringstream   strm(str);
+    long                value;
+
+    strm >> value;
+
+    return value;
+}
+
+int		my_stoi(const std::string & str)
+{
+    std::stringstream   strm(str);
+    int                 value;
+
+    strm >> value;
+
+    return value;
+}

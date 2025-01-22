@@ -3,7 +3,7 @@
 
 std::string ConfigException::file_name = "";
 
-void	ConfigException::throwParsingError(const ConfigParseError & e, const token_info & token) // TODO : change the value in token_info to value
+void	ConfigException::throwParsingError(const ConfigParseError & e, const token_info  & token)
 {
 	std::ostringstream	error_info;
 
@@ -49,7 +49,7 @@ void	ConfigException::throwParsingError(const ConfigParseError & e, const token_
             error_info <<  token.line_num;
     }
 
-	throw std::invalid_argument(error_info.str()); // TODO : Better create a specific exception type
+	throw std::invalid_argument(error_info.str());
 }
 
 
@@ -90,6 +90,11 @@ void    ConfigException::throwWrongValueError(const std::string & directive, con
     else if (directive == MAX_BODY_DIR)
     {
         error_info << "webserv : value \"" + token.token + "\" must be a number between 0 and 12500000000 in " + file_name + ":";
+        error_info <<  token.line_num;
+    }
+    else if (directive == CGI_RD_TMOUT_DIR)
+    {
+        error_info << "webserv : value \"" + token.token + "\" must be a number between 3 and 9223372036854775807 in " + file_name + ":";
         error_info <<  token.line_num;
     }
 

@@ -1,14 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   DefaultInfo.cpp                                    :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/10/27 15:21:34 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/27 10:06:07 by klamqari         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 # include "DefaultInfo.hpp"
 
@@ -62,17 +51,6 @@ void DefaultInfo::init_pages(void) {
     error_pages[204] = NO_CONTENT ;
 
 }
-
-/*
-    "<!DOCTYPE html>\n"
-    "<html>\n"
-    "<head><title>504 Gateway Timeout</title></head>\n"
-    "<body>\n"
-    "<center><h1>504 Gateway Timeout</h1></center>\n"
-    "<hr><center>MyServer</center>\n"
-    "</body>\n"
-    "</html>\n";
-*/
 
 std::string  DefaultInfo::getDefaultPage( const std::string & error_message )
 {

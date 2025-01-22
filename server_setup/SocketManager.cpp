@@ -13,7 +13,7 @@ SocketManager::~SocketManager()
 
     for ( ; it != end; it++ )
     {
-        delete *it;   
+        delete *it;
     }
 }
 
@@ -24,9 +24,10 @@ bool SocketManager::already_binded(const ServerContext& server, struct in_addr h
 
     for ( ; it != end; it++)
     {
+        if ((it->get_host().s_addr == host.s_addr))
         if ((it->get_host().s_addr == host.s_addr) && (it->get_port() == port))
         {
-            it->add_server(&server); // link the server to the socket already created for this host:port // TODO : can be stored as reference
+            it->add_server(&server); // link the server to the socket already created for this host:port
             return true;
         }
     }
@@ -46,15 +47,15 @@ struct addrinfo *   SocketManager::my_get_addrinfo(const char * host)
     if ((ec = getaddrinfo(host, NULL, &hints, &res)) != 0)
     {
         if (ec == 8)
-            err_throw((std::string("Unknown host : ") + host).c_str());
-        err_throw(gai_strerror(ec));
+            std::cerr << BOLD << RED << "Unknown host \"" << host << "\"." << RESET << std::endl;
+        return NULL;
     }
     return res;
 }
 
 void    SocketManager::create_new_listener(int fd, struct addrinfo *entry, const ServerContext& server)
 {
-    ListenerSocket   new_s;
+    ListenerSocket  new_s;
 
     new_s.set_ident(fd);
     new_s.set_host(((struct sockaddr_in *)entry->ai_addr)->sin_addr);
@@ -62,11 +63,8 @@ void    SocketManager::create_new_listener(int fd, struct addrinfo *entry, const
     new_s.add_server(&server);
 
     activeListners.push_back(new_s);
-    new_s.set_ident(-1);
 
-    std::cout	<<  inet_ntoa(((struct sockaddr_in *)(entry->ai_addr))->sin_addr)
-                << ":" << ntohs(((struct sockaddr_in*)entry->ai_addr)->sin_port)
-                << std::endl;
+    new_s.set_ident(-1);
 }
 
 void    SocketManager::initialize_sockets_on_port(struct addrinfo *list, const ServerContext& server, unsigned short port)
@@ -74,12 +72,12 @@ void    SocketManager::initialize_sockets_on_port(struct addrinfo *list, const S
     int                 fd;
     const char          *cause = NULL;
     unsigned int        n_sock = 0;
-    int                 opt = 1; // TODO
+    int                 opt = 1;
     struct sockaddr_in *ip_access; 
 
     for (struct addrinfo *entry = list; entry ; entry = entry->ai_next)
     {
-        if (already_binded(server, ((struct sockaddr_in *) entry)->sin_addr, port))
+        if (already_binded(server, ((struct sockaddr_in *) entry->ai_addr)->sin_addr, htons(port)))
         {
             n_sock++;
             continue ;
@@ -91,8 +89,8 @@ void    SocketManager::initialize_sockets_on_port(struct addrinfo *list, const S
             continue ;
         }
 
-        setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(opt)); // TODO
-        // memset(ip_access, 0, sizeof(struct sockaddr_in)); // TODO
+        setsockopt(fd, SOL_SOCKET, SO_REUSEADDR, (void *)&opt, sizeof(opt));
+
         ip_access = (struct sockaddr_in *) entry->ai_addr;
         ip_access->sin_family = entry->ai_family;;
         ip_access->sin_port = htons(port);
@@ -104,49 +102,61 @@ void    SocketManager::initialize_sockets_on_port(struct addrinfo *list, const S
             continue ;
         }
 
+        if (listen(fd, 128) == -1)
+        {
+            close(fd);
+            cause = "listen";
+            continue ;
+        }
+
         create_new_listener(fd, entry, server);
 
         n_sock++;
-        if (listen(fd, 128) == -1)
-        {
-            perror("Error : ");
-            freeaddrinfo(list);
-            throw std::runtime_error("\nWebserv : listen() failed");
-        }
     }
 
     if (n_sock == 0)
-    {
-        freeaddrinfo(list);
         throw cause;
-    }
 }
 
 void    SocketManager::create_listeners(const HttpContext& http_config)
 {
     struct addrinfo *res;
+    int             valid_servers = 0;
 
     std::vector<ServerContext>::const_iterator serv_it = http_config.get_servers().begin();
     std::vector<ServerContext>::const_iterator end = http_config.get_servers().end();
 
     for ( ; serv_it != end; serv_it++)
     {
-        res = my_get_addrinfo(serv_it->get_host().c_str());
+        if ((res = my_get_addrinfo(serv_it->get_host().c_str())) == NULL)
+            continue ;
 
         {
             std::vector<unsigned short>::const_iterator ports_it = serv_it->get_ports().begin();
             std::vector<unsigned short>::const_iterator p_end = serv_it->get_ports().end();
-            
+            int                                         valid_ports = 0;
+
             for ( ; ports_it != p_end; ports_it++ )
             {
+                try {
                     initialize_sockets_on_port(res, *serv_it, *ports_it);
+                    valid_ports++;
+                }
+                catch(const char * err) {}
             }
+
+            if (valid_ports)
+                valid_servers++;
         }
 
-        freeaddrinfo(res);
+        if (res) freeaddrinfo(res);
     }
-}
 
+    if (valid_servers)
+        show_listeners_info();
+    else
+        throw "❌ ERROR: No valid server could be created!\n   Please check your configuration and try again.";
+}
 
 std::vector<ListenerSocket>&	SocketManager::get_listeners()
 {
@@ -159,8 +169,8 @@ void    SocketManager::delete_client(int fd)
     std::vector<ClientSocket *>::iterator end = activeClients.end();
 
     for ( ; it != end; it++)
-    {                                 // should kill child process if cgi request
-        if ((*it)->get_ident() == fd) // TODO : store clients in a map instead of a vector like that the key will be the client fd so i dont have to loop over all clients to delete on of them
+    {
+        if ((*it)->get_ident() == fd)
         {
             delete (*it);
             activeClients.erase(it);
@@ -169,8 +179,33 @@ void    SocketManager::delete_client(int fd)
     }
 }
 
-
 void    SocketManager::add_client(ClientSocket * new_client)
 {
     activeClients.push_back(new_client);
+}
+
+void    SocketManager::show_listeners_info( void )
+{
+
+    std::cout << BOLD << CYAN << "Created Listeners: " << RESET << std::endl;
+
+    for (std::vector<ListenerSocket>::iterator l_it = activeListners.begin(); l_it != activeListners.end(); l_it++)
+    {
+        std::cout << BOLD << CYAN << "  Server Names: " << RESET << "[";
+
+        for (std::vector<const ServerContext*>::const_iterator s_it = l_it->get_servers().begin(); s_it != l_it->get_servers().end(); s_it++)
+        {
+            if (s_it != l_it->get_servers().begin())
+                std::cout << ", ";
+            (*s_it)->show_server_names();
+        }
+
+        std::cout << "]   " << BOLD << CYAN << "Listening on: " << RESET;
+
+        std::cout	<< GREEN
+                    << inet_ntoa(l_it->get_host())
+                    << ":" << ntohs(l_it->get_port())
+                    << RESET
+                    << std::endl;
+    }
 }

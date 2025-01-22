@@ -1,14 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   LocationContext.hpp                                :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/10/09 11:31:25 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/18 11:04:13 by klamqari         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 #ifndef LOCATION_CONTEXT_HPP
 # define LOCATION_CONTEXT_HPP
@@ -16,74 +5,85 @@
 #include <vector>
 #include <string>
 #include <iostream>
+#include <map>
 
 #include "../config_file_parsing/config_structs.hpp"
 
+typedef std::string extension;
+typedef std::string execPath;
+
 class LocationContext {
 
-    public :
+	public :
 
-    /*  Flags to detect duplications in configuration file. */
+	/*  Flags to detect duplications in configuration file. */
 
-    bool     redirect_is_set;
-    bool     auto_ind_is_set;
-    bool     cgi_ext_is_set;
-    bool     methods_is_set;
-    bool     upl_dir_is_set;
-    bool     index_is_set;
-    bool     root_is_set;
+	bool	redirect_is_set;
+	bool	auto_ind_is_set;
+	bool	methods_is_set;
+	bool	upl_dir_is_set;
+	bool	index_is_set;
+	bool	root_is_set;
+	bool	alias_is_set;
+	bool	cgi_info_inherited;
 
-    /* LocationContext Constructor */
-    LocationContext( void );
-    LocationContext( const std::string & location );
+	/* LocationContext Constructor */
+	LocationContext( void );
+	LocationContext( const std::string & location, const std::map<extension, execPath>& CgiExecPaths );
 
-    /* LocationContext Destructor */
-    ~LocationContext();
+	/* LocationContext Destructor */
+	~LocationContext();
 
-    /* Setters */
+	/* Setters */
 
-    void    set_error_page      ( const t_error_page & error_info );
-    void    set_redirection     ( t_redirection_info redirection_info );
-    void    set_root_directory  ( std::string root );
-    void    set_cgi_extension   ( const std::string& extension );
-    void    set_upload_dir      ( std::string directory );
-    void    set_index           ( std::string index );
-    void    set_auto_index      ( const std::string & on_off );
-    void    set_allowed_methods ( std::vector<std::string> methods );
-    void    set_location        ( std::string location );
+	void    set_error_page      ( const t_error_page & error_info );
+	void    set_redirection     ( t_redirection_info redirection_info );
+	void    set_root_directory  ( std::string root );
+	void    set_upload_dir      ( std::string directory );
+	void    set_index           ( std::string index );
+	void    set_auto_index      ( const std::string & on_off );
+	void    set_allowed_methods ( std::vector<std::string> methods );
+	void    set_location        ( const std::string & location );
+	void    set_alias	        ( const std::string & alias );
+	void    set_cgi_info		( const std::pair<extension, execPath>& info );
 
-        /* Getters */
+		/* Getters */
 
-    const std::vector<t_error_page> &                          get_error_pages      ( void ) const;
-    const t_redirection_info &                                 get_redirection     ( void ) const;
-    const std::string&                                         get_root_directory  ( void ) const ;
-    const std::string&                                         get_cgi_extension   ( void ) const ;
-    const std::string&                                         get_upload_dir      ( void ) const ;
-    const std::string&                                         get_index           ( void ) const ;
-    const bool &                                               get_auto_index      ( void ) const ;
-    const std::vector<std::string>&                            get_allowed_methods ( void ) const ;
-    const std::string&                                         get_location        ( void ) const ;
-    // bool                                                       is_exact_location   ( void ) const ;
+	const std::vector<t_error_page> &							get_error_pages    	( void ) const;
+	const t_redirection_info &									get_redirection    	( void ) const;
+	const std::vector<std::string>&								get_allowed_methods	( void ) const ;
+	const std::string&											get_root_directory 	( void ) const ;
+	const std::string&											get_upload_dir     	( void ) const ;
+	const std::string&											get_index          	( void ) const ;
+	const std::string&											get_location       	( void ) const ;
+	const std::string&											get_alias			( void ) const ;
+	const bool &												get_auto_index     	( void ) const ;
+	const std::map<extension, execPath>&						get_cgi_info		( void ) const;
 
-    private :
+	/* Methods */
+	void                                    					clear_cgi_info( void );
 
-        std::vector<t_error_page>                               error_pages;
+	private :
 
-        t_redirection_info                                      redirection;
+		std::vector<t_error_page>                               error_pages;
 
-        std::vector<std::string>                                allowed_methods;
+		t_redirection_info                                      redirection;
 
-        std::string                                             location;
+		std::vector<std::string>                                allowed_methods;
 
-        std::string                                             root_directory;
+        std::map<extension, execPath>							CgiExecPaths;
 
-        std::string                                             cgi_extension;
+		std::string                                             location;
 
-        std::string                                             upload_dir;
+		std::string                                             root_directory;
 
-        std::string                                             index;
+		std::string                                             upload_dir;
 
-        bool                                                    auto_index;
+		std::string                                             index;
+
+		std::string												alias;	
+
+		bool                                                    auto_index;
 
 };
 

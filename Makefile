@@ -1,10 +1,22 @@
+# Colors
+GREEN = \033[32m
+YELLOW = \033[33m
+BLUE = \033[34m
+CYAN = \033[36m
+RED = \033[31m
+RESET = \033[0m
+BOLD = \033[1m
+
+#-------------------------------------------------------------------------------------------------------------------------------#
+
 SERVER_SRCS			=	server_setup/server.cpp \
+						server_setup/KqueueIdent.cpp \
 						server_setup/SocketManager.cpp  \
 						server_setup/ClientHandler.cpp \
 						server_setup/KqueueEventQueue.cpp \
 						server_setup/Socket.cpp
 
-UTILS_SRCS			=	response/DefaultInfo.cpp Utils/helper_functions.cpp Utils/split.cpp Utils/trim.cpp Utils/helpers.cpp
+UTILS_SRCS			=	response/DefaultInfo.cpp Utils/helper_functions.cpp
 
 
 CONFIG_PARSE_SRCS	=	config_file_parsing/token_name_checker.cpp \
@@ -26,7 +38,6 @@ REQUEST_SRCS		=	Request/Request.cpp \
 
 RESPONSE_SRCS		=	response/Response.cpp \
 						response/StaticPage.cpp \
-						response/ExecuteCgi.cpp \
 					 	response/response_tools.cpp
 
 #-------------------------------------------------------------------------------------------------------------------------------#
@@ -49,48 +60,64 @@ REQUEST_OBJECTS = $(REQUEST_SRCS:.cpp=.o)
 
 CPP = c++
 
-FLAGS =  -Wall -Wextra -Werror -std=c++98 -fsanitize=address
+FLAGS =  -Wall -Wextra -Werror -std=c++98 -D LOG_ENABLED=1
 
 NAME = webserv
 
 #-------------------------------------------------------------------------------------------------------------------------------#
 
 all : $(NAME)
+	@echo "$(GREEN)🎉 Build completed successfully! webserver is ready to use.$(RESET)"
 
 $(NAME) : $(CONFIG_PARSE_OBJECTS) $(UTILS_OBJECTS) $(CONTEXTS_OBJECTS) $(SERVER_OBJECTS) $(MAIN_OBJECTS) $(REQUEST_OBJECTS) $(RESPONSE_OBJS)
-		$(CPP) $(FLAGS) $(CONFIG_PARSE_OBJECTS) $(UTILS_OBJECTS) $(CONTEXTS_OBJECTS) $(SERVER_OBJECTS) $(MAIN_OBJECTS) $(REQUEST_OBJECTS) $(RESPONSE_OBJS) -o $(NAME)
+	@echo "$(BLUE)🔨 Creating the server executable...$(RESET)"
+	@$(CPP) $(FLAGS) $(CONFIG_PARSE_OBJECTS) $(UTILS_OBJECTS) $(CONTEXTS_OBJECTS) $(SERVER_OBJECTS) $(MAIN_OBJECTS) $(REQUEST_OBJECTS) $(RESPONSE_OBJS) -o $(NAME)
+	@echo "$(CYAN)🚀 Server setup is complete!$(RESET)"
 
-Utils/%.o : Utils/%.cpp
-	$(CPP) $(FLAGS) -c $< -o $@
+Utils/%.o : Utils/%.cpp Utils/utils.hpp
+	@echo "$(YELLOW)🛠️  Compiling utility files: $<$(RESET)"
+	@$(CPP) $(FLAGS) -c $< -o $@
 
-config_file_parsing/%.o : config_file_parsing/%.cpp
-	$(CPP) $(FLAGS) -c $< -o $@
+config_file_parsing/%.o : config_file_parsing/%.cpp config_file_parsing/HttpConfigParser.hpp config_file_parsing/config_structs.hpp
+	@echo "$(YELLOW)🛠️  Compiling config parser: $<$(RESET)"
+	@$(CPP) $(FLAGS) -c $< -o $@
 
-Contexts/%.o : Contexts/%.cpp
-	$(CPP) $(FLAGS) -c $< -o $@
+Contexts/%.o : Contexts/%.cpp Contexts/HttpContext.hpp Contexts/LocationContext.hpp Contexts/ServerContext.hpp
+	@echo "$(YELLOW)🛠️  Compiling context files: $<$(RESET)"
+	@$(CPP) $(FLAGS) -c $< -o $@
 
-server_setup/%.o : server_setup/%.cpp
-	$(CPP) $(FLAGS) -c $< -o $@
+server_setup/%.o : server_setup/%.cpp server_setup/KqueueEventQueue.hpp server_setup/KqueueIdent.hpp server_setup/Server.hpp server_setup/SocketManager.hpp
+	@echo "$(YELLOW)🛠️  Compiling server setup files: $<$(RESET)"
+	@$(CPP) $(FLAGS) -c $< -o $@
 
-Request/%.o : Request/%.cpp
-	$(CPP) $(FLAGS) -c $< -o $@
+Request/%.o : Request/%.cpp Request/Request.hpp Request/request_parse.hpp
+	@echo "$(YELLOW)🛠️  Compiling request handler files: $<$(RESET)"
+	@$(CPP) $(FLAGS) -c $< -o $@
 
-%.o : %.cpp
-	$(CPP) $(FLAGS) -c $< -o $@
+response/%.o : response/%.cpp response/DefaultInfo.hpp response/Response.hpp response/includes/macros.hpp response/includes/main.hpp
+	@echo "$(YELLOW)🛠️  Compiling response handler files: $<$(RESET)"
+	@$(CPP) $(FLAGS) -c $< -o $@
+
+%.o : %.cpp webserv.hpp
+	@echo "$(YELLOW)🛠️  Compiling main web server file: $<$(RESET)"
+	@$(CPP) $(FLAGS) -c $< -o $@
 
 #-------------------------------------------------------------------------------------------------------------------------------#
 
 clean :
-	rm -rf $(CONTEXTS_OBJECTS)
-	rm -rf $(CONFIG_PARSE_OBJECTS)
-	rm -rf $(UTILS_OBJECTS)
-	rm -rf $(SERVER_OBJECTS)
-	rm -rf $(MAIN_OBJECTS)
-	rm -rf $(REQUEST_OBJECTS)
-	rm -rf $(RESPONSE_OBJS)
+	@echo "$(RED)🧹 Cleaning up object files...$(RESET)"
+	@rm -rf $(CONTEXTS_OBJECTS)
+	@rm -rf $(CONFIG_PARSE_OBJECTS)
+	@rm -rf $(UTILS_OBJECTS)
+	@rm -rf $(SERVER_OBJECTS)
+	@rm -rf $(MAIN_OBJECTS)
+	@rm -rf $(REQUEST_OBJECTS)
+	@rm -rf $(RESPONSE_OBJS)
+	@echo "$(GREEN)✅ Object files removed.$(RESET)"
 
 fclean : clean
-	rm -rf $(NAME)
+	@rm -rf $(NAME)
+	@echo "$(GREEN)✅ All build objects and executable removed.$(RESET)"
 
 re : fclean all
 

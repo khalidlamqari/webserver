@@ -1,14 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   HttpContext.cpp                                    :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: ymafaman <ymafaman@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/10/09 13:01:34 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/11/30 05:29:17 by ymafaman         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 #include "HttpContext.hpp"
 
@@ -16,10 +5,11 @@ HttpContext::HttpContext( void )
 {
     auto_index = false;
     max_body_size = 1000000;
+    cgi_read_timeout = 0;
 
-    cgi_ext_is_set = false;
     auto_ind_is_set = false;
     max_body_is_set = false;
+    cgi_read_timeout_is_set = false;
 }
 
 HttpContext::~HttpContext()
@@ -52,14 +42,14 @@ void    HttpContext::set_auto_index(const std::string & on_off)
         this->auto_index = false;
 }
 
-void    HttpContext::set_cgi_extension(const std::string& extension)
+void    HttpContext::set_cgi_info(const std::pair<extension, execPath>& info)
 {
-    this->cgi_extension = extension;
+    this->CgiExecPaths[info.first] = info.second;
 }
 
 void   HttpContext::set_new_server( void )
 {
-    ServerContext   new_server;
+    ServerContext   new_server(CgiExecPaths);
 
     std::vector<t_error_page>::iterator it;
 
@@ -67,12 +57,13 @@ void   HttpContext::set_new_server( void )
     for (it = this->error_pages.begin(); it < this->error_pages.end(); it++)
         new_server.set_error_page(*it);
 
-    new_server.set_cgi_extension(this->cgi_extension);
-
     if (this->auto_index)
         new_server.set_auto_index("on");
     else
         new_server.set_auto_index("off");
+    
+    new_server.set_max_body_size(max_body_size);
+    new_server.set_cgi_rd_tm_out(cgi_read_timeout);
     
     /* Pushing the newly created server to the servers vector */
     this->servers.push_back(new_server);
@@ -83,6 +74,10 @@ void    HttpContext::set_max_body_size( size_t limit )
     this->max_body_size = limit;
 }
 
+void	HttpContext::set_cgi_rd_tm_out( time_t max_time )
+{
+    this->cgi_read_timeout = max_time;
+}
 
 ServerContext&  HttpContext::get_latest_server( void )
 {
@@ -99,12 +94,17 @@ const std::vector<t_error_page>& HttpContext::get_error_pages( void ) const
     return this->error_pages;
 }
 
-const std::string&  HttpContext::get_cgi_extension( void ) const
+const std::map<extension, execPath>&  HttpContext::get_cgi_info( void ) const
 {
-    return this->cgi_extension;
+    return this->CgiExecPaths;
 }
 
 const bool& HttpContext::get_auto_index( void ) const
 {
     return this->auto_index;
+}
+
+const time_t&   HttpContext::get_cgi_read_time_out( void ) const
+{
+    return this->cgi_read_timeout;
 }

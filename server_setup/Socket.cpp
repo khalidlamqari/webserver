@@ -1,7 +1,7 @@
 
 
 
-#include "Socket.hpp"
+#include "KqueueIdent.hpp"
 
 /* Socket methods definition */
 
@@ -103,18 +103,15 @@ ListenerSocket& ListenerSocket::get_instance( void )
 
 /* ClientSocket methods definition */
 
-ClientSocket::ClientSocket() : _request(NULL)
+ClientSocket::ClientSocket() : _request(NULL), _response(NULL)
 {
     this->set_type(CLIENT_SOCK);
-    // ADD NEW
-    this->_response = NULL;
 }
 
 ClientSocket::~ClientSocket()
 {
     if (this->_request)
         delete this->_request;
-    // ADD NEW
     if (this->_response)
         delete this->_response;
 }
@@ -122,7 +119,7 @@ ClientSocket::~ClientSocket()
 void    ClientSocket::set_ident( const int & id )
 {
     this->_ident_is_set = true;
-    this->_ident = id;
+    this->_ident = id;  
 }
 
 void    ClientSocket::set_type( const t_ident_type & type )
@@ -216,103 +213,3 @@ void    ClientSocket::delete_response( void )
     this->_response = NULL;
 }
 
-/* --------------- Cgi Process -------------- */
-
-CgiProcess::CgiProcess()
-{
-    this->_ident = -1;
-    this->_type = CHILD_ID;
-    this->response = NULL;
-}
-
-CgiProcess::CgiProcess(const int & id)
-{
-    this->_type = CHILD_ID;
-    this->_ident = id;
-    this->response = NULL;
-}
-
-CgiProcess::~CgiProcess()
-{
-}
-
-void			CgiProcess::set_ident( const int & id )
-{
-    this->_ident = id;
-}
-
-void			CgiProcess::set_type( const t_ident_type & type )
-{
-    this->_type = type;
-}
-
-void			CgiProcess::set_response( Response * response )
-{
-    this->response = response;
-}
-
-int				CgiProcess::get_ident( void )
-{
-    return (this->_ident);
-}
-
-t_ident_type	CgiProcess::get_type( void )
-{
-    return ( this->_type );
-}
-
-Response*		CgiProcess::get_response( void )
-{
-    return (this->response);
-}
-
-
-/* --------------- Cgi Pair Socket --------------- */
-
-CgiPairSocket::CgiPairSocket()
-{
-    this->_ident = -1;
-    this->_type = CGI_PAIR_SOCK;
-    this->response = NULL;
-}
-
-CgiPairSocket::CgiPairSocket(const int & id)
-{
-    this->_type = CGI_PAIR_SOCK;
-    this->_ident = id;
-    this->response = NULL;
-}
-
-CgiPairSocket::~CgiPairSocket()
-{
-}
-
-void			CgiPairSocket::set_ident( const int & id )
-{
-    this->_ident = id;
-}
-
-void			CgiPairSocket::set_type( const t_ident_type & type )
-{
-    this->_type = type;
-}
-
-void			CgiPairSocket::set_response( Response * response )
-{
-    this->response = response;
-}
-
-int				CgiPairSocket::get_ident( void )
-{
-    return ( this->_ident );
-}
-
-t_ident_type	CgiPairSocket::get_type( void )
-{
-    return ( this->_type );
-}
-
-Response*		CgiPairSocket::get_response( void )
-{
-    return (this->response);
-}

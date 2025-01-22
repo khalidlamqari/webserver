@@ -30,6 +30,8 @@ class SocketManager
 		void			delete_client(int fd);
 		void			add_client(ClientSocket * new_client);
 
+		void			show_listeners_info( void );
+
 		std::vector<ListenerSocket>&	get_listeners();
 
 	private :

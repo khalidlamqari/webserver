@@ -20,6 +20,7 @@
 #define	CGI_EXCT_DIR		"cgi_extention"
 #define	AUTO_INDX_DIR		"autoindex"
 #define	ERR_PAGE_DIR		"error_page"
+#define	CGI_RD_TMOUT_DIR	"cgi_read_timeout"
 
 // Server context Specefic
 #define	LOCATION_DIR		"location"
@@ -34,6 +35,7 @@
 
 // Location context Specefic
 #define REDIRECTION_DIR		"return"
+#define	ALIAS_DIR			"alias"
 
 /////////////////////
 
@@ -44,22 +46,29 @@ class ConfigValueExtractor {
 		/* Constructors */
 		ConfigValueExtractor(std::queue<token_info> & tokens_queue);
 
-		std::string					extract_single_string_value(void (ConfigValueExtractor::*validator)(const token_info &));
-		std::vector<std::string>	extract_multi_string_value(void (ConfigValueExtractor::*validator)(const token_info &));
-		std::vector<unsigned short>	extract_port_nums();
-		size_t						extract_max_body_size();
-		t_error_page				extract_error_page_info();
-		std::string					extract_location();
-		t_redirection_info			extract_redirection_info();
+		/* Asserts the queue is not empty and Retruns the front token in the queue. */
+		token_info &					front_token(const token_info & directive);
 
+		/* Value Extractors */
+		std::string						extract_single_string_value(void (ConfigValueExtractor::*validator)(const token_info &));
+		std::vector<std::string>		extract_multi_string_value(void (ConfigValueExtractor::*validator)(const token_info &));
+		std::vector<unsigned short>		extract_port_nums();
+		size_t							extract_max_body_size();
+		t_error_page					extract_error_page_info();
+		std::string						extract_location();
+		t_redirection_info				extract_redirection_info();
+		std::pair<extension, execPath>	extract_cgi_info();
+		time_t							extract_time_value();
+
+		/* Value Validators */
 		void						validate_directive_ending(const token_info & token, const token_info & directive);
 		void						validate_port_number(const token_info & token);
 		void						validate_max_body_size(const token_info & token);
 		void						validate_auto_indx_value(const token_info & token);
-		void						validate_cgi_ext_value(const token_info & token);
 		void						validate_http_code_value(const token_info & token);
 		void						validate_method(const token_info & token);
 		void						validate_redirection_code(const token_info & token);
+		void						validate_time_value(const token_info & token);
 
 	private :
 
@@ -80,7 +89,7 @@ class ConfigParser
 		void				validate_config();
 
 		void				storeHttpDirs();
-		void				storeServDirs();
+		void				storeServDirs(bool & location_dir_found);	// Tracks if a "location" directive is found to restrict other directives afterward.
 		void				storelocationDirs();
 
 		void				find_bad_token_type(token_info & token);

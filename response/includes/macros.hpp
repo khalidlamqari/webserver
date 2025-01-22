@@ -1,14 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   macros.hpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/10/27 17:34:09 by klamqari          #+#    #+#             */
-/*   Updated: 2024/12/25 10:57:23 by klamqari         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 # pragma once
 
@@ -51,9 +40,7 @@
 #define PAYLOAD_TOO_LARGE "413 Payload Too Large"
 #define URI_TOO_LONG "414 URI Too Long"
 #define REQUEST_HEADER_FIELDS_TOO_LARGE "431 Request Header Fields Too Large"
-
 #define MISDIRECTED_REQUEST "421 Misdirected Request"
-
 
 #define PRECONDITION_REQUIRED "428 Precondition Required"
 

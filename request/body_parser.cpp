@@ -1,14 +1,3 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   body_parser.cpp                                    :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/11/08 16:59:44 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/28 10:08:57 by klamqari         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 #include "request_parse.hpp"
 #include <unistd.h>
@@ -23,12 +12,12 @@ static char hex_to_char(const std::string & hex_code, Request & request) // ok
     if ((first == '0' && second == '0')
         || (hex_chars.find(first) == std::string::npos)
         || (hex_chars.find(second) == std::string::npos)) {
-        request.markAsBad(9);
+        request.markAsBad(400, __FILE__, __LINE__);
     }
 
 	value = 16 * hex_chars.find(first) + hex_chars.find(second);
 	if (value > 127)
-		request.markAsBad(9);
+		request.markAsBad(400, __FILE__, __LINE__);
     return (value);
 }
 
@@ -63,7 +52,7 @@ static void trim_white_spaces(Request & request, std::string & header_value, con
             i--;
         }
 		else if (forbidenWS.find(header_value[i]) != std::string::npos)
-			request.markAsBad(11);
+			request.markAsBad(400, __FILE__, __LINE__);
     }
 
 	for (size_t i = header_value.length(); i > 0 && isspace(header_value[i]); i--)
@@ -74,7 +63,7 @@ static void trim_white_spaces(Request & request, std::string & header_value, con
             i++;
         }
 		else if (forbidenWS.find(header_value[i]))
-			request.markAsBad(2);
+			request.markAsBad(400, __FILE__, __LINE__);
     }
 }
 
@@ -134,8 +123,6 @@ static std::string	validate_file_name(Request & request, const std::string & val
 	std::string                 file_name;
     size_t                      value_length = value.length();
 
-	// TODO : MIGHT HAVE TO CHECK THE LENGTH AS WELL!
-
     for (size_t i = 1; i < value_length - 1; i++)
     {
 		if (value[i] == '/')
@@ -148,7 +135,7 @@ static std::string	validate_file_name(Request & request, const std::string & val
             i += 2;
         }
         else
-            request.markAsBad(10);
+            request.markAsBad(400, __FILE__, __LINE__);
     }
     return file_name;
 }
@@ -170,36 +157,37 @@ static void validate_header_value(Request & request, std::string & field_value, 
 			if ((param.length() >= 7) && (param[5] == '"') && (param.back() == '"'))
 				name_param_found = true;
 			else
-				request.markAsBad(931);
+				request.markAsBad(400, __FILE__, __LINE__);
 		}
 		if (param.find("filename=") == 0)
 		{
-			if ((param.length() > 11) && (param[9] == '"') && (param.back() == '"'))
+			if ((param.length() >= 11) && (param[9] == '"') && (param.back() == '"'))
 				file_name = validate_file_name(request, param.substr(9));
 			else
-				request.markAsBad(932);
+			{
+				request.markAsBad(400, __FILE__, __LINE__);
+			}
 		}
 		i++;
 	}
 
 	if (!file_name.empty() && !name_param_found)
-		request.markAsBad(933);
+		request.markAsBad(400, __FILE__, __LINE__);
 }
 
 static void	check_part_header(Request & request, std::string & header, t_part & part) // ok
 {
-	std::cout << header << std::endl;
 	std::string field_name;
     std::string field_value;
     size_t      colon_pos;
 
     colon_pos = header.find(':');
     if (colon_pos == std::string::npos)
-        request.markAsBad(6);
+        request.markAsBad(400, __FILE__, __LINE__);
 
     field_name = header.substr(0, colon_pos);
     if (field_name.empty() || contain_unallowed_char(field_name))
-        request.markAsBad(7);
+        request.markAsBad(400, __FILE__, __LINE__);
 
     normalize_header_name(field_name);
 
@@ -211,10 +199,16 @@ static void	check_part_header(Request & request, std::string & header, t_part & 
 
 	if (!part.file_name.empty() && !part.file_opened)
 	{
-		part.file = new std::ofstream(part.file_name, std::ios::out | std::ios::trunc | std::ios::binary);
+		try {
+			part.file = new std::ofstream(request.upload_dir + "/" + part.file_name, std::ios::out | std::ios::trunc | std::ios::binary);
+		}
+		catch(const std::exception& e) {
+			request.markAsBad(500, __FILE__, __LINE__);
+		}
 
-		if (!part.file || !part.file->is_open())
-			request.markAsBad(500);
+		if (!part.file || !part.file->is_open()) {
+			request.markAsBad(500, __FILE__, __LINE__);
+		}
 		part.file_opened = true;
 	}
 }
@@ -235,7 +229,7 @@ static void	extract_part_headers(Request & request, t_part & part, std::string &
 			return ;
 		}
 		if (header.find(request.get_boundary()) != std::string::npos)
-			request.markAsBad(776);
+			request.markAsBad(400, __FILE__, __LINE__);
 		check_part_header(request, header, part);
 		content.erase(0, crlf_pos + 2);
 		crlf_pos = content.find(CRLF);
@@ -272,7 +266,7 @@ static void	extract_part_content(Request & request, t_part & part, std::string &
 		valid_data.append(content.substr(0, crlf_pos));
 
 		if (valid_data.find(request.get_boundary(), valid_length) != std::string::npos)
-			request.markAsBad(66);
+			request.markAsBad(400, __FILE__, __LINE__);
 
 		valid_length += valid_data.length();
 
@@ -323,7 +317,7 @@ static void	extract_part_content(Request & request, t_part & part, std::string &
 	}
 
 	if (content.find(request.get_boundary()) != std::string::npos)
-		request.markAsBad(66);
+		request.markAsBad(400, __FILE__, __LINE__);
 
 	valid_data.append(content);
 	content.clear();
@@ -369,12 +363,14 @@ static void	extract_part(Request & request, std::string & content) // ok
 	extract_part_content(request, latest_part, content);
 
 	if (latest_part.is_complete && latest_part.file_name.empty())
+	{	
 		request.drop_last_part();
+	}
 }
 
 static void	process_chunck(Request & request, std::string & chunk_content)
 {
-	if (request.isMultipart()) // TODO : && the request target is not CGI
+	if (request.isMultipart() && !request.is_cgi_request && !request.upload_dir.empty())
 	{
 		if (!request.hasReachedFirstPart())
 		{
@@ -399,8 +395,12 @@ static void	process_chunck(Request & request, std::string & chunk_content)
 		else
 			chunk_content.clear();
 	}
-	else
-		chunk_content.clear();
+	else if (request.is_cgi_request)
+	{
+		request.cgi_content_file << chunk_content;
+	}
+
+	chunk_content.clear();
 }
 
 size_t	hex_to_size_t(Request & request, const std::string & chunk_size) // ok
@@ -410,19 +410,19 @@ size_t	hex_to_size_t(Request & request, const std::string & chunk_size) // ok
 
     if (chunk_size[0] == '0' && chunk_size.length() != 1)
     {
-        request.markAsBad(221);
+        request.markAsBad(400, __FILE__, __LINE__);
     }
 
     if ((chunk_size.length() > 16) || (chunk_size.length() == 16 && chunk_size > "FFFFFFFFFFFFFFFF"))
     {
-        request.markAsBad(222);
+        request.markAsBad(400, __FILE__, __LINE__);
     }
 
     for (size_t i = 0; i < chunk_size.length(); i++)
     {
         if (valid_hex_chars.find(chunk_size[i]) == std::string::npos)
         {
-            request.markAsBad(223);
+            request.markAsBad(400, __FILE__, __LINE__);
         }
         else
             size += (size_t) (valid_hex_chars.find(std::toupper(chunk_size[i])) * pow(16, (chunk_size.length() - i - 1)));
@@ -446,17 +446,17 @@ static std::string	extract_chunk_length(Request & request, std::string & msg) //
 	if (crlf_1_pos != 0)
 	{
 		if ((crlf_1_pos != std::string::npos) || (msg.length() >= 2))
-			request.markAsBad(499);
+			request.markAsBad(400, __FILE__, __LINE__);
 	}
 
 	crlf_2_pos = msg.find(CRLF, 2);
 	if (crlf_2_pos == std::string::npos)
 	{
 		if (msg.length() >= 20)				// CRLF FFFFFFFFFFFFFFFF CRLF
-			request.markAsBad(82);
+			request.markAsBad(400, __FILE__, __LINE__);
 	}
 	else if (crlf_2_pos == 2)
-		request.markAsBad(888);
+		request.markAsBad(400, __FILE__, __LINE__);
 
 	if (crlf_1_pos == std::string::npos || crlf_2_pos == std::string::npos)
 	{
@@ -488,7 +488,7 @@ static size_t	find_chunk_length(Request & request, std::string & msg) // ok
 	chunk_length = hex_to_size_t(request, length);
 
 	request.total_body_length  += chunk_length;
-	// TODO : compare it max body size! and compare the content length after reading headers.
+
 	if (!chunk_length)
 		request.markBodyParsed(true);
 
@@ -532,6 +532,9 @@ std::string	find_chunk_content(Request & request, std::string & msg) // ok
 	if (!request.isChunked())
 		request.total_body_length += chunk_content.length();
 
+	if (request.total_body_length > request.max_body_size)
+		request.markAsBad(413, __FILE__, __LINE__);
+
 	return chunk_content;
 }
 
@@ -551,6 +554,8 @@ void    parse_body(Request & request, std::string & msg)
 
 	if (request.hasParsedBody())
 	{
+		if (request.cgi_content_file.is_open())
+			request.cgi_content_file.close();
 		request.markAsReady(true);
 	}
 }

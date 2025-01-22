@@ -256,13 +256,15 @@ token_info	ConfigTokenizer::normalize_token(std::string & _token)
 			escaped = false;
 	}
 
+	if (quoted && (_token.length() == 1) && _token[0] == _quote)
+		_token.erase(0, 1);
+
 	info.token = _token;
 
 	if (is_possible_sep && (_token == ";" || _token == "{" || _token == "}"))
 		info.is_sep = true;
 	else
 		info.is_sep = false;
-	
 	return info;
 }
 

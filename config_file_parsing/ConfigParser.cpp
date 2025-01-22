@@ -43,6 +43,11 @@ HttpContext	ConfigParser::getConfig(const std::string & file_name)
 	// Setting the file_name attribute for the ConfigException class.
 	ConfigException::file_name = file_name;
 
+	token_info ytt;
+
+	if (tokens.empty())
+		ConfigException::throwParsingError(EMPTY, ytt);
+
 	validate_tokens_queue(tokens);
 
 	ConfigParser	parser(tokens);
@@ -76,8 +81,11 @@ void    ConfigParser::validate_tokens_queue(const std::queue<token_info> & token
 
 void	ConfigParser::storeConfig(const std::string & context)
 {
-	if (tokens_queue.front().token != "{")
+	if (tokens_queue.empty() || tokens_queue.front().token != "{")
 		ConfigException::throwParsingError(NO_OPENING, tokens_queue.front());
+
+	static bool	location_dir_found;
+
 
 	tokens_queue.pop();
 
@@ -87,9 +95,12 @@ void	ConfigParser::storeConfig(const std::string & context)
 			break ;
 
 		if (context == "http")
+		{
+			location_dir_found = false;
 			storeHttpDirs();
+		}
 		else if (context == "server")
-			storeServDirs();
+			storeServDirs(location_dir_found);
 		else if (context == "location")
 			storelocationDirs();
 	}
@@ -120,6 +131,8 @@ void	ConfigParser::find_bad_token_type(token_info & token)
 
 void	ConfigParser::storeHttpDirs()
 {
+	static bool	server_dir_found;
+
 	token_info	token = tokens_queue.front();
 
 	if (!is_http_ctx_dir(token.token))
@@ -127,9 +140,13 @@ void	ConfigParser::storeHttpDirs()
 
 	if (token.token == SERVER_DIR)
 	{
+		server_dir_found = true;
 		setup_new_server();
 		return storeConfig("server");
 	}
+
+	if (server_dir_found)
+		ConfigException::throwParsingError(UNEXPECTED, token);
 
 	if (is_duplicated_http_dir(token.token))
 		ConfigException::throwParsingError(DUPLICATION, token);
@@ -142,10 +159,8 @@ void	ConfigParser::storeHttpDirs()
 	}
 	else if (token.token == CGI_EXCT_DIR)
 	{
-		std::string	value = extractor.extract_single_string_value(&ConfigValueExtractor::validate_cgi_ext_value);
-		http_config.set_cgi_extension(value);
-		http_config.cgi_ext_is_set = true;
-
+		std::pair<extension, execPath>	value = extractor.extract_cgi_info();
+		http_config.set_cgi_info(value);
 	}
 	else if (token.token == MAX_BODY_DIR)
 	{
@@ -158,20 +173,30 @@ void	ConfigParser::storeHttpDirs()
 		t_error_page	value = extractor.extract_error_page_info();
 		http_config.set_error_page(value);
 	}
+	else if (token.token == CGI_RD_TMOUT_DIR)
+	{
+		time_t	value = extractor.extract_time_value();
+		http_config.set_cgi_rd_tm_out(value);
+		http_config.cgi_read_timeout_is_set = true;
+	}
 }
 
-void	ConfigParser::storeServDirs()
+void	ConfigParser::storeServDirs(bool & location_dir_found)
 {
-	token_info		token = tokens_queue.front();
+	token_info	token = tokens_queue.front();
 
 	if (!is_server_ctx_dir(token.token))
 		find_bad_token_type(token);
 
 	if (token.token == LOCATION_DIR)
 	{
+		location_dir_found = true;
 		setup_new_location();
 		return storeConfig("location");
 	}
+
+	if (location_dir_found)
+		ConfigException::throwParsingError(UNEXPECTED, token);
 
 	ServerContext&	latest_server = http_config.get_latest_server();
 
@@ -188,12 +213,6 @@ void	ConfigParser::storeServDirs()
 	{
 		t_error_page	value = extractor.extract_error_page_info();
 		latest_server.set_error_page(value);
-	}
-	else if (token.token == CGI_EXCT_DIR)
-	{
-		std::string	value = extractor.extract_single_string_value(&ConfigValueExtractor::validate_cgi_ext_value);
-		latest_server.set_cgi_extension(value);
-		latest_server.cgi_ext_is_set = true;
 	}
 	else if (token.token == LISTEN_DIR)
 	{
@@ -237,6 +256,17 @@ void	ConfigParser::storeServDirs()
 		latest_server.set_host(value);
 		latest_server.host_is_set = true;
 	}
+	else if (token.token == CGI_EXCT_DIR)
+	{
+		std::pair<extension, execPath>	value = extractor.extract_cgi_info();
+		latest_server.set_cgi_info(value);
+	}
+	else if (token.token == CGI_RD_TMOUT_DIR)
+	{
+		time_t	value = extractor.extract_time_value();
+		latest_server.set_cgi_rd_tm_out(value);
+		latest_server.cgi_read_timeout_is_set = true;
+	}
 }
 
 void	ConfigParser::storelocationDirs()
@@ -256,12 +286,6 @@ void	ConfigParser::storelocationDirs()
 		std::string	value = extractor.extract_single_string_value(&ConfigValueExtractor::validate_auto_indx_value);
 		latest_location.set_auto_index(value);
 		latest_location.auto_ind_is_set = true;
-	}
-	else if (token.token == CGI_EXCT_DIR)
-	{
-		std::string	value = extractor.extract_single_string_value(&ConfigValueExtractor::validate_cgi_ext_value);
-		latest_location.set_cgi_extension(value);
-		latest_location.cgi_ext_is_set = true;
 	}
 	else if (token.token == ERR_PAGE_DIR)
 	{
@@ -298,19 +322,28 @@ void	ConfigParser::storelocationDirs()
 		latest_location.set_redirection(value);
 		latest_location.redirect_is_set = true;
 	}
+	else if (token.token == ALIAS_DIR)
+	{
+		std::string	value = extractor.extract_single_string_value(NULL);
+		latest_location.set_alias(value);
+		latest_location.alias_is_set = true;
+	}
+	else if (token.token == CGI_EXCT_DIR)
+	{
+		std::pair<extension, execPath>	value = extractor.extract_cgi_info();
+		latest_location.set_cgi_info(value);
+	}
 }
 
 bool	ConfigParser::is_duplicated_http_dir(const std::string & directive)
 {
 	return (((directive == AUTO_INDX_DIR) && http_config.auto_ind_is_set)
-			|| ((directive == CGI_EXCT_DIR) && http_config.cgi_ext_is_set)
 			|| ((directive == MAX_BODY_DIR) && http_config.max_body_is_set));
 }
 
 bool	ConfigParser::is_duplicated_serv_dir(const std::string & directive, const ServerContext & serv)
 {
 	return (((directive == AUTO_INDX_DIR) && serv.auto_ind_is_set)
-			|| ((directive == CGI_EXCT_DIR) && serv.cgi_ext_is_set)
 			|| ((directive == HOST_DIR) && serv.host_is_set)
 			|| ((directive == ROOT_DIR) && serv.root_is_set)
 			|| ((directive == LISTEN_DIR) && serv.port_is_set)
@@ -323,7 +356,6 @@ bool	ConfigParser::is_duplicated_serv_dir(const std::string & directive, const S
 bool	ConfigParser::is_duplicate_location_dir(const std::string & directive, const LocationContext & location)
 {
 	return (((directive == AUTO_INDX_DIR) && location.auto_ind_is_set)
-			|| ((directive == CGI_EXCT_DIR) && location.cgi_ext_is_set)
 			|| ((directive == ROOT_DIR) && location.root_is_set)
 			|| ((directive == INDEX_DIR) && location.index_is_set)
 			|| ((directive == UPLOAD_DIR) && location.upl_dir_is_set)

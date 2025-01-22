@@ -1,16 +1,17 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   headers_parser.cpp                                 :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/11/06 19:05:24 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/28 10:09:54 by klamqari         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 #include "request_parse.hpp"
+
+static long    my_stoul(Request & request ,const std::string & str)
+{
+	std::stringstream   strm(str);
+    long                value;
+
+    strm >> value;
+	if (strm.fail())
+		request.markAsBad(400, __FILE__, __LINE__);
+
+    return value;
+}
 
 static void trim_white_spaces(Request & request, std::string & header_value, const std::string & allowedWS, const std::string & forbidenWS)
 {
@@ -22,7 +23,7 @@ static void trim_white_spaces(Request & request, std::string & header_value, con
 			i--;
 		}
 		else if (forbidenWS.find(header_value[i]) != std::string::npos)
-			request.markAsBad(11);
+			request.markAsBad(400, __FILE__, __LINE__);
 	}
 
 	for (size_t i = header_value.length(); i > 0 && isspace(header_value[i]); i--)
@@ -33,7 +34,7 @@ static void trim_white_spaces(Request & request, std::string & header_value, con
 			i++;
 		}
 		else if (forbidenWS.find(header_value[i]))
-			request.markAsBad(2);
+			request.markAsBad(400, __FILE__, __LINE__);
 	}
 }
 
@@ -50,7 +51,7 @@ static bool contain_white_space(std::string token)
 static void	validate_host(Request & request, std::string & host_value)
 {
 	if (request.hostIsSet())
-		request.markAsBad(0);
+		request.markAsBad(400, __FILE__, __LINE__);
 
 	trim_white_spaces(request, host_value, " ", "\r\n\f\t\b\v");
 
@@ -60,7 +61,7 @@ static void	validate_host(Request & request, std::string & host_value)
 		host_value.erase(colon_pos);
 
 	if (host_value.empty() || contain_white_space(host_value))
-		request.markAsBad(3);
+		request.markAsBad(400, __FILE__, __LINE__);
 
 	request.setHeader("HOST", host_value);
 	request.markHostAsSet();
@@ -105,22 +106,13 @@ static void validate_connection(Request & request, std::string & field_value)
 static void validate_content_length(Request & request, std::string & field_value)
 {
 	for (size_t i = 0; i < field_value.length(); i++)
-	{
 		if (!isdigit(field_value[i]))
-			request.markAsBad(99);
-	}
+			request.markAsBad(400, __FILE__, __LINE__);
 
-	try
-	{
-		request.set_content_length(std::stoul(field_value));
-	}
-	catch(const std::exception& e)
-	{
-		request.markAsBad(100);
-	}
+	request.set_content_length(my_stoul(request, field_value));
 }
 
-static bool is_multipart(std::string & type) // TODO : check if all multipart types are important!
+static bool is_multipart(std::string & type)
 {
 	return (    type == "multipart/mixed" 
 			||  type == "multipart/related" 
@@ -175,7 +167,7 @@ static void validate_content_type(Request & request, std::string & field_value)
 		{
 			boundary = get_boundary(token);
 			if (boundary.empty())
-				return request.markAsBad(101);
+				return request.markAsBad(400, __FILE__, __LINE__);
 
 			request.markAsMultipart();
 			request.set_boundary(boundary);
@@ -183,7 +175,7 @@ static void validate_content_type(Request & request, std::string & field_value)
 		}
 		i++;
 	}
-	request.markAsBad(88); // Mark the request as invalid because the Content-Type is 'multipart', but the required 'boundary' parameter is missing.
+	request.markAsBad(400, __FILE__, __LINE__); // Mark the request as invalid because the Content-Type is 'multipart', but the required 'boundary' parameter is missing.
 }
 
 static void validate_header_value(Request & request, std::string & field_name, std::string & field_value)
@@ -201,13 +193,13 @@ static void validate_header_value(Request & request, std::string & field_name, s
 		if (field_name == "CONTENT_LENGTH")
 		{
 			if (request.isChunked())
-				request.markAsBad(33);
+				request.markAsBad(400, __FILE__, __LINE__);
 			validate_content_length(request, field_value);
 		}
 		else if (field_name == "TRANSFER_ENCODING")
 		{
 			if (request.ContentLengthIsSet())
-				request.markAsBad(33);
+				request.markAsBad(400, __FILE__, __LINE__);
 			if (!request.isChunked())
 				validate_te(request, field_value);
 		}
@@ -243,12 +235,12 @@ static void    process_header(Request & request, std::string & header)
 
 	colon_pos = header.find(':');
 	if (colon_pos == std::string::npos)
-		request.markAsBad(6);
+		request.markAsBad(400, __FILE__, __LINE__);
 
 	field_name = header.substr(0, colon_pos);
 	if (field_name.empty() || contain_unallowed_char(field_name))
 	{
-		request.markAsBad(7888);
+		request.markAsBad(400, __FILE__, __LINE__);
 	}
 
 	normalize_header_name(field_name);

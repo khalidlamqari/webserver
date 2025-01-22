@@ -1,22 +1,11 @@
-/* ************************************************************************** */
-/*                                                                            */
-/*                                                        :::      ::::::::   */
-/*   Server.hpp                                         :+:      :+:    :+:   */
-/*                                                    +:+ +:+         +:+     */
-/*   By: klamqari <klamqari@student.42.fr>          +#+  +:+       +#+        */
-/*                                                +#+#+#+#+#+   +#+           */
-/*   Created: 2024/10/29 16:08:35 by ymafaman          #+#    #+#             */
-/*   Updated: 2024/12/27 18:39:24 by klamqari         ###   ########.fr       */
-/*                                                                            */
-/* ************************************************************************** */
 
 #ifndef SERVER_HPP
 # define SERVER_HPP
 
 
 #include "SocketManager.hpp"
+#include "../response/Response.hpp"
 #include <fcntl.h>
-/// include only needed hraders ! 
 
 #define TMOUT_SEC 1
 #define TMOUT_NSEC 2000
@@ -36,18 +25,21 @@ class Server {
 		void	setup(const HttpContext & http_config);
 		void	start();
 		void	accept_client_connection(ListenerSocket * listener);
+		void	handle_client_event(struct kevent & event);
+		void	handle_cgi_output(struct kevent & event);
+		void	handle_cgi_process(CgiProcess * cgiProc);
 
     private :
-
 	SocketManager		socketManager;
 	KqueueEventQueue	kqueueManager;
 };
 
+int global_status(int sts, bool set);
 
 /*                              Cient Management                              */
 void    handle_client_request(ClientSocket* client_info);
 void    respond_to_client(ClientSocket* client_info, KqueueEventQueue & kqueueManager );
-void create_new_request(ClientSocket* client_info, SocketManager& socketManager);
-
+void setup_request_response(ClientSocket* client_info, SocketManager& socketManager);
+bool    checkBrokenIdents(int ident, std::string cmd);
 
 #endif
